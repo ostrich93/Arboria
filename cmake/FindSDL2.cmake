@@ -1,4 +1,4 @@
-# Distributed under the OSI-approved BSD 3-Clause License. See accompanying
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
 
 #.rst:
@@ -11,10 +11,10 @@
 #
 # ::
 #
-# SDL2_LIBRARY, the name of the library to link against
-# SDL2_FOUND, if false, do not try to link to SDL
-# SDL2_INCLUDE_DIR, where to find SDL.h
-# SDL2_VERSION_STRING, human-readable string containing the version of SDL
+#   SDL2_LIBRARY, the name of the library to link against
+#   SDL2_FOUND, if false, do not try to link to SDL
+#   SDL2_INCLUDE_DIR, where to find SDL.h
+#   SDL2_VERSION_STRING, human-readable string containing the version of SDL
 #
 #
 #
@@ -22,17 +22,17 @@
 #
 # ::
 #
-# SDL2_BUILDING_LIBRARY
-# If this is defined, then no SDL2_main will be linked in because
-# only applications need main().
-# Otherwise, it is assumed you are building an application and this
-# module will attempt to locate and set the proper link flags
-# as part of the returned SDL2_LIBRARY variable.
+#   SDL2_BUILDING_LIBRARY
+#     If this is defined, then no SDL2_main will be linked in because
+#     only applications need main().
+#     Otherwise, it is assumed you are building an application and this
+#     module will attempt to locate and set the proper link flags
+#     as part of the returned SDL2_LIBRARY variable.
 #
 #
 #
 # Don't forget to include SDLmain.h and SDLmain.m your project for the
-# OS X framework based version. (Other versions link to -lSDLmain which
+# OS X framework based version.  (Other versions link to -lSDL2main which
 # this module will try to find on your behalf.) Also for OS X, this
 # module will automatically add the -framework Cocoa on your behalf.
 #
@@ -40,26 +40,26 @@
 #
 # Additional Note: If you see an empty SDL2_LIBRARY_TEMP in your
 # configuration and no SDL2_LIBRARY, it means CMake did not find your SDL
-# library (SDL.dll, libsdl.so, SDL.framework, etc). Set
+# library (SDL.dll, libsdl.so, SDL.framework, etc).  Set
 # SDL2_LIBRARY_TEMP to point to your SDL library, and configure again.
-# Similarly, if you see an empty SDLMAIN_LIBRARY, you should set this
-# value as appropriate. These values are used to generate the final
+# Similarly, if you see an empty SDL2MAIN_LIBRARY, you should set this
+# value as appropriate.  These values are used to generate the final
 # SDL2_LIBRARY variable, but when these values are unset, SDL2_LIBRARY
 # does not get created.
 #
 #
 #
 # $SDL2DIR is an environment variable that would correspond to the
-# ./configure --prefix=$SDL2DIR used in building SDL. l.e.galup 9-20-02
+# ./configure --prefix=$SDL2DIR used in building SDL.  l.e.galup 9-20-02
 #
-# Modified by Eric Wing. Added code to assist with automated building
+# Modified by Eric Wing.  Added code to assist with automated building
 # by using environmental variables and providing a more
-# controlled/consistent search behavior. Added new modifications to
+# controlled/consistent search behavior.  Added new modifications to
 # recognize OS X frameworks and additional Unix paths (FreeBSD, etc).
 # Also corrected the header search path to follow "proper" SDL
-# guidelines. Added a search for SDLmain which is needed by some
-# platforms. Added a search for threads which is needed by some
-# platforms. Added needed compile switches for MinGW.
+# guidelines.  Added a search for SDL2main which is needed by some
+# platforms.  Added a search for threads which is needed by some
+# platforms.  Added needed compile switches for MinGW.
 #
 # On OSX, this will prefer the Framework version (if found) over others.
 # People will have to manually change the cache values of SDL2_LIBRARY to
@@ -68,7 +68,7 @@
 #
 # Note that the header path has changed from SDL/SDL.h to just SDL.h
 # This needed to change because "proper" SDL convention is #include
-# "SDL.h", not <SDL/SDL.h>. This is done for portability reasons
+# "SDL.h", not <SDL/SDL.h>.  This is done for portability reasons
 # because not all systems place things in SDL/ (see FreeBSD).
 
 if(NOT SDL2_DIR)
@@ -106,8 +106,8 @@ set_property(CACHE SDL2_LIBRARY_TEMP PROPERTY TYPE INTERNAL)
 if(NOT SDL2_BUILDING_LIBRARY)
   if(NOT SDL2_INCLUDE_DIR MATCHES ".framework")
     # Non-OS X framework versions expect you to also dynamically link to
-    # SDLmain. This is mainly for Windows and OS X. Other (Unix) platforms
-    # seem to provide SDLmain for compatibility even though they don't
+    # SDL2main. This is mainly for Windows and OS X. Other (Unix) platforms
+    # seem to provide SDL2main for compatibility even though they don't
     # necessarily need it.
     find_library(SDL2MAIN_LIBRARY
       NAMES SDL2main
@@ -133,17 +133,17 @@ if(NOT APPLE)
 endif()
 
 # MinGW needs an additional link flag, -mwindows
-# It's total link flags should look like -lmingw32 -lSDLmain -lSDL -mwindows
+# It's total link flags should look like -lmingw32 -lSDL2main -lSDL2 -mwindows
 if(MINGW)
   set(MINGW32_LIBRARY mingw32 "-mwindows" CACHE STRING "link flags for MinGW")
 endif()
 
 if(SDL2_LIBRARY_TEMP)
-  # For SDLmain
+  # For SDL2main
   if(SDL2MAIN_LIBRARY AND NOT SDL2_BUILDING_LIBRARY)
-    list(FIND SDL2_LIBRARY_TEMP "${SDLMAIN_LIBRARY}" _SDL2_MAIN_INDEX)
+    list(FIND SDL2_LIBRARY_TEMP "${SDL2MAIN_LIBRARY}" _SDL2_MAIN_INDEX)
     if(_SDL2_MAIN_INDEX EQUAL -1)
-      set(SDL2_LIBRARY_TEMP "${SDLMAIN_LIBRARY}" ${SDL2_LIBRARY_TEMP})
+      set(SDL2_LIBRARY_TEMP "${SDL2MAIN_LIBRARY}" ${SDL2_LIBRARY_TEMP})
     endif()
     unset(_SDL2_MAIN_INDEX)
   endif()
@@ -195,7 +195,6 @@ set(SDL2_INCLUDE_DIRS ${SDL2_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2
                                   REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR
                                   VERSION_VAR SDL2_VERSION_STRING)
-

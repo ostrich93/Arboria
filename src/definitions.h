@@ -1,7 +1,7 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
-#ifdef (WIN32) || (_WIN32)
+#ifdef defined(WIN32) || defined(_WIN32)
 #ifdef _MSC_VER
 #define ALIGN16(x) __declspec(align(16))x
 #define ALIGNTYPE16 __declspec(align(16))
@@ -19,7 +19,6 @@
 
 #ifndef WIN32
 #define WIN32
-#endif
 
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__APPLE__) || defined(__GNUC__) || defined(__clang__)
 

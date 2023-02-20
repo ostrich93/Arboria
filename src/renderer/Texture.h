@@ -1,17 +1,16 @@
 #ifndef __TEXTURE_H__
 #define __TEXTURE_H__
 #include "../utils/Vector.h"
+#include <SDL_opengl.h>
 
 namespace Arboria {
 	class Sprite {
-	public:
-
 	private:
 		friend class Texture;
 	protected:
 		Texture* img;
-		Vector2 offsetPosition;
-		Vector2 dimensions;
+		Vector2<unsigned int> offsetPosition;
+		Vector2<unsigned int> dimensions;
 
 	};
 
