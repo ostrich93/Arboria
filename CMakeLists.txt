@@ -35,6 +35,9 @@ set (ARBORIA_SOURCE_FILES
 		./src/gui/WidgetContainer.cpp
 		./src/renderer/Font.cpp
 		./src/renderer/FontManager.cpp
+		./src/renderer/Renderer.cpp
+		./src/renderer/Shader.cpp
+		./src/renderer/ShaderProgram.cpp
 		./src/renderer/Texture.cpp
 		./src/main.cpp
 )
@@ -66,6 +69,8 @@ set (ARBORIA_HEADER_FILES
 		./src/renderer/FontManager.h
 		./src/renderer/Renderer.h
 		./src/renderer/RenderSystem.h
+		./src/renderer/Shader.h
+		./src/renderer/ShaderProgram.h
 		./src/renderer/stb_image.h
 		./src/renderer/Texture.h
 		./src/utils/math.h
