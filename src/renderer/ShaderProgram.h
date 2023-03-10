@@ -3,10 +3,17 @@
 
 #include "Shader.h"
 #include "../utils/Vector.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+PFNGLGENVERTEXARRAYSPROC		glGenVertexArrays;
+PFNGLBINDVERTEXARRAYPROC		glBindVertexArray;
+PFNGLDELETEVERTEXARRAYSPROC		glDeleteVertexArrays;
+PFNGLVERTEXATTRIBDIVISORPROC	glVertexAttribDivisor;
 
 namespace Arboria {
 	class ShaderProgram {
-		private:
+		protected:
 			Shader* vertexShader;
 			Shader* fragmentShader;
 			GLuint programId;
@@ -28,11 +35,12 @@ namespace Arboria {
 			void setFloat(const char* name, GLfloat value);
 			void setInteger(const char* name, GLint value);
 			void setVector2f(const char* name, GLfloat x, GLfloat y);
-			void setVector2f(const char* name, Vector2f& value);
+			void setVector2f(const char* name, Vector2<float>& value);
 			void setVector3f(const char* name, GLfloat x, GLfloat y, GLfloat z);
-			void setVector3f(const char* name, Vector3f& value);
+			void setVector3f(const char* name, Vector3<float>& value);
 			void setVector4f(const char* name, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 			void setVector4f(const char* name, Vector4<GLfloat>& value);
+			void setMatrix4(const char* name, glm::mat4& value);
 	};
 }
 

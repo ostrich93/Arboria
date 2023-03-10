@@ -13,12 +13,14 @@ namespace Arboria {
 	typedef void (*widgetCallback)(WidgetEvent*);
 	class Widget {
 		private:
+			typedef void (*preRenderCallback)(Widget*);
 			HashTable<WidgetEventType, List<widgetCallback>> callbacks;
 			Texture* surface;
 			void* data;
+			preRenderCallback preRenderFunction;
 		protected:
 			Widget* parent;
-			Vector2i resolvedLocation; //actual location derived from the parent.
+			Vector2<int> resolvedLocation; //actual location derived from the parent.
 			bool clickable;
 			bool visible;
 			bool dirty;
@@ -27,11 +29,13 @@ namespace Arboria {
 			void submitGuiEvent(WidgetEventType weType, Event* _parent);
 			void triggerCallbacks(WidgetEvent* event);
 		public:
+			Widget(bool focused = true) : preRenderFunction(NULL), location(0, 0), size(0, 0), selectableSize(0, 0), resolvedLocation(0, 0),
+				visible(true), clickable(false), name("Widget"), hasFocus(focused), enabled(true), mouseInside(false), mousePressed(false) {}
 			bool enabled;
 			char* name;
-			Vector2i location; //relative
-			Vector2i size;
-			Vector2i selectableSize;
+			Vector2<int> location; //relative
+			Vector2<int> size;
+			Vector2<int> selectableSize;
 			List<Widget> children;
 			bool hasFocus;
 			bool isPointInsideSelectBoundaries(int x, int y) const;
@@ -42,13 +46,16 @@ namespace Arboria {
 			void setClickable(bool _clickable) { clickable = _clickable; }
 			void setParent(Widget* _parent);
 			Widget* getParent() const { return parent; }
-			Vector2i getParentSize() const;
+			Texture* getSurface() const { return surface; }
+			void setSurface(Texture* _surface) { surface = _surface; }
+			Vector2<int> getParentSize() const;
 			static int align(HorizontalAlignment _halign, int parentWidth, int childWidth);
-			static int align(VerticalAlignment _valign, int parentWidth, int childWidth);
-			int align(HorizontalAlignment _halign);
-			int align(VerticalAlignment _valign);
-			int align(HorizontalAlignment _halign, VerticalAlignment _valign);
+			static int align(VerticalAlignment _valign, int parentHeight, int childHeight);
+			void align(HorizontalAlignment _halign);
+			void align(VerticalAlignment _valign);
+			void align(HorizontalAlignment _halign, VerticalAlignment _valign);
 			template<typename T> T* getData() const { return static_cast<T*>(data); }
+			void* getData() const { return data; }
 			void setData(void* _data) { data = _data; }
 			void setDirty();
 			void resolveLocation();
@@ -59,6 +66,7 @@ namespace Arboria {
 			virtual void onRender();
 			virtual void preRender();
 			virtual void postRender();
+			void setPreRenderFunction(preRenderCallback cb) { this->preRenderFunction = cb; }
 			virtual ~Widget();
 	};
 }

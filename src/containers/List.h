@@ -72,10 +72,10 @@ namespace Arboria {
 	inline void* generateNewList(int num, bool zeroBuffer) { //this is used by the second constructor
 		T* ptr = NULL;
 		if (zeroBuffer) {
-			ptr = (T*)Mem_ClearedAlloc(num);
+			ptr = (T*)Mem_ClearedAlloc(sizeof(T) * num);
 		}
 		else {
-			ptr = (T*)Mem_Alloc(size);
+			ptr = (T*)Mem_Alloc(sizeof(T) * num);
 		}
 		for (int i = 0; i < size; ++i) {
 			//the new call does NOT allocate new memory, what it does is construct a T object at &ptr[i], which is equivalent to new(sizeof(T), &ptr[i])
@@ -357,6 +357,7 @@ namespace Arboria {
 
 	template<typename T>
 	inline List<T>& List<T>::operator=(const List& other) { //copy operator
+		clear();
 		num = other.num;
 		capacity = other.capacity;
 		granularity = other.granularity;

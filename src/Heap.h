@@ -10,6 +10,11 @@ namespace Arboria {
 
 	inline void* Mem_Alloc(const int size) { return Mem_Alloc16(size); }
 	inline void Mem_Free(void* ptr) { return Mem_Free16(ptr); }
+
+	inline void* operator new(size_t s) { return Mem_Alloc(s); }
+	inline void operator delete(void* p) { Mem_Free(p); }
+	inline void* operator new[](size_t s) { return Mem_Alloc(s); }
+	inline void operator delete[](void* p) { Mem_Free(p); }
 }
 
 #endif

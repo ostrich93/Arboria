@@ -3554,7 +3554,7 @@ static stbi_uc *stbi__resample_row_hv_2_simd(stbi_uc *out, stbi_uc *in_near, stb
 
       // horizontal filter works the same based on shifted vers of current
       // row. "prev" is current row shifted right by 1 pixel; we need to
-      // insert the previous pixel value (from t1).
+      // insert the previous pixel value (from v1).
       // "next" is current row shifted left by 1 pixel, with first pixel
       // of next block of 8 pixels added in.
       __m128i prv0 = _mm_slli_si128(curr, 2);
@@ -3594,7 +3594,7 @@ static stbi_uc *stbi__resample_row_hv_2_simd(stbi_uc *out, stbi_uc *in_near, stb
 
       // horizontal filter works the same based on shifted vers of current
       // row. "prev" is current row shifted right by 1 pixel; we need to
-      // insert the previous pixel value (from t1).
+      // insert the previous pixel value (from v1).
       // "next" is current row shifted left by 1 pixel, with first pixel
       // of next block of 8 pixels added in.
       int16x8_t prv0 = vextq_s16(curr, curr, 7);

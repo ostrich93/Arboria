@@ -1,7 +1,6 @@
 #include "MainMenu.h"
 #include "../../gui/ButtonWidget.h"
 #include "../../globals.h"
-#include <string>
 
 namespace Arboria {
 	MainMenuScreen::MainMenuScreen() : Screen(), currentButtonIndex(0)

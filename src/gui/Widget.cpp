@@ -79,6 +79,8 @@ namespace Arboria {
 		}
 	}
 
+	void Widget::onRender() {}
+
 	void Widget::submitGuiEvent(WidgetEventType weType, Event* _parent) {
 		WidgetEvent* uiEvent = new WidgetEvent();
 		uiEvent->setGuiEventType(weType);
@@ -128,10 +130,10 @@ namespace Arboria {
 	}
 
 	bool Widget::isPointInsideSelectBoundaries(int x, int y) const {
-		const Vector2i& trueSize = ((selectableSize.getX() == 0) || (selectableSize.getY() == 0)) ?
+		const Vector2<int>& trueSize = ((selectableSize.x == 0) || (selectableSize.y == 0)) ?
 			size : selectableSize; //in case the selectable size isn't set, use default size of ui object
 
-		return x >= resolvedLocation.getX() && x < resolvedLocation.getX() + size.getX() && y >= resolvedLocation.getY() && y < resolvedLocation.getY() + size.getY();
+		return x >= resolvedLocation.x && x < resolvedLocation.x + size.x && y >= resolvedLocation.y && y < resolvedLocation.y + size.y;
 	}
 
 	void Widget::setDirty() {
@@ -146,17 +148,17 @@ namespace Arboria {
 		auto parentControl = parent;
 
 		if (parentControl == NULL) {
-			resolvedLocation.setX(location.getX());
-			resolvedLocation.setY(location.getY());
+			resolvedLocation.x = location.x;
+			resolvedLocation.y = location.y;
 		}
 		else {
-			if (location.getX() > parentControl->size.getX() || location.getY() > parentControl->size.getY()) {
-				resolvedLocation.setX(-99999);
-				resolvedLocation.setY(-99999);
+			if (location.x > parentControl->size.x || location.y > parentControl->size.y) {
+				resolvedLocation.x = -99999;
+				resolvedLocation.y = -99999;
 			}
 			else {
-				resolvedLocation.setX(location.getX() + parentControl->resolvedLocation.getX());
-				resolvedLocation.setY(location.getY() + parentControl->resolvedLocation.getY());
+				resolvedLocation.x = location.x + parentControl->resolvedLocation.x;
+				resolvedLocation.y = location.y + parentControl->resolvedLocation.y;
 			}
 		}
 		for (int i = 0; i < children.getLength(); i++) {
@@ -170,7 +172,7 @@ namespace Arboria {
 
 	void Widget::render()
 	{
-		if (!visible || size.getX() == 0 || size.getY() == 0) {
+		if (!visible || size.x == 0 || size.y == 0) {
 			return;
 		}
 
@@ -182,6 +184,26 @@ namespace Arboria {
 		dirty = false;
 
 		//if enabled, draw normal, else draw tinted.
+	}
+
+	void Widget::preRender()
+	{
+		for (int i = 0; i < children.getLength(); i++) {
+			children[i].preRender();
+		}
+		if (preRenderFunction != NULL) {
+			preRenderFunction(this);
+		}
+	}
+
+	void Widget::postRender() {
+		Widget child;
+		for (int i = 0; i < children.getLength(); i++) {
+			child = children[i];
+			if (child.isVisible()) {
+				child.render();
+			}
+		}
 	}
 
 	void Widget::setVisible(bool _visibility) {
@@ -197,6 +219,62 @@ namespace Arboria {
 			_parent->setDirty();
 		}
 		parent = _parent;
+	}
+
+	Vector2<int> Widget::getParentSize() const
+	{
+		if (parent != NULL) {
+			return parent->size;
+		}
+		else {
+			//return screen size in options
+			return Vector2<int>(800, 600);
+		}
+	}
+
+	int Widget::align(HorizontalAlignment _halign, int parentWidth, int childWidth) {
+		int x = 0;
+		switch (_halign) {
+			case (HorizontalAlignment::LEFT):
+				x = 0;
+				break;
+			case (HorizontalAlignment::CENTER):
+				x = (parentWidth / 2) - (childWidth / 2);
+				break;
+			case (HorizontalAlignment::RIGHT):
+				x = parentWidth - childWidth;
+				break;
+		}
+		return x;
+	}
+
+	int Widget::align(VerticalAlignment _valign, int parentHeight, int childHeight) {
+		int y = 0;
+		switch (_valign) {
+			case (VerticalAlignment::TOP):
+				y = 0;
+				break;
+			case (VerticalAlignment::CENTER):
+				y = (parentHeight / 2) - (childHeight / 2);
+				break;
+			case (VerticalAlignment::BOTTOM):
+				y = parentHeight - childHeight;
+				break;
+		}
+		return y;
+	}
+
+	void Widget::align(HorizontalAlignment _halign) {
+		location.x = this->align(_halign, parent->size.x, size.x);
+	}
+
+	void Widget::align(VerticalAlignment _valign) {
+		location.y = this->align(_valign, parent->size.y, size.y);
+	}
+
+	void Widget::align(HorizontalAlignment _halign, VerticalAlignment _valign) {
+		align(_halign);
+		align(_valign);
 	}
 
 	void Widget::addCallback(WidgetEventType eType, widgetCallback callback) {
