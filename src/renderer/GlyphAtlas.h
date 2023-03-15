@@ -2,23 +2,14 @@
 #define __GLYPH_ATLAS_H__
 
 #include "Font.h"
-#include "stb_rect_pack.h"
 
 namespace Arboria {
 
-
 	class GlyphAtlas {
-	public:
-		struct GlyphInfo {
-			Glyph glyph;
-			float u0;
-			float v0;
-			float u1;
-			float v1;
-		};
 
 	public:
 		GlyphAtlas(Font& font, unsigned int _width = 1024, unsigned int _height = 1024, int capacity = 128);
+		GlyphAtlas(unsigned int _width);
 		~GlyphAtlas();
 
 		inline unsigned int getWidth() { return width; }
@@ -36,36 +27,25 @@ namespace Arboria {
 		//void loadGlyphs();
 		//void reloadGlyphs();
 		//void repack();
-		void initialize();
+		int initialize(FT_Face& face, FontMetrics* size, int length);
 		void bind(int unit);
-		Glyph* getGlyph(unsigned short codepoint);
+		Glyph* getGlyph(unsigned int codepoint);
 		//GlyphInfo* getGlyph(unsigned short codepoint) const;
-		bool loadGlyphs();
+		Glyph* loadGlyphs(FT_Face& face, FontMetrics* size, int length);
+		void setGlyphMetrics(Glyph* glyphMetrics, const FT_UInt& index, int xPos, FontMetrics* size, int yPos, FT_Face& face);
 		unsigned char* loadGlyph(FT_Face& _face, unsigned short codepoint, Glyph& glyph);
 		bool addEntry(unsigned short codepoint, Glyph& glyph, const unsigned char* img);
-		void bind(int unit);
-
+		Font* getFont();
+		void setFont(Font* _font);
+		bool wasInitialized;
 	private:
 		friend class FontManager;
-		struct dirty_rect {
-			unsigned int x1;
-			unsigned int y1;
-			unsigned int x2;
-			unsigned int y2;
-		};
-		bool isDirty;
-		dirty_rect dirtyArea;
 		unsigned int textureId;
 		unsigned int width;
 		unsigned int height;
 		unsigned char* dataBuffer;
-		stbrp_context pack_context;
-		stbrp_node* pack_nodes;
-		int glyphCapacity;
-		HashTable<size_t, Glyph> glyphs;
+		Glyph* glyphs;
 		Font* parentFont;
-
-		void updateDirtyArea(int x, int y, int width, int height);
 	};
 }
 

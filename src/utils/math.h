@@ -6,6 +6,26 @@
 #include <stdint.h>
 
 namespace Arboria {
+
+	#ifdef INFINITE
+	#undef INFINITE
+	#endif
+
+	#ifdef FLT_EPSILON
+	#undef FLT_EPSILON
+	#endif
+
+	#define DEG2RAD(a)		( (a) * DEG_2_RAD);
+	#define RAD2DEG(a)		( (a) * RAD_2_DEG);
+
+	#define FLOATSIGNBITSET(f)			((*(const unsigned int *)&(f)) >> 31)
+	#define FLOATSIGNBITNOTSET(f)		((~(*(const unsigned int *)&(f))) >> 31)
+	#define FLOATNOTZERO(f)				((*(const unsigned int *)&(f)) & ~(1 << 31))
+	#define INTSIGNBITSET(i)			(((const unsigned int)(i)) >> 31)
+	#define INTSIGNBITNOTSET(i)			((~((const unsigned int)(i))) >> 31)
+
+	#define IEEE_FLT_MANTISSA_BITS		23
+
 	static const float PI = 3.14159265358979323846f;
 	static const float TAU = 6.28318530717958647692f;
 	static const float HALF_PI = 0.5f * PI;
@@ -26,9 +46,12 @@ namespace Arboria {
 	static const float RAD_2_DEG = 180.0f / PI;
 	static const float SEC2MS = 1000.0f;
 	static const float MS2SEC = 0.001f;
-	//static const float INFINITE = 1e30f;
-	static const float EPSILON = 1.192092896e-07f;
+	static const float INFINITE = 1e30f;
+	static const float FLT_EPSILON = 1.192092896e-07f;
 	static const int NAN_VALUE = 0x7f800000;
+	static const int SMALLEST_NON_DENORMAL = 1 << IEEE_FLT_MANTISSA_BITS;
+	static const float FLT_SMALLEST_NON_DENORMAL = *reinterpret_cast<const float*>(&SMALLEST_NON_DENORMAL);
+
 
 	class Math {
 	public:
@@ -40,6 +63,11 @@ namespace Arboria {
 		static float clampFloat(float min, float max, float value);
 		static bool isPowerOfTwo(int x);
 		static float floor(float f);
+		static int ftoi(float f);
+		static unsigned int ftol(float f);
+		static float ceil(float f);
+		static float invSqrt(float x);
+		static float sqrt(float x);
 	};
 
 	inline int Math::iMin(int a, int b) {
@@ -96,6 +124,26 @@ namespace Arboria {
 
 	inline float Math::floor(float f) {
 		return floorf(f);
+	}
+
+	inline int Math::ftoi(float f) {
+		return (int) f;
+	}
+
+	inline unsigned int Math::ftol(float f) {
+		return (unsigned int)f;
+	}
+
+	inline float Math::ceil(float f) {
+		return ceilf(f);
+	}
+
+	inline float Math::invSqrt(float x) {
+		return (x > FLT_SMALLEST_NON_DENORMAL) ? sqrtf(1.0f / x) : INFINITE;
+	}
+
+	inline float Math::sqrt(float x) {
+		return (x >= 0.0f) ? sqrtf(x) : 0.0f;
 	}
 }
 

@@ -7,8 +7,8 @@
 namespace Arboria {
 	ShaderProgram::ShaderProgram(const char* vName, const char* fName) : programId(0), currentBuffer(0)
 	{
-		std::string vertexSource;
-		std::string fragmentSource;
+		String vertexSource;
+		String fragmentSource;
 
 		try {
 			std::ifstream vertexShaderFile(vName);
@@ -18,16 +18,16 @@ namespace Arboria {
 			fragmentShaderStream << fragmentShaderFile.rdbuf();
 			vertexShaderFile.close();
 			fragmentShaderFile.close();
-			vertexSource = vertexShaderStream.str();
-			fragmentSource = fragmentShaderStream.str();
+			vertexSource = vertexShaderStream.str().c_str();
+			fragmentSource = fragmentShaderStream.str().c_str();
 		}
 		catch (std::exception e) {
 			printf("Error loading shader files %s and %s\n", vName, fName);
 			throw std::runtime_error("Failed to load vertex and fragment shaders");
 		}
 
-		vertexShader = new Shader(vertexSource.c_str(), GL_VERTEX_SHADER);
-		fragmentShader = new Shader(fragmentSource.c_str(), GL_FRAGMENT_SHADER);
+		vertexShader = new Shader(vertexSource, GL_VERTEX_SHADER);
+		fragmentShader = new Shader(fragmentSource, GL_FRAGMENT_SHADER);
 
 		programId = glCreateProgram();
 		glAttachShader(programId, vertexShader->id);

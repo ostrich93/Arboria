@@ -1,14 +1,13 @@
-#include "FontManager.h"
+#include "GlyphAtlas.h"
 #include "../globals.h"
 #include "../Heap.h"
+#include "../FileSystem.h"
 #include <cstdio>
 #include <exception>
 #include <harfbuzz/hb.h>
 #include <harfbuzz/hb-ft.h>
 
 namespace Arboria {
-	
-	const char* FONT_FOLDER_PREFIX = "../../asssets/fonts/";
 
 	FontManager::FontManager() {
 		if (FT_Init_FreeType(&fontLibrary) != 0) {
@@ -24,26 +23,73 @@ namespace Arboria {
 
 	const char* FontManager::getFontFilename(const char* family, const char* style) const
 	{
-		int styleLen = strlen(style);
-		int folderLen = strlen(FONT_FOLDER_PREFIX);
-		int familyLen = strlen(family);
-		int slen = folderLen + familyLen;
-		if (styleLen > 0) {
-			slen += styleLen + 1; //dash character plus the length of the string
+		List<String> pathTokens;
+		if (!style || strlen(style) == 0) {
+			pathTokens = { PHYSFS_getBaseDir(), "assets", DIR_SEPARATOR, "fonts", DIR_SEPARATOR, family, ".ttf"};
 		}
-		slen += 5; //".ttf\0"
-
-		char* filestring = (char*)Mem_Alloc(sizeof(char) * slen);
-		strncpy(filestring, FONT_FOLDER_PREFIX, folderLen);
-		strncpy(filestring+folderLen, family, familyLen);
-		if (styleLen > 0) {
-			strncpy(filestring + folderLen + familyLen, "-", 1);
-			strncpy(filestring + folderLen + familyLen + 1, style, styleLen);
+		else {
+			pathTokens = { PHYSFS_getBaseDir(), "assets", DIR_SEPARATOR, "fonts", DIR_SEPARATOR, family, "-", style, ".ttf" };
 		}
-		strncpy(filestring + slen - 5, ".ttf", 4);
-		filestring[slen] = '\0';
 
-		return filestring;
+		String pathName = String::join(pathTokens, "");
+		return pathName.c_str();
+	}
+
+	int FontManager::loadFont(const char* family, const char* style, unsigned int size)
+	{
+		Font font { family, style, 0, size };
+		Font* fl = (Font*)Mem_ClearedAlloc(sizeof(*fl));
+		
+		int result = font.initialize();
+		if (!result) {
+			fprintf(stderr, "FontManager::loadFont failed to load font");
+			font.~Font();
+		}
+		else {
+			fontCache.set(font.getFontName(), &font);
+			sizeof(font.getFontName());
+			result = 1;
+		}
+
+		return result;
+	}
+
+	int FontManager::loadFont(FontHandle& fontHandle) {
+		Font font = Font{ fontHandle, 0 };
+
+		int result = font.initialize();
+		if (!result) {
+			fprintf(stderr, "FontManager::loadFont failed to load font");
+			font.~Font();
+		}
+		else {
+			fontCache.set(font.getFontName(), &font);
+			result = 1;
+		}
+
+		return result;
+	}
+
+	Font* FontManager::getFont(const char* family, const char* style, unsigned int size)
+	{
+		FontHandle fnm{ family, style, size };
+		if (!fontCache.contains(fnm)) {
+			int rslt = loadFont(fnm);
+			if (!rslt) {
+				return NULL;
+			}
+		}
+		return fontCache.get(fnm);
+	}
+
+	Font* FontManager::getFont(FontHandle& fontHandle) {
+		if (!fontCache.contains(fontHandle)) {
+			int rslt = loadFont(fontHandle);
+			if (!rslt) {
+				return NULL;
+			}
+		}
+		return fontCache.get(fontHandle);
 	}
 
 	//int FontManager::loadGlyphData(Font& font)
@@ -60,7 +106,7 @@ namespace Arboria {
 	//		fprintf(stderr, "STBRP Error: Could not pack the rectangle.\n");
 	//		return 0;
 	//	}
-	//	Texture* tex = new Texture(font.fontName);
+	//	Texture* tex = new Texture(font.fontHandle);
 	//	GlyphInfo* glyphPointer = font.glyphData;
 	//	List<SubTexture> subTextures;
 	//	List<TextureBuffer> buffers;
@@ -106,16 +152,16 @@ namespace Arboria {
 	//	}
 	//	tex->setBufferData(buffers);
 	//	tex->setSubTextures(subTextures);
-	//	engine->getResourceManager()->getImageCache().set(font.fontName, *tex);
+	//	engine->getResourceManager()->getImageCache().set(font.fontHandle, *tex);
 	//	font.dataBuffer = glyph->bitmap.buffer;
-	//	FontName fName{ font };
+	//	FontHandle fName{ font };
 	//	fontCache.set(fName, &font);
 	//	return 1;
 	//}
 
 
 
-	FontName::FontName(const char* _fontName, const char* _fontFamily, unsigned char _fontSize): fontName(_fontName), fontFamily(_fontFamily), fontSize(_fontSize) {}
+	FontHandle::FontHandle(const char* _fontName, const char* _fontFamily, unsigned char _fontSize): fontName(_fontName), fontStyle(_fontFamily), fontSize(_fontSize) {}
 
-	FontName::FontName(const char* _fontName, unsigned char _fontSize) : FontName(_fontName, "", _fontSize) {}
+	FontHandle::FontHandle(const char* _fontName, unsigned char _fontSize) : FontHandle(_fontName, "", _fontSize) {}
 }

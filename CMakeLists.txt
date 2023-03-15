@@ -49,9 +49,11 @@ Find_Package(SDL2_image REQUIRED)
 Find_Package(GLEW REQUIRED)
 Find_Package(GLM REQUIRED)
 Find_Package(HarfBuzz REQUIRED)
+Find_Package(PhysFS REQUIRED)
 
 set (ARBORIA_SOURCE_FILES
 		./src/Arboria.cpp
+		./src/FileSystem.cpp
 		./src/Heap.cpp
 		./src/events/Event.cpp
 		./src/framework/Camera.cpp
@@ -60,6 +62,7 @@ set (ARBORIA_SOURCE_FILES
 		./src/framework/InputManager.cpp
 		./src/framework/ResourceManager.cpp
 		./src/framework/ScreenManager.cpp
+		./src/framework/String.cpp
 		./src/game/scenes/MainMenu.cpp
 		./src/game/scenes/OptionsMenu.cpp
 		./src/gui/Label.cpp
@@ -75,11 +78,12 @@ set (ARBORIA_SOURCE_FILES
 		./src/renderer/Texture.cpp
 		./src/renderer/TextRenderer.cpp
 		./src/main.cpp
-  )
+	)
 set (ARBORIA_HEADER_FILES
 		./src/Arboria.h
 		./src/definitions.h
 		./src/globals.h
+		./src/FileSystem.h
 		./src/Heap.h
 		./src/containers/HashTable.h
 		./src/containers/List.h
@@ -94,6 +98,7 @@ set (ARBORIA_HEADER_FILES
 		./src/framework/ResourceManager.h
 		./src/framework/Screen.h
 		./src/framework/ScreenManager.h
+		./src/framework/String.h
 		./src/game/scenes/MainMenu.h
 		./src/game/scenes/OptionsMenu.h
 		./src/gui/Label.h
@@ -115,13 +120,16 @@ set (ARBORIA_HEADER_FILES
 		./src/renderer/TextRenderer.h
 		./src/utils/math.h
 		./src/utils/Vector.h
-  )
+	)
 
 add_executable (${CMAKE_PROJECT_NAME} ${ARBORIA_SOURCE_FILES} ${ARBORIA_HEADER_FILES})
 
 If (NOT SDL2MAIN_LIBRARY)
 	Set (SDL2MAIN_LIBRARY "")
 EndIf (NOT SDL2MAIN_LIBRARY)
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${PHYSFS_INCLUDE_DIR})
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${PHYSFS_LIBRARY})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${FREETYPE_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${HarfBuzz_INCLUDE_DIRS})
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${HarfBuzz_LIBRARIES} ${FREETYPE_LIBRARY} OpenGL::GL ${SDL2IMAGE_LIBRARIES} ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY} GLEW::GLEW)

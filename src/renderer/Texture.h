@@ -2,6 +2,7 @@
 #define __TEXTURE_H__
 #include "../utils/Vector.h"
 #include "../containers/List.h"
+#include "../framework/String.h"
 #include <SDL_opengl.h>
 
 namespace Arboria {
@@ -22,7 +23,7 @@ namespace Arboria {
 
 		GLuint getTextureId() const { return textureId; }
 		GLuint setTextureId(const GLuint _textureId) { textureId = _textureId; }
-		const char* getTextureName() const { return textureName; }
+		const char* getTextureName() const { return textureName.c_str(); }
 		GLenum getFormat() const { return format; }
 		void setFormat(const GLenum _format) { format = _format; }
 		GLuint getHeight() const { return height; }
@@ -40,7 +41,7 @@ namespace Arboria {
 		
 	private:
 		GLuint textureId;
-		const char* textureName;
+		String textureName;
 		GLenum format;
 		GLuint height, width;
 		size_t rowAlignment;

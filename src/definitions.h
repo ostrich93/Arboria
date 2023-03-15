@@ -34,4 +34,25 @@
 #define MAX_UNSIGNED_TYPE(x) ((((1U << ((sizeof(x) - 1)) * 8) - 1) << 8) | 255U)
 #define MIN_UNSIGNED_TYPE(x) 0;
 
+#define STRINGIFY(x)		#x
+#define STRINGIZE(x)		STRINGIFY(x)
+#define CONCAT(x,y)			x##y
+#define CONCATENATE(arg1, arg2)		CONCATENATE1(arg1, arg2)
+#define CONCATENATE1(arg1, arg2)	CONCATENATE2(arg1, arg2)
+#define CONCATENATE2(arg1, arg2)	arg1##arg2
+
+#define PHYSFS_SEPARATOR	"/"
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+	#define DIR_SEPARATOR	"\\"
+	#include <direct.h>
+#elif defined(__unix__) || defined(__linux__)
+	#define DIR_SEPARATOR	"/"
+	#include <sys/stat.h>
+#elif defined(__APPLE__) || defined(__MACH__)
+	#define DIR_SEPARATOR	":"
+	#include <sys/stat.h>
+#else
+	#define DIR_SEPARATOR	NULL
+#endif
+
 #endif

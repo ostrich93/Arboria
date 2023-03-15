@@ -5,6 +5,7 @@
 #include <new>
 #include <stdlib.h>
 #include <assert.h>
+#include <initializer_list>
 
 namespace Arboria {
 	template <typename T>
@@ -12,6 +13,7 @@ namespace Arboria {
 	public:
 		List(int newGranularity = 16);
 		List(const List& other);
+		List(const std::initializer_list<T>& other);
 		~List();
 
 		void append(const T& elem);
@@ -61,6 +63,15 @@ namespace Arboria {
 	inline List<T>::List<T>(const List<T>& other) { //copy constructor
 		list = NULL;
 		*this = other;
+	}
+
+	template<typename T>
+	inline List<T>::List<T>(const std::initializer_list<T>& other) {
+		resize(other.size);
+		auto x = other.begin();
+		while (x != other.end()) {
+			append(*x++);
+		}
 	}
 
 	template<typename T>

@@ -1,5 +1,7 @@
 #include "TextRenderer.h"
+#include "GlyphAtlas.h"
 #include "../containers/List.h"
+#include "Font.h"
 
 namespace Arboria {
 	TextRenderer::TextRenderer() : textShader("textRenderShader.vert", "textRenderShader.frag") {
@@ -18,15 +20,15 @@ namespace Arboria {
 		if (ibo_id) glDeleteBuffers(1, &ibo_id);
 	}
 
-	void TextRenderer::draw(Font* ft, Vector2<float> pos, Vector3<float> color, const char* text) {
-		GlyphAtlas ga = *(ft->glyphAtlas);
+	void TextRenderer::draw(Font* ft, Vector2<float> pos, Vector3<float> color, String& text) {
+		GlyphAtlas ga = *(ft->getGlyphAtlas());
 		float x = pos.x;
 		float y = pos.y;
 		float x0, x1, y0, y1;
 		List<TextVertexDesc> vertices;
 		List<unsigned int> indices;
 
-		int charCount = strlen(text);
+		int charCount = text.length();
 		vertices.resize(vertices.getLength() + (4 * charCount + 1));
 		indices.resize(indices.getLength() + (6 * charCount + 1));
 
@@ -82,7 +84,7 @@ namespace Arboria {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		for (int i = 0; i < charCount; i++) {
-			ga.bind(*ga.getGlyph(text[i]), 0);
+			ga.bind(0);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(sizeof(int) * i * 6));
 		}
 

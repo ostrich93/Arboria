@@ -3,9 +3,11 @@
 #include <iostream>
 
 namespace Arboria {
-	Shader::Shader(const char* name, GLenum _type) : type(_type) {
+	Shader::Shader(const String& name, GLenum _type) : type(_type) {
 		id = glCreateShader(type);
-		glShaderSource(id, 1, &name, NULL);
+		const GLchar* stringSource = name.c_str();
+		const GLint sourceLength = name.length();
+		glShaderSource(id, 1, &stringSource, &sourceLength);
 		glCompileShader(id);
 
 		GLint compileStatus;

@@ -4,22 +4,33 @@
 #include "FontManager.h"
 #include <harfbuzz/hb.h>
 #include <harfbuzz/hb-ft.h>
-#include "../utils/math.h"
 
 namespace Arboria {
-	GlyphAtlas::GlyphAtlas(Font& font, unsigned int _width, unsigned int _height, int capacity) : parentFont(&font), width(_width), height(_height), glyphCapacity(capacity), isDirty(false), dirtyArea{ _width, _height, 0, 0 }, textureId(0) {
+	GlyphAtlas::GlyphAtlas(Font& font, unsigned int _width, unsigned int _height, int capacity) : parentFont(&font), width(_width), height(_height), textureId(0) {
 		dataBuffer = (unsigned char*)Mem_ClearedAlloc(_width * _height * sizeof(unsigned char));
-		pack_nodes = (stbrp_node*)Mem_ClearedAlloc(sizeof(stbrp_node) * _width);
-		stbrp_init_target(&pack_context, _width, _height, pack_nodes, _width);
+		glGenTextures(1, &textureId);
+	}
+
+	GlyphAtlas::GlyphAtlas(unsigned int _width) : parentFont(NULL), width(_width), height(_width), textureId(0), wasInitialized(false) {
 		glGenTextures(1, &textureId);
 	}
 
 	GlyphAtlas::~GlyphAtlas() {
 		if (textureId) glDeleteTextures(1, &textureId);
-		Mem_Free(pack_nodes);
 	}
 
-	void GlyphAtlas::initialize() {
+	int GlyphAtlas::initialize(FT_Face& face, FontMetrics* size, int length) {
+		dataBuffer = (unsigned char*)Mem_ClearedAlloc(width * width * sizeof(uint32_t));
+		if (!dataBuffer) {
+			return 1;
+		}
+
+		glyphs = loadGlyphs(face, size, length);
+		if (!glyphs) {
+			Mem_Free(dataBuffer);
+			return 2;
+		}
+
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glBindTexture(GL_TEXTURE_2D, textureId);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -28,108 +39,86 @@ namespace Arboria {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dataBuffer);
 		//glBindTexture(GL_TEXTURE_2D, 0);
+
+		wasInitialized = true;
+		return 0;
 	}
 
-	bool GlyphAtlas::loadGlyphs()
-	{
-		FT_Face face = hb_ft_font_get_face(parentFont->hbFont);
+	Glyph* GlyphAtlas::loadGlyphs(FT_Face& face, FontMetrics* size, int length) {
+		Glyph* glyphMetrics = (Glyph*)Mem_Alloc(sizeof(*glyphs) * face->num_glyphs);
+		if (!glyphMetrics) return NULL;
 
-		for (int c = 32; c < 128; c++) {
-			Glyph glyph;
-			unsigned char* glyph_data = loadGlyph(face, c, glyph);
-			addEntry(c, glyph, glyph_data);
-		}
-		return false;
-	}
+		FT_UInt index;
+		int xPos = 0;
+		int yPos = 0;
 
-	unsigned char* GlyphAtlas::loadGlyph(FT_Face& _face, unsigned short codepoint, Glyph& glyph)
-	{
-		if (FT_Load_Glyph(_face, codepoint, FT_LOAD_DEFAULT | FT_LOAD_NO_HINTING | FT_LOAD_RENDER)) {
-			return NULL;
-		}
-		glyph.codepoint = codepoint;
-		glyph.left = _face->glyph->bitmap_left;
-		glyph.top = _face->glyph->bitmap_top;
-		glyph.width = _face->glyph->bitmap.width;
-		glyph.height = _face->glyph->bitmap.rows;
-		glyph.advanceX = _face->glyph->advance.x >> 6;
-
-		unsigned char* glyph_data = (unsigned char*)Mem_Alloc(glyph.width * glyph.height * sizeof(unsigned char));
-		for (size_t i = 0; i < glyph.height; i++) {
-			memcpy(&glyph_data[i * glyph.width],
-				_face->glyph->bitmap.buffer + (glyph.height - i - 1) * glyph.width,
-				glyph.width * sizeof(unsigned char));
-		}
-		return glyph_data;
-	}
-
-	bool GlyphAtlas::addEntry(unsigned short codepoint, Glyph& glyph, const unsigned char* img)
-	{
-		stbrp_rect rect;
-		rect.w = glyph.width + 1;
-		rect.h = glyph.height + 1;
-
-		bool ok = stbrp_pack_rects(&pack_context, &rect, 1);
-		if (!ok) {
-			fprintf(stderr, "STBRP Error: Could not pack the rectangle.\n");
-			return ok;
-		}
-		if (rect.was_packed) {
-			glyph.u0 = rect.x / width;
-			glyph.v0 = rect.y / height;
-			glyph.u1 = (rect.x + glyph.width) / width;
-			glyph.v1 = (rect.y + glyph.height) / height;
-
-			for (unsigned int i = 0; i < glyph.height; i++) {
-				memcpy(this->dataBuffer + ((rect.y + i) * glyph.width + rect.x),
-					img + (i * glyph.width),
-					glyph.width * sizeof(unsigned char));
+		for (FT_ULong charcode = FT_Get_First_Char(face, &index); index != 0; charcode = FT_Get_Next_Char(face, charcode, &index)) {
+			if (xPos < (length - 1)) {
+				xPos++;
 			}
-			updateDirtyArea(rect.x, rect.y, glyph.width, glyph.height);
-			glyphs.set(codepoint - 32, glyph);
-			return true;
-		}
-		return false;
-	}
+			else {
+				xPos = 0;
+				yPos++;
+			}
 
-	void GlyphAtlas::updateDirtyArea(int x, int y, int width, int height) {
-		isDirty = true;
-		dirtyArea.x1 = Math::iMin(dirtyArea.x1, x);
-		dirtyArea.y1 = Math::iMin(dirtyArea.y1, y);
-		dirtyArea.x2 = Math::iMin(dirtyArea.x2, x + width);
-		dirtyArea.y2 = Math::iMin(dirtyArea.y2, y + height);
-	}
+			FT_Load_Char(face, charcode, FT_LOAD_RENDER);
+			FT_Bitmap* bitmap = &face->glyph->bitmap;
+			if (bitmap->pixel_mode != ft_pixel_mode_grays) {
+				break;
+			}
 
-	void GlyphAtlas::bind(int unit) {
-		glActiveTexture(GL_TEXTURE0 + unit);
-		glBindTexture(GL_TEXTURE_2D, textureId);
+			setGlyphMetrics(glyphMetrics, index, xPos, size, yPos, face);
 
-		if (isDirty) {
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, dirtyArea.y1, width, dirtyArea.y2 - dirtyArea.y1, GL_RGBA, GL_UNSIGNED_BYTE, dataBuffer + width * dirtyArea.y1);
-			isDirty = false;
-			dirtyArea = { width, height, 0, 0 };
-		}
-	}
+			int xReal = xPos * size->ptSize;
+			int yReal = yPos * size->ptSize;
+			for (int y = 0; y < bitmap->rows; y++) {
+				for (int x = 0; x < bitmap->width; x++) {
+					int index = (yReal + y) * width + xReal + x;
+					uint32_t* pixel = &((uint32_t*)dataBuffer)[index];
+					uint8_t alpha = bitmap->buffer[y * bitmap->pitch + x];
+					*pixel = (255 << 24) + (255 << 16) + (255 << 8) + alpha;
+				}
+			}
 
-	Glyph* GlyphAtlas::getGlyph(unsigned short codepoint) {
-		if (codepoint < 32) return NULL;
-
-		if (!glyphs.contains(codepoint - 32)) {
-			loadGlyphs();
 		}
 
-		return &(glyphs.get(codepoint - 32));
+		return glyphMetrics;
 	}
 
-	Glyph* Font::getGlyph(unsigned short _codePoint)
+	void GlyphAtlas::setGlyphMetrics(Glyph* glyphMetrics, const FT_UInt& index, int xPos, FontMetrics* size, int yPos, FT_Face& face)
 	{
-		if (glyphAtlas == NULL) {
-			glyphAtlas = &GlyphAtlas{ *this };
-			glyphAtlas->initialize();
+		glyphMetrics[index].codepoint = face->glyph->glyph_index; //maybe glyphIndex?
+		glyphMetrics[index].left = xPos * size->ptSize;
+		glyphMetrics[index].top = yPos * size->ptSize;
+		glyphMetrics[index].height = face->glyph->metrics.height >> 6;
+		glyphMetrics[index].width = face->glyph->metrics.width >> 6;
+		glyphMetrics[index].bearingX = face->glyph->metrics.horiBearingX >> 6;
+		glyphMetrics[index].bearingY = face->glyph->metrics.horiBearingY >> 6;
+		glyphMetrics[index].advanceX = face->glyph->metrics.horiAdvance >> 6;
+		if (size->max_width < glyphMetrics[index].width) {
+			size->max_width = glyphMetrics[index].width;
 		}
-		if (glyphAtlas != NULL) {
-			return glyphAtlas->getGlyph(_codePoint);
+		if (size->max_height < glyphMetrics[index].height) {
+			size->max_height = glyphMetrics[index].height;
 		}
+		if (size->max_advance < glyphMetrics[index].advanceX) {
+			size->max_advance = glyphMetrics[index].advanceX;
+		}
+	}
+
+	Font* GlyphAtlas::getFont()
+	{
+		return parentFont;
+	}
+
+	void GlyphAtlas::setFont(Font* _font) {
+		parentFont = _font;
+	}
+
+	Glyph* GlyphAtlas::getGlyph(unsigned int codepoint) {
+		FT_UInt glyphIndex = FT_Get_Char_Index(parentFont->face, codepoint);
+		if (glyphIndex != 0) return &glyphs[glyphIndex];
+
 		return NULL;
 	}
 }

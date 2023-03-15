@@ -2,17 +2,18 @@
 #define __RESOURCE_MANAGER_H__
 
 #include "../containers/HashTable.h"
+#include "String.h"
 
 namespace Arboria {
 	class Texture;
 	class ResourceManager {
 		private:
-			HashTable<const char*, Texture> imageCache;
-			Texture* loadTextureFromFile(const char* filename);
+			HashTable<String, Texture> imageCache;
+			Texture* loadTextureFromFile(String& filename);
 		public:
-			HashTable<const char*, Texture>& getImageCache() { return imageCache; }
-			const HashTable<const char*, Texture>& getImageCache() const { return imageCache; }
-			Texture* loadTexture(const char* filename);
+			HashTable<String, Texture>& getImageCache() { return imageCache; }
+			const HashTable<String, Texture>& getImageCache() const { return imageCache; }
+			Texture* loadTexture(String& filename);
 
 	};
 }
