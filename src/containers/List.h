@@ -92,6 +92,7 @@ namespace Arboria {
 			//the new call does NOT allocate new memory, what it does is construct a T object at &ptr[i], which is equivalent to new(sizeof(T), &ptr[i])
 			new (&ptr[i]) T;
 		}
+		return ptr;
 	}
 
 	template<typename T>

@@ -6,8 +6,7 @@
 #include <harfbuzz/hb-ft.h>
 
 namespace Arboria {
-	GlyphAtlas::GlyphAtlas(Font& font, unsigned int _width, unsigned int _height, int capacity) : parentFont(&font), width(_width), height(_height), textureId(0) {
-		dataBuffer = (unsigned char*)Mem_ClearedAlloc(_width * _height * sizeof(unsigned char));
+	GlyphAtlas::GlyphAtlas(Font& font, unsigned int _width, unsigned int _height) : parentFont(&font), width(_width), height(_height), textureId(0) {
 		glGenTextures(1, &textureId);
 	}
 
@@ -19,29 +18,17 @@ namespace Arboria {
 		if (textureId) glDeleteTextures(1, &textureId);
 	}
 
-	int GlyphAtlas::initialize(FT_Face& face, FontMetrics* size, int length) {
-		dataBuffer = (unsigned char*)Mem_ClearedAlloc(width * width * sizeof(uint32_t));
-		if (!dataBuffer) {
-			return 1;
-		}
-
-		glyphs = loadGlyphs(face, size, length);
-		if (!glyphs) {
-			Mem_Free(dataBuffer);
-			return 2;
-		}
-
+	void GlyphAtlas::initialize() {
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glBindTexture(GL_TEXTURE_2D, textureId);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dataBuffer);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dataBuffer);
 		//glBindTexture(GL_TEXTURE_2D, 0);
 
 		wasInitialized = true;
-		return 0;
 	}
 
 	Glyph* GlyphAtlas::loadGlyphs(FT_Face& face, FontMetrics* size, int length) {
@@ -52,34 +39,46 @@ namespace Arboria {
 		int xPos = 0;
 		int yPos = 0;
 
-		for (FT_ULong charcode = FT_Get_First_Char(face, &index); index != 0; charcode = FT_Get_Next_Char(face, charcode, &index)) {
-			if (xPos < (length - 1)) {
-				xPos++;
-			}
-			else {
-				xPos = 0;
-				yPos++;
-			}
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureId);
 
-			FT_Load_Char(face, charcode, FT_LOAD_RENDER);
-			FT_Bitmap* bitmap = &face->glyph->bitmap;
-			if (bitmap->pixel_mode != ft_pixel_mode_grays) {
-				break;
-			}
-
-			setGlyphMetrics(glyphMetrics, index, xPos, size, yPos, face);
-
-			int xReal = xPos * size->ptSize;
-			int yReal = yPos * size->ptSize;
-			for (int y = 0; y < bitmap->rows; y++) {
-				for (int x = 0; x < bitmap->width; x++) {
-					int index = (yReal + y) * width + xReal + x;
-					uint32_t* pixel = &((uint32_t*)dataBuffer)[index];
-					uint8_t alpha = bitmap->buffer[y * bitmap->pitch + x];
-					*pixel = (255 << 24) + (255 << 16) + (255 << 8) + alpha;
+		try {
+			for (FT_ULong charcode = FT_Get_First_Char(face, &index); index != 0; charcode = FT_Get_Next_Char(face, charcode, &index)) {
+				if (xPos < (length - 1)) {
+					xPos++;
 				}
-			}
+				else {
+					xPos = 0;
+					yPos++;
+				}
 
+				FT_Load_Char(face, charcode, FT_LOAD_RENDER);
+				FT_Bitmap* bitmap = &face->glyph->bitmap;
+				if (bitmap->pixel_mode != ft_pixel_mode_grays) {
+					break;
+				}
+
+				setGlyphMetrics(glyphMetrics, index, xPos, size, yPos, face);
+
+				int xReal = xPos * size->ptSize;
+				int yReal = yPos * size->ptSize;
+				for (int y = 0; y < bitmap->rows; y++) {
+					for (int x = 0; x < bitmap->width; x++) {
+						int index = (yReal + y) * width + xReal + x;
+						uint32_t* pixel = &((uint32_t*)dataBuffer)[index];
+						uint8_t alpha = bitmap->buffer[y * bitmap->pitch + x];
+						*pixel = (255 << 24) + (255 << 16) + (255 << 8) + alpha;
+					}
+				}
+
+				glTexSubImage2D(GL_TEXTURE_2D, 0, xReal, yReal, bitmap->width, bitmap->rows, GL_RGBA, GL_UNSIGNED_BYTE, bitmap->buffer);
+
+			}
+		}
+		catch (std::exception _exception) {
+			printf("GlyphAtlas::loadGlyphs: An exception was caught when attempting to load the glyph data for the font %s.\n%s", parentFont->getFontName().fontName.c_str(), _exception.what());
+			Mem_Free(glyphMetrics);
+			glyphMetrics = NULL;
 		}
 
 		return glyphMetrics;
@@ -120,5 +119,31 @@ namespace Arboria {
 		if (glyphIndex != 0) return &glyphs[glyphIndex];
 
 		return NULL;
+	}
+
+	const Glyph* GlyphAtlas::getGlyph(unsigned int codepoint) const {
+		FT_UInt glyphIndex = FT_Get_Char_Index(parentFont->face, codepoint);
+		if (glyphIndex != 0) return &glyphs[glyphIndex];
+
+		return NULL;
+	}
+
+	int generateGlyphs(Font* font, GlyphAtlas* outAtlas, unsigned int length)
+	{
+		unsigned char* dBuffer = (unsigned char*)Mem_ClearedAlloc(outAtlas->getWidth() * outAtlas->getHeight() * sizeof(uint32_t));
+		if (!dBuffer) {
+			return 1;
+		}
+		outAtlas->setDataBuffer(dBuffer);
+		FT_Face face = font->face;
+		FontMetrics size = font->getSize();
+
+		Glyph* glyphData = outAtlas->loadGlyphs(face, &size, length);
+		if (!glyphData) {
+			Mem_Free(outAtlas->getDataBuffer());
+			return 1;
+		}
+
+		return 0;
 	}
 }

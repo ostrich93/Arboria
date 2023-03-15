@@ -16,10 +16,6 @@ namespace Arboria {
 		int advanceX; //the horizontal skip after rendering the glyph (1/64 pixels)
 		int bearingX;
 		int bearingY;
-		float u0; //x-offset (in pixels) in the image where the glyph starts
-		float v0; //y-offset (in pixels) in the image where the glyph starts
-		float u1;
-		float v1;
 	};
 
 	struct FontMetrics {
@@ -51,6 +47,7 @@ namespace Arboria {
 			inline FontHandle& getFontName() { return fontHandle; }
 			inline GlyphAtlas* getGlyphAtlas() { return glyphAtlas; }
 			inline void setGlyphAtlas(GlyphAtlas* _glyphAtlas) { glyphAtlas = _glyphAtlas; }
+			inline FontMetrics& getSize() { return size; }
 			FT_Face face;
 	};
 }

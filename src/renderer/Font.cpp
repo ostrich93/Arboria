@@ -42,7 +42,8 @@ namespace Arboria {
 		unsigned int fwidth = length * size.ptSize;
 		//create font glyph atlas
 		glyphAtlas = &GlyphAtlas{ fwidth };
-		int result = glyphAtlas->initialize(face, &size, _length);
+		glyphAtlas->initialize();
+		int result = generateGlyphs(this, glyphAtlas, length);
 		if (result) {
 			glyphAtlas->~GlyphAtlas();
 			FT_Done_Face(face);

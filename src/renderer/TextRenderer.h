@@ -27,7 +27,7 @@ namespace Arboria {
 		public:
 			TextRenderer();
 			~TextRenderer();
-			void draw(Font* ft, Vector2<float> pos, Vector3<float> color, String& text);
+			void draw(Font* ft, const Vector2<int>* pos, Vector3<float> color, String& text);
 	};
 }
 
