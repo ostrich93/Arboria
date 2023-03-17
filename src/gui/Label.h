@@ -22,7 +22,7 @@ namespace Arboria {
 			void onRender() override;
 			void run() override;
 
-			String& getText() const;
+			String getText() const;
 			void setText(String& _text);
 
 			Font* getFont() const;

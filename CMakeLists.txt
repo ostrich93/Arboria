@@ -118,9 +118,10 @@ set (ARBORIA_HEADER_FILES
 		./src/renderer/stb_rect_pack.h
 		./src/renderer/Texture.h
 		./src/renderer/TextRenderer.h
+		./src/utils/check_static_cast.h
 		./src/utils/math.h
 		./src/utils/Vector.h
-	)
+)
 
 add_executable (${CMAKE_PROJECT_NAME} ${ARBORIA_SOURCE_FILES} ${ARBORIA_HEADER_FILES})
 

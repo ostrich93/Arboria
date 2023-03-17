@@ -5,8 +5,10 @@
 #include "../containers/HashTable.h"
 #include "../containers/List.h"
 #include "../utils/Vector.h"
+#include <type_traits>
 
 namespace Arboria {
+
 	class WidgetEvent;
 	class Event;
 	class Texture;
@@ -60,6 +62,15 @@ namespace Arboria {
 			void setDirty();
 			void resolveLocation();
 			void render();
+
+			template<typename T, typename... Args>
+			std::enable_if<std::is_base_of<Widget, T>::value, T>::type*
+			createChild(Args&&...args) {
+				T* newWidget = new T(args);
+				newWidget->setParent(this);
+				return newWidget;
+			}
+
 			void addCallback(WidgetEventType eType, widgetCallback callback);
 			virtual void run();
 			virtual void eventOccured(Event* e);

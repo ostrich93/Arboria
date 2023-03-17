@@ -1,7 +1,6 @@
 #include "Renderer.h"
 #include "Texture.h"
 #include "ShaderProgram.h"
-#include "FontManager.h"
 #include "../containers/List.h"
 #include <SDL_opengles2.h>
 
