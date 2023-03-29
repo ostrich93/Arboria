@@ -16,7 +16,12 @@ namespace Arboria {
 		KEY_PRESS,
 		BUTTON_DOWN,
 		BUTTON_UP,
-		BUTTON_PRESS
+		BUTTON_PRESS,
+
+		SCROLLBAR_CHANGE,
+		LIST_BOX_CHANGE_HOVER,
+		LIST_BOX_CHANGE_SELECT,
+		LIST_BOX_CHANGE_CANCEL
 	};
 
 	enum HorizontalAlignment {
@@ -29,6 +34,11 @@ namespace Arboria {
 		TOP,
 		CENTER,
 		BOTTOM
+	};
+
+	enum ListAlignment {
+		VERTICAL,
+		HORIZONTAL
 	};
 
 	enum Orientation {

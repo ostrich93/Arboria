@@ -14,7 +14,7 @@ namespace Arboria {
 			VerticalAlignment textVAlign;
 			HorizontalAlignment textHAlign;
 
-			ButtonWidget(const char* labelName, Font* font = NULL);
+			ButtonWidget(const String& labelName, Font* font = NULL);
 			~ButtonWidget() override;
 			void run() override;
 			void eventOccured(Event* e) override;

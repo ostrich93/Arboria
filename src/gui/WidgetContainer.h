@@ -11,8 +11,8 @@ namespace Arboria {
 			void eventOccured(Event* e) override;
 			void onRender() override;
 			void run() override;
-			void preRender() override;
-			void postRender() override;
+			//void preRender() override;
+			//void postRender() override;
 	};
 }
 

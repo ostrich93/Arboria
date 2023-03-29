@@ -8,7 +8,7 @@ namespace Arboria {
 	class RenderSystem {
 		private:
 			TextRenderer* textRenderer;
-			List<Renderer> renderers;
+			SpriteRenderer* spriteRenderer;
 	};
 }
 

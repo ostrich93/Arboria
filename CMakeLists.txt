@@ -57,6 +57,7 @@ set (ARBORIA_SOURCE_FILES
 		./src/Heap.cpp
 		./src/events/Event.cpp
 		./src/framework/Camera.cpp
+		
 		./src/framework/Engine.cpp
 		./src/framework/InputBindings.cpp
 		./src/framework/InputManager.cpp
@@ -66,6 +67,9 @@ set (ARBORIA_SOURCE_FILES
 		./src/game/scenes/MainMenu.cpp
 		./src/game/scenes/OptionsMenu.cpp
 		./src/gui/Label.cpp
+		./src/gui/ListBoxWidget.cpp
+		./src/gui/ScrollAreaWidget.cpp
+		./src/gui/ScrollbarWidget.cpp
 		./src/gui/ButtonWidget.cpp
 		./src/gui/Widget.cpp
 		./src/gui/WidgetContainer.cpp
@@ -78,7 +82,7 @@ set (ARBORIA_SOURCE_FILES
 		./src/renderer/Texture.cpp
 		./src/renderer/TextRenderer.cpp
 		./src/main.cpp
-	)
+)
 set (ARBORIA_HEADER_FILES
 		./src/Arboria.h
 		./src/definitions.h
@@ -103,6 +107,9 @@ set (ARBORIA_HEADER_FILES
 		./src/game/scenes/OptionsMenu.h
 		./src/gui/Label.h
 		./src/gui/ButtonWidget.h
+		./src/gui/ListBoxWidget.h
+		./src/gui/ScrollAreaWidget.h
+		./src/gui/ScrollbarWidget.h
 		./src/gui/Widget.h
 		./src/gui/WidgetContainer.h
 		./src/gui/WidgetEnums.h

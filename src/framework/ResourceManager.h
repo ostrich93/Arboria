@@ -10,11 +10,12 @@ namespace Arboria {
 		private:
 			HashTable<String, Texture> imageCache;
 			Texture* loadTextureFromFile(String& filename);
+			Texture* loadTextureFromFile(const char* filename);
 		public:
 			HashTable<String, Texture>& getImageCache() { return imageCache; }
 			const HashTable<String, Texture>& getImageCache() const { return imageCache; }
 			Texture* loadTexture(String& filename);
-
+			Texture* loadTexture(const char* filename);
 	};
 }
 

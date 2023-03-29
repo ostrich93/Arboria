@@ -3,6 +3,7 @@
 #include "../utils/Vector.h"
 #include "../containers/List.h"
 #include "../framework/String.h"
+#include <GL/glew.h>
 #include <SDL_opengl.h>
 
 namespace Arboria {

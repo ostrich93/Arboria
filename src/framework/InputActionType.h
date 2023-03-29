@@ -8,7 +8,6 @@ namespace Arboria{
 		CONFIRM,
 		UNIT_MENU,
 		HELP,
-		SKIP,
 		START,
 		UP,
 		DOWN,

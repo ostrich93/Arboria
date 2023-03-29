@@ -4,14 +4,13 @@
 #include "../utils/Vector.h"
 #include "FontManager.h"
 #include "ShaderProgram.h"
-#include <SDL_opengles2.h>
 
 namespace Arboria {
 	struct TextVertexDesc {
 		Vector2<float> screenPosition;
 		Vector2<float> texCoord;
 		Vector2<float> texSize;
-		Vector3<float> tint;
+		Vector4<float> tint;
 	};
 
 	class TextRenderer {
@@ -27,7 +26,7 @@ namespace Arboria {
 		public:
 			TextRenderer();
 			~TextRenderer();
-			void draw(Font* ft, const Vector2<int>* pos, Vector3<float> color, String& text);
+			void draw(Font* ft, const Vector2<int>* pos, Vector4<float> color, String& text);
 	};
 }
 

@@ -20,7 +20,7 @@ namespace Arboria {
 		if (ibo_id) glDeleteBuffers(1, &ibo_id);
 	}
 
-	void TextRenderer::draw(Font* ft, const Vector2<int>* pos, Vector3<float> color, String& text) {
+	void TextRenderer::draw(Font* ft, const Vector2<int>* pos, Vector4<float> color, String& text) {
 		GlyphAtlas ga = *ft->getGlyphAtlas();
 		float u0, v0, u1, v1;
 		float minX, minY, maxX, maxY;

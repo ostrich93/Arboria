@@ -7,7 +7,7 @@
 namespace Arboria {
 	class MainMenuScreen : public Screen {
 		private:
-			WidgetContainer canvas;
+			WidgetContainer canvas; //canvas has one child, which is a listbox.
 		public:
 			MainMenuScreen();
 			~MainMenuScreen() override;
@@ -18,9 +18,7 @@ namespace Arboria {
 			void pause() override;
 			void resume() override;
 			void run() override;
-			int getActionTranslation(WidgetEvent& widgetEvent) override;
 			bool isTransitioning() const override;
-			unsigned int currentButtonIndex;
 	};
 }
 

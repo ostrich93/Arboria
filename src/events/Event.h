@@ -34,7 +34,7 @@ namespace Arboria {
 		unsigned int mods;
 	} KeyboardEventData;
 
-	typedef struct MouseEventData {
+	/*typedef struct MouseEventData {
 		int x;
 		int y;
 		int deltaX;
@@ -49,15 +49,15 @@ namespace Arboria {
 		int hat;
 		int position;
 		int button;
-	} ControllerEventData;
+	} ControllerEventData;*/
 
 	typedef struct GuiEventData {
 		Widget* raisedBy;
 		EventType parentEventType;
 		WidgetEventType guiEventType;
 		KeyboardEventData keyboardData;
-		MouseEventData mouseData;
-		ControllerEventData controllerData;
+		//MouseEventData mouseData;
+		//ControllerEventData controllerData;
 	} GuiEventData;
 
 	class Event {
@@ -82,26 +82,6 @@ namespace Arboria {
 			~KeyboardEvent() override = default;
 	};
 
-	class MouseEvent : public Event {
-		private:
-			MouseEventData data;
-			friend class Event;
-		public:
-			MouseEvent(EventType _eventType, MouseEventData& _data) : Event(_eventType), data(_data) {}
-			MouseEventData getData() { return data; }
-			~MouseEvent() override = default;
-	};
-
-	class ControllerEvent : public Event {
-		private:
-			ControllerEventData data;
-			friend class Event;
-		public:
-			ControllerEvent(EventType _eventType, ControllerEventData& _data) : Event(_eventType), data(_data) {}
-			ControllerEventData getData() { return data; }
-			~ControllerEvent() override = default;
-	};
-
 	class WidgetEvent : public Event {
 		private:
 			GuiEventData data;
@@ -123,20 +103,6 @@ namespace Arboria {
 	class KeyboardEventFactory : public EventFactory {
 		private:
 			KeyboardEventData generateData(SDL_Event _sdlEvent);
-		public:
-			Event* generateEvent(SDL_Event sdl_event) override;
-	};
-
-	class MouseEventFactory : public EventFactory {
-		private:
-			MouseEventData generateData(SDL_Event _sdlEvent);
-		public:
-			Event* generateEvent(SDL_Event sdl_event) override;
-	};
-
-	class ControllerEventFactory : public EventFactory {
-		private:
-			ControllerEventData generateData(SDL_Event _sdlEvent);
 		public:
 			Event* generateEvent(SDL_Event sdl_event) override;
 	};

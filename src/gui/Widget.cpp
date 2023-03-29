@@ -13,45 +13,7 @@ namespace Arboria {
 				}
 			}
 		}
-		
-		if (e->getEventType() == EventType::EVENT_MOUSE_MOVE || e->getEventType() == EventType::EVENT_MOUSE_DOWN || e->getEventType() == EventType::EVENT_MOUSE_UP) {
-			auto mousey = dynamic_cast<MouseEvent*>(e);
-			bool isNewPosInsideBounds = isPointInsideSelectBoundaries(mousey->getData().x, mousey->getData().y);
-			if (e->getEventType() == EventType::EVENT_MOUSE_MOVE) {
-				if (isNewPosInsideBounds) {
-					if (!mouseInside) {
-						submitGuiEvent(WidgetEventType::MOUSE_ENTER, e);
-					}
-					submitGuiEvent(WidgetEventType::MOUSE_MOVE, e);
-				}
-				else {
-					if (mouseInside) {
-						submitGuiEvent(WidgetEventType::MOUSE_LEAVE, e);
-						mousePressed = false;
-					}
-				}
-			}
-			if (e->getEventType() == EventType::EVENT_MOUSE_DOWN) {
-				if (isNewPosInsideBounds) {
-					submitGuiEvent(WidgetEventType::MOUSE_DOWN, e);
-					mousePressed = true;
-					if (clickable) {
-						e->isHandled = true;
-					}
-				}
-			}
-			if (e->getEventType() == EventType::EVENT_MOUSE_UP) {
-				if (isNewPosInsideBounds) {
-					submitGuiEvent(WidgetEventType::MOUSE_UP, e);
-					if (mousePressed) {
-						submitGuiEvent(WidgetEventType::MOUSE_CLICK, e);
-					}
-				}
-				mousePressed = false;
-			}
-			mouseInside = isNewPosInsideBounds;
-		}
-		if ((e->getEventType() == EventType::EVENT_KEY_DOWN) || (e->getEventType() == EventType::EVENT_BUTTON_UP)) {
+		if ((e->getEventType() == EventType::EVENT_KEY_DOWN) || (e->getEventType() == EventType::EVENT_KEY_UP)) {
 			if (hasFocus) {
 				submitGuiEvent(e->getEventType() == EventType::EVENT_KEY_DOWN ? WidgetEventType::KEY_DOWN : WidgetEventType::KEY_UP, e);
 				e->isHandled = true;
@@ -63,63 +25,47 @@ namespace Arboria {
 				e->isHandled = true;
 			}
 		}
-		if ((e->getEventType() == EventType::EVENT_BUTTON_DOWN) || (e->getEventType() == EventType::EVENT_BUTTON_UP)
-			|| (e->getEventType() == EventType::EVENT_CONTROLLER_AXIS) || (e->getEventType() == EventType::EVENT_CONTROLLER_HAT)) {
-			if (hasFocus) {
-				submitGuiEvent(
-					e->getEventType() == EVENT_BUTTON_DOWN ? WidgetEventType::BUTTON_DOWN : WidgetEventType::BUTTON_UP, e);
-				e->isHandled = true;
-			}
-		}
-		if (e->getEventType() == EventType::EVENT_BUTTON_PRESS) {
-			if (hasFocus) {
-				submitGuiEvent(WidgetEventType::BUTTON_PRESS, e);
-				e->isHandled = true;
-			}
-		}
 	}
 
 	void Widget::onRender() {}
 
 	void Widget::submitGuiEvent(WidgetEventType weType, Event* _parent) {
-		WidgetEvent* uiEvent = new WidgetEvent();
+		WidgetEvent* uiEvent = NULL;
 		uiEvent->setGuiEventType(weType);
 		uiEvent->setRaisedBy(*this);
-		uiEvent->setParentEventType(_parent->getEventType());
 		switch (weType) {
-			case WidgetEventType::MOUSE_LEAVE:
-			case WidgetEventType::MOUSE_ENTER:
-				setDirty();
-				break;
-			case WidgetEventType::MOUSE_CLICK:
-			case WidgetEventType::MOUSE_DOWN:
-			case WidgetEventType::MOUSE_UP:
-			case WidgetEventType::MOUSE_MOVE:
-				auto* mouseEv = dynamic_cast<MouseEvent*>(_parent);
-				uiEvent->getData().mouseData = mouseEv->getData();
-				if (weType != WidgetEventType::MOUSE_MOVE) {
-					setDirty();
-				}
-				break;
-			case WidgetEventType::BUTTON_DOWN:
-			case WidgetEventType::BUTTON_UP:
-			case WidgetEventType::BUTTON_PRESS:
-				auto* ctrlEv = dynamic_cast<ControllerEvent*>(_parent);
-				uiEvent->getData().controllerData = ctrlEv->getData();
-				setDirty();
-				break;
 			case WidgetEventType::KEY_DOWN:
 			case WidgetEventType::KEY_UP:
 			case WidgetEventType::KEY_PRESS:
+				WidgetEvent* uiEvent = new WidgetEvent();
+				uiEvent->setGuiEventType(weType);
+				uiEvent->setRaisedBy(*this);
+				if (_parent) {
+					uiEvent->setParentEventType(_parent->getEventType());
+				}
 				auto* keyEv = dynamic_cast<KeyboardEvent*>(_parent);
 				uiEvent->getData().keyboardData = keyEv->getData();
+				engine->getInputManager()->submitEvent(uiEvent);
+				setDirty();
+				break;
+			case SCROLLBAR_CHANGE:
+			case LIST_BOX_CHANGE_HOVER:
+			case LIST_BOX_CHANGE_SELECT:
+			case LIST_BOX_CHANGE_CANCEL:
+				WidgetEvent* uiEvent = new WidgetEvent();
+				uiEvent->setGuiEventType(weType);
+				uiEvent->setRaisedBy(*this);
+				if (_parent) {
+					uiEvent = dynamic_cast<WidgetEvent*>(_parent);
+					uiEvent->setParentEventType(_parent->getEventType());
+				}
+				engine->getInputManager()->submitEvent(uiEvent);
 				setDirty();
 				break;
 			default:
 				break;
 		}
 
-		engine->getInputManager()->submitEvent(uiEvent);
 		this->triggerCallbacks(uiEvent);
 	}
 
@@ -182,8 +128,6 @@ namespace Arboria {
 		}
 
 		dirty = false;
-
-		//if enabled, draw normal, else draw tinted.
 	}
 
 	void Widget::preRender()
@@ -204,6 +148,10 @@ namespace Arboria {
 				child.render();
 			}
 		}
+	}
+
+	Widget::~Widget()
+	{
 	}
 
 	void Widget::setVisible(bool _visibility) {
@@ -275,6 +223,16 @@ namespace Arboria {
 	void Widget::align(HorizontalAlignment _halign, VerticalAlignment _valign) {
 		align(_halign);
 		align(_valign);
+	}
+
+	Widget* Widget::getPointOfAncestry(Widget* parent)
+	{
+		Widget* poa = this;
+		while (poa != NULL) {
+			if (poa->getParent() == parent) break;
+			else poa = poa->getParent();
+		}
+		return poa;
 	}
 
 	void Widget::addCallback(WidgetEventType eType, widgetCallback callback) {

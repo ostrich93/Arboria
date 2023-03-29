@@ -18,14 +18,17 @@ namespace Arboria {
 			InputBindType bindType;
 			InputActionType actionType;
 			int value;
-			bool repeatLock;
 		public:
+			InputBinding() : bindType(InputBindType::BIND_KEYBOARD), actionType(InputActionType::INVALID), value(-1) {}
 			InputBinding(InputBindType _bindType, InputActionType _actionType, int _value = -1) : bindType(_bindType), actionType(_actionType), value(_value), repeatLock(false) {}
 			int getValue() { return value; }
 			InputBindType getBindType() { return bindType; }
+			void setBindType(InputBindType bType) { bindType = bType; }
 			InputActionType getActionType() { return actionType; }
+			void setActionType(InputActionType aType) { actionType = aType; }
 			bool hasValue(const int v) const { return value == v; }
-			void setBindValue(int _value) { value = _value; }
+			void setValue(int _value) { value = _value; }
+			bool repeatLock;
 	};
 
 	//This will be read in through a file called "inputbindings.ini" but for now, we'll have a default set.

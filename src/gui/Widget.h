@@ -5,6 +5,7 @@
 #include "../containers/HashTable.h"
 #include "../containers/List.h"
 #include "../utils/Vector.h"
+#include "../framework/String.h"
 #include <type_traits>
 
 namespace Arboria {
@@ -26,15 +27,15 @@ namespace Arboria {
 			bool clickable;
 			bool visible;
 			bool dirty;
-			bool mouseInside;
-			bool mousePressed;
+			//bool mouseInside;
+			//bool mousePressed;
 			void submitGuiEvent(WidgetEventType weType, Event* _parent);
 			void triggerCallbacks(WidgetEvent* event);
 		public:
 			Widget(bool focused = true) : preRenderFunction(NULL), location(0, 0), size(0, 0), selectableSize(0, 0), resolvedLocation(0, 0),
-				visible(true), clickable(false), name("Widget"), hasFocus(focused), enabled(true), mouseInside(false), mousePressed(false) {}
+				visible(true), clickable(false), name("Widget"), hasFocus(focused), enabled(true) {}
 			bool enabled;
-			char* name;
+			String name;
 			Vector2<int> location; //relative
 			Vector2<int> size;
 			Vector2<int> selectableSize;
@@ -57,11 +58,23 @@ namespace Arboria {
 			void align(VerticalAlignment _valign);
 			void align(HorizontalAlignment _halign, VerticalAlignment _valign);
 			template<typename T> T* getData() const { return static_cast<T*>(data); }
+			Widget* getPointOfAncestry(Widget* parent);
 			void* getData() const { return data; }
 			void setData(void* _data) { data = _data; }
 			void setDirty();
 			void resolveLocation();
 			void render();
+			
+			template<typename T>
+			std::enable_if<std::is_base_of<Widget, T>::value, T>::type*
+			findWidget(String& widgetId) {
+				for (int j = 0; j < children.getLength(); j++) {
+					if (children[j].name == widgetId)
+						return &children[j];
+				}
+
+				return NULL;
+			}
 
 			template<typename T, typename... Args>
 			std::enable_if<std::is_base_of<Widget, T>::value, T>::type*
@@ -77,7 +90,7 @@ namespace Arboria {
 			virtual void onRender();
 			virtual void preRender();
 			virtual void postRender();
-			void setPreRenderFunction(preRenderCallback cb) { this->preRenderFunction = cb; }
+			void setPreRenderFunction(preRenderCallback cb) { preRenderFunction = cb; }
 			virtual ~Widget();
 	};
 }

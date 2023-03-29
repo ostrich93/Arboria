@@ -6,10 +6,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-PFNGLGENVERTEXARRAYSPROC		glGenVertexArrays;
-PFNGLBINDVERTEXARRAYPROC		glBindVertexArray;
-PFNGLDELETEVERTEXARRAYSPROC		glDeleteVertexArrays;
-PFNGLVERTEXATTRIBDIVISORPROC	glVertexAttribDivisor;
+//PFNGLGENVERTEXARRAYSPROC		glGenVertexArrays;
+//PFNGLBINDVERTEXARRAYPROC		glBindVertexArray;
+//PFNGLDELETEVERTEXARRAYSPROC		glDeleteVertexArrays;
+//PFNGLVERTEXATTRIBDIVISORPROC	glVertexAttribDivisor;
 
 namespace Arboria {
 	class ShaderProgram {

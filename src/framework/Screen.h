@@ -32,7 +32,6 @@ namespace Arboria {
 		virtual void pause() = 0;
 		virtual void resume() = 0;
 		virtual void run() = 0;
-		virtual int getActionTranslation(WidgetEvent& widgetEvent) = 0;
 	};
 }
 #endif

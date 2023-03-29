@@ -13,7 +13,7 @@ namespace Arboria {
 			VerticalAlignment valign;
 			HorizontalAlignment halign;
 			bool wordWrap;
-			Vector3<size_t> tint{ 255, 255, 255 };
+			Vector4<size_t> tint{ 255, 255, 255, 255 };
 			//font stuff
 
 			Label(const String& textContent = "", Font* _font = NULL);
