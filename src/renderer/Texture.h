@@ -1,10 +1,8 @@
 #ifndef __TEXTURE_H__
 #define __TEXTURE_H__
 #include "../utils/Vector.h"
-#include "../containers/List.h"
 #include "../framework/String.h"
-#include <GL/glew.h>
-#include <SDL_opengl.h>
+#include "../framework/Engine.h"
 
 namespace Arboria {
 	class Sprite {

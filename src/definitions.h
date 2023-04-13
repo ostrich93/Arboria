@@ -1,7 +1,8 @@
+#pragma once
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
-#ifdef defined(WIN32) || defined(_WIN32)
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
 #ifdef _MSC_VER
 #define ALIGN16(x) __declspec(align(16))x
 #define ALIGNTYPE16 __declspec(align(16))
@@ -43,16 +44,41 @@
 
 #define PHYSFS_SEPARATOR	"/"
 #if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
-	#define DIR_SEPARATOR	"\\"
+	#define DIR_SEPARATOR_STR	"\\"
+	#define DIR_SEPARATOR_CHAR	'\\'
+	#define NEWLINE				"\r\n"
 	#include <direct.h>
 #elif defined(__unix__) || defined(__linux__)
-	#define DIR_SEPARATOR	"/"
+	#define DIR_SEPARATOR_STR	"/"
+	#define DIR_SEPARATOR_CHAR	'/'
+	#define NEWLINE				"\n"
 	#include <sys/stat.h>
 #elif defined(__APPLE__) || defined(__MACH__)
-	#define DIR_SEPARATOR	":"
+	#define DIR_SEPARATOR_STR	":"
+	#define DIR_SEPARATOR_CHAR	':'
+	#define NEWLINE				"\n"
 	#include <sys/stat.h>
 #else
-	#define DIR_SEPARATOR	NULL
+	#define DIR_SEPARATOR_STR	NULL
+	#define DIR_SEPARATOR_CHAR	NULL
+	#define NEWLINE				"\n"
+#endif
+
+// Warnings
+#ifdef _MSC_VER
+#pragma warning (push)
+#pragma warning (disable: 26495)    // [Static Analyzer] Variable 'XXX' is uninitialized. Always initialize a member variable (type.6).
+#endif
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wold-style-cast"
+#if __has_warning("-Wzero-as-null-pointer-constant")
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"          // warning: unknown option after '#pragma GCC diagnostic' kind
+#pragma GCC diagnostic ignored "-Wclass-memaccess"  // [__GNUC__ >= 8] warning: 'memset/memcpy' clearing/writing an object of type 'xxxx' with no trivial copy-assignment; use assignment or value-initialization instead
 #endif
 
 #endif

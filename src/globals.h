@@ -1,7 +1,6 @@
 #ifndef __GLOBALS_H__
 #define __GLOBALS_H__
 
-#include "framework/Engine.h"
 #include <string>
 
 #if defined(_WIN32)
@@ -11,13 +10,11 @@
 #endif
 
 namespace Arboria {
-	extern Engine* engine;
-
-	void NoP(void*) {
+	inline void NoP(void*) {
 		return;
 	}
 
-	uint64_t getNanoseconds() {
+	inline uint64_t getNanoseconds() {
 		static uint64_t is_init = 0;
 		#if defined(_WIN32)
 		static LARGE_INTEGER window_freq;
@@ -29,7 +26,7 @@ namespace Arboria {
 		#endif
 	}
 
-	double getMicroseconds() {
+	inline double getMicroseconds() {
 		return (double)(getNanoseconds() / 1e6);
 	}
 }

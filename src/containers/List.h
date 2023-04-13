@@ -2,10 +2,12 @@
 #define __LIST_H__
 
 #include "../Heap.h"
+#include "../utils/math.h"
 #include <new>
 #include <stdlib.h>
 #include <assert.h>
 #include <initializer_list>
+#include <type_traits>
 
 namespace Arboria {
 	template <typename T>
@@ -19,13 +21,13 @@ namespace Arboria {
 		void append(const T& elem);
 		void append(const List& other);
 		void insert(const T& elem, int index = 0);
-		bool remove(const T& elem);
+		bool remove(T const& elem);
 		bool removeAt(int index);
 		bool removeLast();
-		bool contains(const T& elem);
-		int findIndex(const T& elem);
-		T* find(T const& elem);
-		int findNull();
+		bool contains(T const& elem);
+		int findIndex(T const& elem) const;
+		T* find(T const& elem) const;
+		int findNull() const;
 		void clear();
 		int getLength() const;
 		int getCapacity();
@@ -54,7 +56,6 @@ namespace Arboria {
 	template<typename T>
 	inline List<T>::List<T>(int newGranularity) {
 		num = 0;
-		capacity = newGranularity;
 		granularity = newGranularity;
 		list = NULL;
 	}
@@ -67,7 +68,7 @@ namespace Arboria {
 
 	template<typename T>
 	inline List<T>::List<T>(const std::initializer_list<T>& other) {
-		resize(other.size);
+		resize(other.size());
 		auto x = other.begin();
 		while (x != other.end()) {
 			append(*x++);
@@ -80,7 +81,7 @@ namespace Arboria {
 	}
 
 	template <typename T>
-	inline void* generateNewList(int num, bool zeroBuffer) { //this is used by the second constructor
+	inline void* generateNewList(size_t num, bool zeroBuffer) { //this is used by the second constructor
 		T* ptr = NULL;
 		if (zeroBuffer) {
 			ptr = (T*)Mem_ClearedAlloc(sizeof(T) * num);
@@ -88,7 +89,7 @@ namespace Arboria {
 		else {
 			ptr = (T*)Mem_Alloc(sizeof(T) * num);
 		}
-		for (int i = 0; i < size; ++i) {
+		for (int i = 0; i < num; ++i) {
 			//the new call does NOT allocate new memory, what it does is construct a T object at &ptr[i], which is equivalent to new(sizeof(T), &ptr[i])
 			new (&ptr[i]) T;
 		}
@@ -98,19 +99,19 @@ namespace Arboria {
 	template<typename T>
 	inline void deleteListContent(void* ptr, int _num) {
 		for (int i = 0; i < _num; ++i) {
-			((T*)list)[i].~T();
+			((T*)ptr)[i].~T();
 		}
-		Mem_Free(list);
+		Mem_Free(ptr);
 	}
 
 	template <typename T>
-	inline void* resizeList(void* ptr, int oldSize, int newSize, bool zeroBuffer) {
+	inline void* resizeList(void* ptr, size_t oldSize, size_t newSize, bool zeroBuffer) {
 		T* oldPtr = (T*)ptr;
 		T* newPtr = NULL;
 		if (newSize > 0) {
-			newPtr = (T*)generateNewList(newSize, zeroBuffer);
+			newPtr = (T*)generateNewList<T>(newSize, zeroBuffer);
 			//get the min between the oldSize and newSize, then copy the first min bytes from the oldptr to the newptr
-			int carryOver = min(oldSize, newSize);
+			int carryOver = Math::iMin(oldSize, newSize);
 			for (int i = 0; i < carryOver; ++i) {
 				newPtr[i] = oldPtr[i];
 			}
@@ -124,7 +125,7 @@ namespace Arboria {
 		if (!list) {
 			resize(granularity);
 		}
-		if (num == size) {
+		if (num == capacity) {
 			int newSize = capacity + granularity;
 			newSize -= newSize % granularity;
 			resize(newSize);
@@ -138,7 +139,7 @@ namespace Arboria {
 		if (!list) {
 			resize(granularity);
 		}
-		if (num == size) {
+		if (num == capacity) {
 			int newSize = capacity + granularity;
 			newSize -= newSize % granularity;
 			resize(newSize);
@@ -173,7 +174,7 @@ namespace Arboria {
 	}
 
 	template<typename T>
-	inline bool List<T>::remove(const T& elem) {
+	inline bool List<T>::remove(T const& elem) {
 		int index = findIndex(elem);
 		if (index >= 0) {
 			return removeAt(index);
@@ -184,7 +185,7 @@ namespace Arboria {
 
 	template<typename T>
 	inline bool List<T>::removeAt(int index) {
-		if (i < 0 || i >= num) {
+		if (index < 0 || index >= num) {
 			return false;
 		}
 
@@ -209,12 +210,12 @@ namespace Arboria {
 	}
 
 	template<typename T>
-	inline bool List<T>::contains(const T& elem) {
+	inline bool List<T>::contains(T const& elem) {
 		return findIndex(elem) > -1;
 	}
 
 	template<typename T>
-	inline int List<T>::findIndex(const T& elem) {
+	inline int List<T>::findIndex(T const& elem) const {
 		//Since the list is unsorted, it's best to do a linear search
 		for (int i = 0; i < num; i++) {
 			if (list[i] == elem) {
@@ -226,21 +227,23 @@ namespace Arboria {
 	}
 
 	template<typename T>
-	inline T* List<T>::find(const T& elem) {
+	inline T* List<T>::find(T const& elem) const {
 		//return a pointer to the element
 		int index = findIndex(elem);
 		if (index >= 0) {
-			return &list[i];
+			return &list[index];
 		}
 		return NULL;
 	}
 
 	template<typename T>
-	inline int List<T>::findNull() {
-		//since we can't get a pointer to null for obvious reasons, findIndex isn't used here
-		for (int i = 0; i < num; i++) {
-			if (list[i] == NULL)
-				return i;
+	inline int List<T>::findNull() const {
+		if (std::is_pointer_v<T>) {
+			//since we can't get a pointer to null for obvious reasons, findIndex isn't used here
+			for (int i = 0; i < num; i++) {
+				if (list[i] == NULL)
+					return i;
+			}
 		}
 
 		return -1;
@@ -249,7 +252,7 @@ namespace Arboria {
 	template<typename T>
 	inline void List<T>::clear()
 	{
-		deleteListContent(list, capacity);
+		deleteListContent<T>(list, capacity);
 		list = NULL;
 		num = 0;
 		capacity = 0;
@@ -311,10 +314,10 @@ namespace Arboria {
 			return;
 		}
 
-		if (newSize == size)
+		if (newSize == capacity)
 			return;
 
-		list = (T*)resizeList(list, capacity, newSize, false);
+		list = (T*)resizeList<T>(list, capacity, newSize, false);
 		capacity = newSize;
 		if (capacity < num) {
 			num = capacity;
@@ -331,7 +334,7 @@ namespace Arboria {
 			return;
 		}
 
-		if (newSize == size)
+		if (newSize == capacity)
 			return;
 
 		list = (T*)resizeList(list, capacity, newSize, false);
@@ -375,7 +378,7 @@ namespace Arboria {
 		granularity = other.granularity;
 
 		if (capacity) {
-			list = (T*)generateNewList(capacity, false);
+			list = (T*)generateNewList<T>(capacity, false);
 			for (int i = 0; i < capacity; i++) {
 				list[i] = other.list[i];
 			}

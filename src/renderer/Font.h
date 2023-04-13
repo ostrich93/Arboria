@@ -1,8 +1,8 @@
 #ifndef __FONT_H__
 #define __FONT_H__
 
-#include "FontManager.h"
 #include "../utils/Vector.h"
+#include "FontManager.h"
 
 namespace Arboria {
 	class GlyphAtlas;

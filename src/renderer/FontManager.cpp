@@ -1,11 +1,13 @@
+#include "FontManager.h"
 #include "GlyphAtlas.h"
-#include "../globals.h"
-#include "../Heap.h"
+#include "../definitions.h"
 #include "../FileSystem.h"
+#include "../Heap.h"
 #include <cstdio>
 #include <exception>
 #include <harfbuzz/hb.h>
 #include <harfbuzz/hb-ft.h>
+#include <physfs.h>
 
 namespace Arboria {
 
@@ -25,10 +27,10 @@ namespace Arboria {
 	{
 		List<String> pathTokens;
 		if (!style || strlen(style) == 0) {
-			pathTokens = { PHYSFS_getBaseDir(), "assets", DIR_SEPARATOR, "fonts", DIR_SEPARATOR, family, ".ttf"};
+			pathTokens = { PHYSFS_getBaseDir(), "assets", DIR_SEPARATOR_STR, "fonts", DIR_SEPARATOR_STR, family, ".ttf"};
 		}
 		else {
-			pathTokens = { PHYSFS_getBaseDir(), "assets", DIR_SEPARATOR, "fonts", DIR_SEPARATOR, family, "-", style, ".ttf" };
+			pathTokens = { PHYSFS_getBaseDir(), "assets", DIR_SEPARATOR_STR, "fonts", DIR_SEPARATOR_STR, family, "-", style, ".ttf" };
 		}
 
 		String pathName = String::join(pathTokens, "");
@@ -37,7 +39,7 @@ namespace Arboria {
 
 	int FontManager::loadFont(const char* family, const char* style, unsigned int size)
 	{
-		Font font { family, style, 0, size };
+		Font font { family, style, 0, static_cast<unsigned char>(size) };
 		Font* fl = (Font*)Mem_ClearedAlloc(sizeof(*fl));
 		
 		int result = font.initialize();
@@ -46,7 +48,7 @@ namespace Arboria {
 			font.~Font();
 		}
 		else {
-			fontCache.set(font.getFontName(), &font);
+			fontCache.set(FontHandle::getHash(font.getFontName()), &font);
 			sizeof(font.getFontName());
 			result = 1;
 		}
@@ -63,7 +65,7 @@ namespace Arboria {
 			font.~Font();
 		}
 		else {
-			fontCache.set(font.getFontName(), &font);
+			fontCache.set(FontHandle::getHash(font.getFontName()), &font);
 			result = 1;
 		}
 
@@ -72,24 +74,26 @@ namespace Arboria {
 
 	Font* FontManager::getFont(const char* family, const char* style, unsigned int size)
 	{
-		FontHandle fnm{ family, style, size };
-		if (!fontCache.contains(fnm)) {
+		FontHandle fnm{ family, style, static_cast<unsigned char>(size) };
+		size_t fontHash = FontHandle::getHash(fnm);
+		if (!fontCache.contains(fontHash)) {
 			int rslt = loadFont(fnm);
 			if (!rslt) {
 				return NULL;
 			}
 		}
-		return fontCache.get(fnm);
+		return fontCache.get(fontHash);
 	}
 
 	Font* FontManager::getFont(FontHandle& fontHandle) {
-		if (!fontCache.contains(fontHandle)) {
+		size_t fontHash = FontHandle::getHash(fontHandle);
+		if (!fontCache.contains(fontHash)) {
 			int rslt = loadFont(fontHandle);
 			if (!rslt) {
 				return NULL;
 			}
 		}
-		return fontCache.get(fontHandle);
+		return fontCache.get(fontHash);
 	}
 
 	//int FontManager::loadGlyphData(Font& font)

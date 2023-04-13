@@ -1,5 +1,5 @@
 #include "ShaderProgram.h"
-#include <SDL_opengles2.h>
+#include "../framework/String.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>

@@ -1,5 +1,8 @@
 #include "FileSystem.h"
 #include "Heap.h"
+#include <physfs.h>
+#include "definitions.h"
+#include "SDL2/SDL.h"
 
 namespace Arboria {
 
@@ -10,7 +13,7 @@ namespace Arboria {
 		char* temp_base = SDL_GetBasePath();
 		strncpy(buildDir, temp_base, 128);
 		strncpy(srcDir, temp_base, 128);
-		Mem_Free(temp_base);
+		//Mem_Free(temp_base);
 		
 		char output[128] = "";
 		int mkdirResult;
@@ -20,54 +23,55 @@ namespace Arboria {
 		PHYSFS_setSaneConfig("Vultan", "Arboria", "pak", 0, 0);
 		if (strlen(srcDir) > 0) {
 			strcpy(output, srcDir);
-			if (output[strlen(output) - 1] != DIR_SEPARATOR[0]) {
-				strcat(output, DIR_SEPARATOR);
+			if (output[strlen(output) - 1] != DIR_SEPARATOR_CHAR) {
+				strcat(output, DIR_SEPARATOR_STR);
 			}
 		}
 		if (!PHYSFS_mount(output, NULL, 1)) {
 			//print error message, throw?
-			return 0;
+			exit(PHYSFS_getLastErrorCode());
+			//return 0;
 		}
 
-		strcpy(temp, output);
-		strcat(temp, "saves" DIR_SEPARATOR);
+		/*strcpy(temp, output);
+		strcat(temp, "saves" DIR_SEPARATOR_STR);
 		if (!PHYSFS_mount(temp, NULL, 1)) {
-			return 0;
-		}
+			exit(PHYSFS_getLastErrorCode());
+		}*/
 
 		temp[0] = '\0';
 		strcpy(temp, output);
-		strcat(temp, "src" DIR_SEPARATOR "renderer" DIR_SEPARATOR "shader" DIR_SEPARATOR);
+		strcat(temp, "src" DIR_SEPARATOR_STR "renderer" DIR_SEPARATOR_STR "shader" DIR_SEPARATOR_STR);
 		if (!PHYSFS_mount(temp, NULL, 1)) {
-			return 0;
+			exit(PHYSFS_getLastErrorCode());
 		}
 
 		temp[0] = '\0';
 		strcpy(temp, output);
 		strcat(temp, "assets");
 		if (!PHYSFS_mount(temp, NULL, 1)) {
-			return 0;
+			exit(PHYSFS_getLastErrorCode());
 		}
 
 		temp[0] = '\0';
 		strcpy(temp, output);
-		strcat(temp, "assets" DIR_SEPARATOR "background" DIR_SEPARATOR);
+		strcat(temp, "assets" DIR_SEPARATOR_STR "background" DIR_SEPARATOR_STR);
 		if (!PHYSFS_mount(temp, NULL, 1)) {
-			return 0;
+			exit(PHYSFS_getLastErrorCode());
 		}
 
 		temp[0] = '\0';
 		strcpy(temp, output);
-		strcat(temp, "assets" DIR_SEPARATOR "fonts" DIR_SEPARATOR);
+		strcat(temp, "assets" DIR_SEPARATOR_STR "fonts" DIR_SEPARATOR_STR);
 		if (!PHYSFS_mount(temp, NULL, 1)) {
-			return 0;
+			exit(PHYSFS_getLastErrorCode());
 		}
 
 		temp[0] = '\0';
 		strcpy(temp, output);
-		strcat(temp, "assets" DIR_SEPARATOR "gui" DIR_SEPARATOR);
+		strcat(temp, "assets" DIR_SEPARATOR_STR "gui" DIR_SEPARATOR_STR);
 		if (!PHYSFS_mount(temp, NULL, 1)) {
-			return 0;
+			exit(PHYSFS_getLastErrorCode());
 		}
 
 		Mem_Free(buildDir);

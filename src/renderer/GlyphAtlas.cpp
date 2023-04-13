@@ -1,9 +1,6 @@
 #include "GlyphAtlas.h"
 #include "../Heap.h"
-#include <SDL_opengl.h>
 #include "FontManager.h"
-#include <harfbuzz/hb.h>
-#include <harfbuzz/hb-ft.h>
 
 namespace Arboria {
 	GlyphAtlas::GlyphAtlas(Font& font, unsigned int _width, unsigned int _height) : parentFont(&font), width(_width), height(_height), textureId(0) {

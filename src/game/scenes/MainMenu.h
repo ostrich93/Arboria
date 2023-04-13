@@ -19,6 +19,12 @@ namespace Arboria {
 			void resume() override;
 			void run() override;
 			bool isTransitioning() const override;
+		protected:
+			bool compare(const Screen& other) const override {
+				if (MainMenuScreen* ptr = dynamic_cast<MainMenuScreen*>(const_cast<Screen*>(&other))) {
+					return (canvas == ptr->canvas);
+				}
+			}
 	};
 }
 

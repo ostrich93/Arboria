@@ -1,6 +1,6 @@
 #include "Shader.h"
-#include <SDL_opengles2.h>
 #include <iostream>
+#include "../framework/String.h"
 
 namespace Arboria {
 	Shader::Shader(const String& name, GLenum _type) : type(_type) {

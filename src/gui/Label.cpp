@@ -1,10 +1,11 @@
 #include "Label.h"
 #include "../renderer/Font.h"
-#include "../globals.h"
+#include "../renderer/FontManager.h"
 #include "../renderer/TextRenderer.h"
+#include "WidgetEnums.h"
 
 namespace Arboria {
-	Label::Label(const String& textContent, Font* _font) : text(textContent), font(_font), valign(VerticalAlignment::BOTTOM), halign(HorizontalAlignment::LEFT), wordWrap(true){}
+	Label::Label(const String& textContent, Font* _font) : text(textContent), font(_font), valign(VerticalAlignment::VERT_BOTTOM), halign(HorizontalAlignment::HOR_LEFT), wordWrap(true){}
 
 	Label::~Label() = default;
 
@@ -18,7 +19,7 @@ namespace Arboria {
 		int ypos = align(valign, size.y, font->getSize().max_height);
 
 		//go through each character in the text. Each time, 
-		engine->getTextRenderer()->draw(font, &location, tint, text);
+		textRenderer->draw(font, &location, tint, text);
 	}
 
 	void Label::run()

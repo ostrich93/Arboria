@@ -1,6 +1,8 @@
 #include "TextRenderer.h"
 #include "GlyphAtlas.h"
+#include "FontManager.h"
 #include "../containers/List.h"
+#include "../framework/String.h"
 #include "Font.h"
 
 namespace Arboria {

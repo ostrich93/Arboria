@@ -9,7 +9,6 @@ namespace Arboria {
 		AlwaysOff,
 		AlwaysOn
 	};
-
 	class ScrollAreaWidget : public Widget {
 		protected:
 			virtual void configureScrollbar(Orientation _orientation);

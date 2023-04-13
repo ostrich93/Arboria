@@ -1,12 +1,13 @@
 #include "ScrollbarWidget.h"
-#include "../globals.h"
-#include "../framework/Engine.h"
+#include "../framework/InputManager.h"
+#include "../framework/ResourceManager.h"
+#include "../renderer/Renderer.h"
 #include "../renderer/Texture.h"
 
 namespace Arboria {
 	ScrollbarWidget::ScrollbarWidget(Texture* scrollerImage, bool _isMenu, Orientation orientation) : Widget(), scrollValue(0), scrollStep(1), barOrientation(orientation), maximum(1), minimum(0), menuFlag(_isMenu), scrollbarImage(scrollerImage), color({ 255.f, 255.f, 255.f, 128.f }) {
 		if (!scrollbarImage) {
-			scrollbarImage = engine->getResourceManager()->loadTexture("gui/scroller.png");
+			scrollbarImage = resourceManager->loadTexture("gui/scroller.png");
 		}
 	}
 
@@ -24,18 +25,18 @@ namespace Arboria {
 		setDirty();
 	}
 
-	void ScrollbarWidget::setMinimum(int min) {
-		if (minimum == min)
+	void ScrollbarWidget::setMinimum(int newValue) {
+		if (minimum == newValue)
 			return;
-		minimum = min;
+		minimum = newValue;
 		setScrollValue(scrollValue);
 		setDirty();
 	}
 
-	void ScrollbarWidget::setMaximum(int max) {
-		if (maximum == max)
+	void ScrollbarWidget::setMaximum(int newValue) {
+		if (maximum == newValue)
 			return;
-		maximum = max;
+		maximum = newValue;
 		setScrollValue(scrollValue);
 		setDirty();
 	}
@@ -47,7 +48,7 @@ namespace Arboria {
 			int pos = static_cast<int>(segmentSize * (scrollValue - minimum));
 			auto widgetEvent = dynamic_cast<WidgetEvent*>(e);
 			if (widgetEvent->getData().raisedBy == this && widgetEvent->getData().guiEventType == WidgetEventType::KEY_DOWN) {
-				InputActionType action = engine->getInputManager()->getActionTranslation(&widgetEvent->getData().keyboardData);
+				InputActionType action = inputManager->getActionTranslation(&widgetEvent->getData().keyboardData);
 				switch (barOrientation) {
 					case Orientation::HORIZONTAL:
 						if (action == InputActionType::RIGHT) {
@@ -84,11 +85,12 @@ namespace Arboria {
 				newSize = { size.x, static_cast<int>(segmentSize * (maximum - minimum)) };
 				break;
 			case Orientation::HORIZONTAL:
+			default:
 				newPos = { position, 0 };
 				newSize = { static_cast<int>(segmentSize * (maximum - minimum)), size.y };
 				break;
 		}
-		engine->getSpriteRenderer()->draw(scrollbarImage, newPos, newSize, color);
+		spriteRenderer->draw(scrollbarImage, newPos, newSize, color);
 	}
 
 	void ScrollbarWidget::run() {

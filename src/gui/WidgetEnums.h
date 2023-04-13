@@ -25,20 +25,20 @@ namespace Arboria {
 	};
 
 	enum HorizontalAlignment {
-		LEFT,
-		CENTER,
-		RIGHT
+		HOR_LEFT,
+		HOR_CENTER,
+		HOR_RIGHT
 	};
 
 	enum VerticalAlignment {
-		TOP,
-		CENTER,
-		BOTTOM
+		VERT_TOP,
+		VERT_CENTER,
+		VERT_BOTTOM
 	};
 
 	enum ListAlignment {
-		VERTICAL,
-		HORIZONTAL
+		LIST_VERTICAL,
+		LIST_HORIZONTAL
 	};
 
 	enum Orientation {

@@ -1,6 +1,6 @@
 #include "ListBoxWidget.h"
-#include "../events/Event.h"
-#include "../globals.h"
+#include "../framework/InputManager.h"
+#include "../renderer/Renderer.h"
 
 namespace Arboria {
 
@@ -22,7 +22,7 @@ namespace Arboria {
 				KeyboardEventData* keyData = &widgetEvent->getData().keyboardData;
 				InputActionType actionType;
 				if (scrollbar && (descendant != NULL || origin == this)) {
-					actionType = engine->getInputManager()->getActionTranslation(keyData);
+					actionType = inputManager->getActionTranslation(keyData);
 					if (actionType != InputActionType::INVALID && widgetEvent->getData().guiEventType == WidgetEventType::KEY_DOWN) {
 						int newCursor;
 						switch (viewOrientation) {
@@ -126,13 +126,13 @@ namespace Arboria {
 			auto child = &children[i];
 			if (child != scrollbar && child->isVisible()) {
 				if (child == selected) {
-					engine->getSpriteRenderer()->draw(child->getSurface(), child->location, child->size, selectColor);
+					spriteRenderer->draw(child->getSurface(), child->location, child->size, selectColor);
 				}
 				else if (child == hovered) {
-					engine->getSpriteRenderer()->draw(child->getSurface(), child->location, child->size, hoverColor);
+					spriteRenderer->draw(child->getSurface(), child->location, child->size, hoverColor);
 				}
 				else {
-					engine->getSpriteRenderer()->draw(child->getSurface(), child->location, child->size, regularColor);
+					spriteRenderer->draw(child->getSurface(), child->location, child->size, regularColor);
 				}
 			}
 		}

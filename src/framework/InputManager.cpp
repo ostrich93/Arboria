@@ -1,6 +1,4 @@
 #include "InputManager.h"
-#include <SDL.h>
-#include "../Heap.h"
 
 namespace Arboria {
 	InputManager::InputManager() {
@@ -33,7 +31,7 @@ namespace Arboria {
 						keyboardEventFactory = new KeyboardEventFactory();
 					}
 
-					if (_se.key.keysym.scancode < 128 && keyBindings[_se.key.keysym.scancode] != -1) {
+					if (_se.key.keysym.scancode < 128 && keyBindings[_se.key.keysym.scancode] != InputActionType::INVALID) {
 						e = keyboardEventFactory->generateEvent(_se);
 						this->submitEvent(e);
 						this->updateKeyInputState(dynamic_cast<KeyboardEvent*>(e));

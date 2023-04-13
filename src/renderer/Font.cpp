@@ -25,7 +25,7 @@ namespace Arboria {
 	int Font::initialize() {
 		if (wasInitialized) return 1;
 
-		if (FT_New_Face(engine->getFontManager()->getFontLibrary(), engine->getFontManager()->getFontFilename(fontHandle.fontName, fontHandle.fontStyle), 0, &face)) {
+		if (FT_New_Face(fontManager->getFontLibrary(),fontManager->getFontFilename(fontHandle.fontName, fontHandle.fontStyle), 0, &face)) {
 			fprintf(stderr, "FreeType Error: Could not open font %s\n", fontHandle.fontName);
 			return 0;
 		}

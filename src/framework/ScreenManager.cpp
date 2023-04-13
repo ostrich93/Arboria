@@ -1,4 +1,5 @@
 #include "ScreenManager.h"
+#include "Screen.h"
 
 namespace Arboria {
     void ScreenManager::clear() {
@@ -12,21 +13,21 @@ namespace Arboria {
             return NULL;
         }
 
-        return &stack[stack.getLength() - 1];
+        return stack[stack.getLength() - 1];
     }
 
     Screen* ScreenManager::getPrevious(Screen& from) {
-        int idx = stack.findIndex(from);
+        int idx = stack.findIndex(&from);
         if (idx <= 0) {
             return NULL;
         }
 
-        return &stack[idx-1];
+        return stack[idx-1];
     }
     
     bool ScreenManager::isEmpty()
     {
-        stack.getLength() == 0;
+        return stack.getLength() == 0;
     }
 
     Screen* ScreenManager::pop() {
@@ -48,7 +49,7 @@ namespace Arboria {
             getCurrent()->pause();
         }
 
-        stack.append(scene);
+        stack.append(&scene);
         scene.enter();
     }
     List<ScreenCommand>& ScreenManager::getScreenCommands()

@@ -1,6 +1,5 @@
 #include "Widget.h"
-#include "../events/Event.h"
-#include "../globals.h"
+#include "../framework/InputManager.h"
 
 namespace Arboria {
 	void Widget::eventOccured(Event* e) {
@@ -31,35 +30,37 @@ namespace Arboria {
 
 	void Widget::submitGuiEvent(WidgetEventType weType, Event* _parent) {
 		WidgetEvent* uiEvent = NULL;
+		KeyboardEvent* keyEv = NULL;
 		uiEvent->setGuiEventType(weType);
 		uiEvent->setRaisedBy(*this);
 		switch (weType) {
 			case WidgetEventType::KEY_DOWN:
 			case WidgetEventType::KEY_UP:
 			case WidgetEventType::KEY_PRESS:
-				WidgetEvent* uiEvent = new WidgetEvent();
+				uiEvent = new WidgetEvent();
 				uiEvent->setGuiEventType(weType);
 				uiEvent->setRaisedBy(*this);
 				if (_parent) {
 					uiEvent->setParentEventType(_parent->getEventType());
 				}
-				auto* keyEv = dynamic_cast<KeyboardEvent*>(_parent);
-				uiEvent->getData().keyboardData = keyEv->getData();
-				engine->getInputManager()->submitEvent(uiEvent);
+				keyEv = dynamic_cast<KeyboardEvent*>(_parent);
+				if (keyEv)
+					uiEvent->getData().keyboardData = keyEv->getData();
+				inputManager->submitEvent(uiEvent);
 				setDirty();
 				break;
 			case SCROLLBAR_CHANGE:
 			case LIST_BOX_CHANGE_HOVER:
 			case LIST_BOX_CHANGE_SELECT:
 			case LIST_BOX_CHANGE_CANCEL:
-				WidgetEvent* uiEvent = new WidgetEvent();
+				uiEvent = new WidgetEvent();
 				uiEvent->setGuiEventType(weType);
 				uiEvent->setRaisedBy(*this);
 				if (_parent) {
 					uiEvent = dynamic_cast<WidgetEvent*>(_parent);
 					uiEvent->setParentEventType(_parent->getEventType());
 				}
-				engine->getInputManager()->submitEvent(uiEvent);
+				inputManager->submitEvent(uiEvent);
 				setDirty();
 				break;
 			default:
@@ -73,6 +74,11 @@ namespace Arboria {
 		for (int j = 0; j < callbacks.get(event->getData().guiEventType).getLength(); j++) {
 			callbacks.get(event->getData().guiEventType)[j](event);
 		}
+	}
+
+	Widget::Widget(bool focused) : preRenderFunction(NULL), location(0, 0), size(0, 0), selectableSize(0, 0), resolvedLocation(0, 0),
+		visible(true), clickable(false), name("Widget"), hasFocus(focused), enabled(true)
+	{
 	}
 
 	bool Widget::isPointInsideSelectBoundaries(int x, int y) const {
@@ -183,13 +189,13 @@ namespace Arboria {
 	int Widget::align(HorizontalAlignment _halign, int parentWidth, int childWidth) {
 		int x = 0;
 		switch (_halign) {
-			case (HorizontalAlignment::LEFT):
+			case (HorizontalAlignment::HOR_LEFT):
 				x = 0;
 				break;
-			case (HorizontalAlignment::CENTER):
+			case (HorizontalAlignment::HOR_CENTER):
 				x = (parentWidth / 2) - (childWidth / 2);
 				break;
-			case (HorizontalAlignment::RIGHT):
+			case (HorizontalAlignment::HOR_RIGHT):
 				x = parentWidth - childWidth;
 				break;
 		}
@@ -199,13 +205,13 @@ namespace Arboria {
 	int Widget::align(VerticalAlignment _valign, int parentHeight, int childHeight) {
 		int y = 0;
 		switch (_valign) {
-			case (VerticalAlignment::TOP):
+			case (VerticalAlignment::VERT_TOP):
 				y = 0;
 				break;
-			case (VerticalAlignment::CENTER):
+			case (VerticalAlignment::VERT_CENTER):
 				y = (parentHeight / 2) - (childHeight / 2);
 				break;
-			case (VerticalAlignment::BOTTOM):
+			case (VerticalAlignment::VERT_BOTTOM):
 				y = parentHeight - childHeight;
 				break;
 		}

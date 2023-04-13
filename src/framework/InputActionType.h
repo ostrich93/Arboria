@@ -2,7 +2,7 @@
 #define __INPUT_ACTION_TYPE_H__
 
 namespace Arboria{
-	enum InputActionType {
+	typedef enum {
 		INVALID = -1,
 		CANCEL = 0,
 		CONFIRM,
@@ -17,7 +17,7 @@ namespace Arboria{
 		RSHIFT,
 		QUIT,
 		ACTION_COUNT
-	};
+	} InputActionType;
 }
 
 #endif

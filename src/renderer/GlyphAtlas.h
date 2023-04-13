@@ -2,6 +2,8 @@
 #define __GLYPH_ATLAS_H__
 
 #include "Font.h"
+#include <harfbuzz/hb.h>
+#include <harfbuzz/hb-ft.h>
 
 namespace Arboria {
 

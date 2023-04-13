@@ -1,5 +1,4 @@
 #include "Event.h"
-#include <SDL_mouse.h>
 
 namespace Arboria {
 

@@ -52,16 +52,17 @@ Find_Package(HarfBuzz REQUIRED)
 Find_Package(PhysFS REQUIRED)
 
 set (ARBORIA_SOURCE_FILES
-		./src/Arboria.cpp
+		
 		./src/FileSystem.cpp
 		./src/Heap.cpp
 		./src/events/Event.cpp
 		./src/framework/Camera.cpp
-		
 		./src/framework/Engine.cpp
 		./src/framework/InputBindings.cpp
 		./src/framework/InputManager.cpp
+		./src/framework/RenderDevice.cpp
 		./src/framework/ResourceManager.cpp
+		./src/framework/Screen.cpp
 		./src/framework/ScreenManager.cpp
 		./src/framework/String.cpp
 		./src/game/scenes/MainMenu.cpp
@@ -84,7 +85,7 @@ set (ARBORIA_SOURCE_FILES
 		./src/main.cpp
 )
 set (ARBORIA_HEADER_FILES
-		./src/Arboria.h
+		
 		./src/definitions.h
 		./src/globals.h
 		./src/FileSystem.h
@@ -99,6 +100,7 @@ set (ARBORIA_HEADER_FILES
 		./src/framework/InputActionType.h
 		./src/framework/InputBindings.h
 		./src/framework/InputManager.h
+		./src/framework/RenderDevice.h
 		./src/framework/ResourceManager.h
 		./src/framework/Screen.h
 		./src/framework/ScreenManager.h
@@ -118,19 +120,34 @@ set (ARBORIA_HEADER_FILES
 		./src/renderer/FontManager.h
 		./src/renderer/GlyphAtlas.h
 		./src/renderer/Renderer.h
-		./src/renderer/RenderSystem.h
 		./src/renderer/Shader.h
 		./src/renderer/ShaderProgram.h
 		./src/renderer/stb_image.h
-		./src/renderer/stb_rect_pack.h
 		./src/renderer/Texture.h
 		./src/renderer/TextRenderer.h
 		./src/utils/check_static_cast.h
+		./src/utils/combine_hash.h
 		./src/utils/math.h
 		./src/utils/Vector.h
 )
 
+#set(ARBORIA_LIST_SOURCE_FILES
+#	./src/Heap.cpp
+#	./src/main.cpp
+#	./src/framework/String.cpp
+#)
+
+#set(ARBORIA_LIST_HEADER_FILES
+#	./src/definitions.h
+#	./src/globals.h
+#	./src/Heap.h
+#	./src/containers/List.h
+#	./src/framework/String.h
+#	./src/utils/math.h
+#)
+
 add_executable (${CMAKE_PROJECT_NAME} ${ARBORIA_SOURCE_FILES} ${ARBORIA_HEADER_FILES})
+#add_executable (${CMAKE_PROJECT_NAME} ${ARBORIA_LIST_SOURCE_FILES} ${ARBORIA_LIST_HEADER_FILES})
 
 If (NOT SDL2MAIN_LIBRARY)
 	Set (SDL2MAIN_LIBRARY "")

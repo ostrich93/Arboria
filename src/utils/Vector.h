@@ -1,6 +1,5 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
-#include "math.h"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>

@@ -2,7 +2,8 @@
 #define __LABEL_H__
 
 #include "Widget.h"
-#include "../renderer/FontManager.h"
+#include "../framework/String.h"
+#include "../renderer/Font.h"
 
 namespace Arboria {
 	class Label : public Widget {

@@ -1,11 +1,10 @@
 #ifndef __SHADER_H__
 #define __SHADER_H__
 
-#include <GL/glew.h>
-#include <SDL_opengl.h>
-#include "../framework/String.h"
+#include "../framework/Engine.h"
 
 namespace Arboria {
+	class String;
 	class Shader {
 		public:
 			GLuint id;

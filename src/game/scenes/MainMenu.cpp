@@ -1,7 +1,9 @@
 #include "MainMenu.h"
 #include "../../renderer/Texture.h"
+#include "../../framework/InputManager.h"
+#include "../../framework/ResourceManager.h"
+#include "../../renderer/FontManager.h"
 #include "../../gui/ListBoxWidget.h"
-#include "../../globals.h"
 #include "../../gui/ButtonWidget.h"
 #include "../../gui/Label.h"
 
@@ -13,7 +15,7 @@ namespace Arboria {
 			2. set the canvas as listbox's parent.
 		*/
 		canvas.size = { 800, 640 };
-		canvas.setSurface(engine->getResourceManager()->loadTexture("mainBackground.png"));
+		canvas.setSurface(resourceManager->loadTexture("mainBackground.png"));
 		canvas.name = "CANVAS";
 		canvas.setVisible(true);
 		canvas.enabled = true;
@@ -24,9 +26,9 @@ namespace Arboria {
 		optionsList->itemSize = 40;
 		optionsList->itemSpacing = 5;
 		
-		Font* font = engine->getFontManager()->getFont("logotypegothicregular", "", 24);
+		Font* font = fontManager->getFont("logotypegothicregular", "", 24);
 
-		Texture* bTexture = engine->getResourceManager()->loadTexture("Button01.png");
+		Texture* bTexture = resourceManager->loadTexture("Button01.png");
 		ButtonWidget* newGameButton = new ButtonWidget("NEW_GAME", font);
 		newGameButton->setSurface(bTexture);
 		ButtonWidget* continueButton = new ButtonWidget("CONTINUE_GAME", font);
@@ -85,7 +87,7 @@ namespace Arboria {
 
 						//when quit is selected, exit the game
 						if (target->cursor == 3) {
-							engine->isQuit = true;
+							_isQuit = true;
 						}
 					}
 					else {

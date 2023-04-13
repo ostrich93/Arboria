@@ -2,12 +2,14 @@
 #define __SCENE_MANAGER_H__
 
 #include "../containers/List.h"
-#include "Screen.h"
+#include "Engine.h"
 
 namespace Arboria {
+	class Screen;
+	struct ScreenCommand;
 	class ScreenManager {
 		private:
-			List<Screen> stack;
+			List<Screen*> stack;
 			List<ScreenCommand> screenCommands;
 
 		public:

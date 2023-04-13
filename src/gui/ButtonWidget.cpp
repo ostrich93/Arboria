@@ -1,12 +1,12 @@
 #include "ButtonWidget.h"
-#include "../events/Event.h"
-#include "../globals.h"
+#include "WidgetEnums.h"
+#include "../renderer/FontManager.h"
 
 namespace Arboria {
 	
-	ButtonWidget::ButtonWidget(const String& labelName, Font* font) : Widget(), hover(false), textVAlign(VerticalAlignment::CENTER), textHAlign(HorizontalAlignment::CENTER) {
+	ButtonWidget::ButtonWidget(const String& labelName, Font* font) : Widget(), hover(false), textVAlign(VerticalAlignment::VERT_CENTER), textHAlign(HorizontalAlignment::HOR_CENTER) {
 		if (font == NULL) {
-			font == engine->getFontManager()->getFont("logotypegothicregular", "", 24);
+			font == fontManager->getFont("logotypegothicregular", "", 24);
 		}
 		label = new Label(labelName, font);
 		clickable = true;

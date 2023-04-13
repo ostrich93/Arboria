@@ -1,5 +1,5 @@
 #include "InputBindings.h"
-#include <SDL.h>
+#include "Engine.h"
 
 namespace Arboria {
 	InputConfiguration::~InputConfiguration() {}

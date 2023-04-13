@@ -22,6 +22,16 @@ namespace Arboria {
 		return image;
 	}
 
+	HashTable<String, Texture>& ResourceManager::getImageCache()
+	{
+		return imageCache;
+	}
+
+	const HashTable<String, Texture>& ResourceManager::getImageCache() const
+	{
+		return imageCache;
+	}
+
 	Texture* ResourceManager::loadTexture(String& filename) {
 		Texture* tex = &imageCache.get(filename);
 		if (tex) {

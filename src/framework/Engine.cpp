@@ -1,12 +1,26 @@
 #include "Engine.h"
 #include "../game/scenes/MainMenu.h"
 #include "../renderer/TextRenderer.h"
+#include "InputManager.h"
+#include "ResourceManager.h"
+#include "ScreenManager.h"
+#include "../renderer/FontManager.h"
+#include "../renderer/Renderer.h"
+#include "../renderer/Texture.h"
 #include "../globals.h"
 #include "../FileSystem.h"
-#include <SDL_opengl.h>
-#include <GL/glew.h>
+#include <physfs.h>
 
 namespace Arboria {
+
+	InputManager* inputManager = NULL;
+	ScreenManager* screenManager = NULL;
+	FontManager* fontManager = NULL;
+	ResourceManager* resourceManager = NULL;
+	SpriteRenderer* spriteRenderer = NULL;
+	TextRenderer* textRenderer = NULL;
+	RenderDevice* renderDevice = NULL;
+	bool _isQuit = false;
 
 	const short MAX_FPS = 60;
 	Engine::Engine()

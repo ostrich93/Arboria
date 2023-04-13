@@ -1,10 +1,11 @@
 #ifndef __EVENT_H__
 #define __EVENT_H__
 
-#include <SDL.h>
-#include "../gui/WidgetEnums.h"
+#include "../framework/Engine.h"
 
 namespace Arboria {
+	enum WidgetEventType;
+
 	class Widget;
 	enum EventType {
 		EVENT_UNDEFINED = -1,

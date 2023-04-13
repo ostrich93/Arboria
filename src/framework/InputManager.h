@@ -1,9 +1,9 @@
 #ifndef __INPUT_MANAGER_H__
 #define __INPUT_MANAGER_H__
 
-#include "../events/Event.h"
-#include "InputActionType.h"
+#include "Engine.h"
 #include "InputBindings.h"
+#include "../events/Event.h"
 
 const int MAX_EVENT_COUNT = 256;
 
