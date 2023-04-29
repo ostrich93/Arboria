@@ -1,5 +1,5 @@
-#ifndef __BUTTON_WIDGET_H__
-#define __BUTTON_WIDGET_H__
+#ifndef BUTTON_WIDGET_H
+#define BUTTON_WIDGET_H
 
 #include "Label.h"
 

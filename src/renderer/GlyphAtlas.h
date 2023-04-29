@@ -1,5 +1,5 @@
-#ifndef __GLYPH_ATLAS_H__
-#define __GLYPH_ATLAS_H__
+#ifndef GLYPH_ATLAS_H
+#define GLYPH_ATLAS_H
 
 #include "Font.h"
 #include <harfbuzz/hb.h>

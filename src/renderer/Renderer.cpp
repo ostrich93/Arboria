@@ -3,16 +3,21 @@
 #include "../containers/List.h"
 
 namespace Arboria {
-	SpriteRenderer::SpriteRenderer() : spriteShader("baseSurfaceShader.vert", "baseSurfaceShader.frag") {
+	SpriteRenderer::SpriteRenderer() : spriteShader("baseSurfaceShader") {
 		initRenderData();
 	}
 
 	SpriteRenderer::~SpriteRenderer() {
 		glDeleteVertexArrays(1, &this->vao_id);
 		glDeleteBuffers(1, &this->vbo_id);
+		spriteShader.destroy();
 	}
 
 	void SpriteRenderer::initRenderData() {
+		spriteShader.initialize();
+		spriteShader.attachVertexShader();
+		spriteShader.attachFragmentShader();
+		spriteShader.link();
 		spriteShader.use();
 		modelLocation = spriteShader.getUniformLocation("model");
 		spriteColorLocation = spriteShader.getUniformLocation("spriteColor");

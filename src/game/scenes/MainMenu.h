@@ -1,5 +1,5 @@
-#ifndef __MAIN_MENU_H__
-#define __MAIN_MENU_H__
+#ifndef MAIN_MENU_H
+#define MAIN_MENU_H
 
 #include "../../framework/Screen.h"
 #include "../../gui/WidgetContainer.h"

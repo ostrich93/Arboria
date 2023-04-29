@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt : CMake project for Arboria, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.16)
 
 if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE
@@ -40,11 +40,16 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 Find_Package(OpenGL REQUIRED)
 find_package(Freetype REQUIRED)
-Find_Package(SDL2 REQUIRED)
+Find_Package(SDL2 CONFIG REQUIRED)
+target_compile_definitions(SDL2::SDL2 INTERFACE SDL_MAIN_HANDLED)
 Find_Package(SDL2_image REQUIRED)
 Find_Package(GLEW REQUIRED)
 Find_Package(GLM REQUIRED)
@@ -52,7 +57,6 @@ Find_Package(HarfBuzz REQUIRED)
 Find_Package(PhysFS REQUIRED)
 
 set (ARBORIA_SOURCE_FILES
-		
 		./src/FileSystem.cpp
 		./src/Heap.cpp
 		./src/events/Event.cpp
@@ -78,14 +82,12 @@ set (ARBORIA_SOURCE_FILES
 		./src/renderer/FontManager.cpp
 		./src/renderer/GlyphAtlas.cpp
 		./src/renderer/Renderer.cpp
-		./src/renderer/Shader.cpp
 		./src/renderer/ShaderProgram.cpp
 		./src/renderer/Texture.cpp
 		./src/renderer/TextRenderer.cpp
 		./src/main.cpp
 )
 set (ARBORIA_HEADER_FILES
-		
 		./src/definitions.h
 		./src/globals.h
 		./src/FileSystem.h
@@ -120,7 +122,6 @@ set (ARBORIA_HEADER_FILES
 		./src/renderer/FontManager.h
 		./src/renderer/GlyphAtlas.h
 		./src/renderer/Renderer.h
-		./src/renderer/Shader.h
 		./src/renderer/ShaderProgram.h
 		./src/renderer/stb_image.h
 		./src/renderer/Texture.h
@@ -129,7 +130,7 @@ set (ARBORIA_HEADER_FILES
 		./src/utils/combine_hash.h
 		./src/utils/math.h
 		./src/utils/Vector.h
-)
+ )
 
 #set(ARBORIA_LIST_SOURCE_FILES
 #	./src/Heap.cpp
@@ -146,17 +147,17 @@ set (ARBORIA_HEADER_FILES
 #	./src/utils/math.h
 #)
 
+#add_subdirectory("assets")
+
+file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+
 add_executable (${CMAKE_PROJECT_NAME} ${ARBORIA_SOURCE_FILES} ${ARBORIA_HEADER_FILES})
 #add_executable (${CMAKE_PROJECT_NAME} ${ARBORIA_LIST_SOURCE_FILES} ${ARBORIA_LIST_HEADER_FILES})
-
-If (NOT SDL2MAIN_LIBRARY)
-	Set (SDL2MAIN_LIBRARY "")
-EndIf (NOT SDL2MAIN_LIBRARY)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${PHYSFS_INCLUDE_DIR})
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${PHYSFS_LIBRARY})
 
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${FREETYPE_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${HarfBuzz_INCLUDE_DIRS})
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${HarfBuzz_LIBRARIES} ${FREETYPE_LIBRARY} OpenGL::GL ${SDL2IMAGE_LIBRARIES} ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY} GLEW::GLEW)
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${FREETYPE_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${HarfBuzz_INCLUDE_DIRS})
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${HarfBuzz_LIBRARIES} ${FREETYPE_LIBRARY} OpenGL::GL ${SDL2IMAGE_LIBRARIES} SDL2::SDL2 GLEW::GLEW)
 
 # TODO: Add tests and install targets if needed.

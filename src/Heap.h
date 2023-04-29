@@ -1,5 +1,5 @@
-#ifndef __HEAP_H__
-#define __HEAP_H__
+#ifndef HEAP_H
+#define HEAP_H
 
 void* Mem_Alloc16(const size_t size);
 void Mem_Free16(void* ptr);

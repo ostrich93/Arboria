@@ -1,5 +1,5 @@
-#ifndef __SCROLLAREA_WIDGET_H__
-#define __SCROLLAREA_WIDGET_H__
+#ifndef SCROLLAREA_WIDGET_H
+#define SCROLLAREA_WIDGET_H
 
 #include "ScrollbarWidget.h"
 

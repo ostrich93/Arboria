@@ -1,5 +1,5 @@
-#ifndef __SCENE_MANAGER_H__
-#define __SCENE_MANAGER_H__
+#ifndef SCREEN_MANAGER_H
+#define SCREEN_MANAGER_H
 
 #include "../containers/List.h"
 #include "Engine.h"

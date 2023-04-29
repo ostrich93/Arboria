@@ -1,5 +1,5 @@
-#ifndef __HASHTABLE_H__
-#define __HASHTABLE_H__
+#ifndef HASHTABLE_H
+#define HASHTABLE_H
 
 #include <memory>
 #include <assert.h>

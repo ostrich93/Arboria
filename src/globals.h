@@ -1,5 +1,5 @@
-#ifndef __GLOBALS_H__
-#define __GLOBALS_H__
+#ifndef GLOBALS_H
+#define GLOBALS_H
 
 #include <string>
 

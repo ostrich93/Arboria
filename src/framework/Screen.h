@@ -1,5 +1,5 @@
-#ifndef __SCENE_H__
-#define __SCENE_H__
+#ifndef SCREEN_H
+#define SCREEN_H
 
 #include <typeinfo>
 

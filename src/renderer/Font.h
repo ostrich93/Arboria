@@ -1,5 +1,5 @@
-#ifndef __FONT_H__
-#define __FONT_H__
+#ifndef FONT_H
+#define FONT_H
 
 #include "../utils/Vector.h"
 #include "FontManager.h"

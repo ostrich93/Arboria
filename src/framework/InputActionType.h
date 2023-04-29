@@ -1,5 +1,5 @@
-#ifndef __INPUT_ACTION_TYPE_H__
-#define __INPUT_ACTION_TYPE_H__
+#ifndef INPUT_ACTION_TYPE_H
+#define INPUT_ACTION_TYPE_H
 
 namespace Arboria{
 	typedef enum {

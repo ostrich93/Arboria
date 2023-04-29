@@ -1,5 +1,5 @@
-#ifndef __INPUT_MANAGER_H__
-#define __INPUT_MANAGER_H__
+#ifndef INPUT_MANAGER_H
+#define INPUT_MANAGER_H
 
 #include "Engine.h"
 #include "InputBindings.h"

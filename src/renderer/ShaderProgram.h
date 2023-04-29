@@ -1,7 +1,8 @@
-#ifndef __SHADER_PROGRAM_H__
-#define __SHADER_PROGRAM_H__
+#ifndef SHADER_PROGRAM_H
+#define SHADER_PROGRAM_H
 
-#include "Shader.h"
+#include "../framework/Engine.h"
+#include "../framework/String.h"
 #include "../utils/Vector.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -14,18 +15,27 @@
 namespace Arboria {
 	class ShaderProgram {
 		protected:
-			Shader* vertexShader;
-			Shader* fragmentShader;
+			String name;
 			GLuint programId;
 			GLuint currentBuffer;
-			bool link();
 		public:
 			GLuint usedBuffers = 0;
-			ShaderProgram(const char* vName, const char* fName);
+			ShaderProgram(const String& _name);
 			ShaderProgram(const ShaderProgram&) = delete;
 			ShaderProgram(ShaderProgram&&) = default;
 			virtual ~ShaderProgram();
 
+			void initialize();
+			void activate();
+			void deactivate();
+			void destroy();
+			bool link();
+			void loadAndAttachShader(GLenum type);
+			void loadAndAttachShader(GLenum type, const char* sourceName);
+			void attachVertexShader();
+			void attachVertexShader(const char* sourceName);
+			void attachFragmentShader();
+			void attachFragmentShader(const char* sourceName);
 			GLuint getAttributeLocation(const char* name);
 			GLuint getUniformLocation(const char* name);
 			GLuint getProgramId() { return programId; }
@@ -41,7 +51,12 @@ namespace Arboria {
 			void setVector4f(const char* name, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 			void setVector4f(const char* name, Vector4<GLfloat>& value);
 			void setMatrix4(const char* name, glm::mat4& value);
+		protected:
+			GLuint compileShader(GLenum type, const char* sourceFilename);
+			
 	};
+
+	String readShaderFile(const char* filename);
 }
 
 #endif

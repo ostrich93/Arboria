@@ -1,5 +1,5 @@
-#ifndef __ENGINE_H__
-#define __ENGINE_H__
+#ifndef ENGINE_H
+#define ENGINE_H
 
 #include "RenderDevice.h"
 
@@ -11,17 +11,12 @@ namespace Arboria {
 	class SpriteRenderer;
 	class InputManager;
 	class Engine {
-		private:
-			SDL_DisplayMode screenMode;
-			SDL_Window* window;
-			SDL_GLContext context;
 		public:
 			Engine();
 			~Engine();
 			void init(); //used to initialize all the systems and managers necessary to run the engine
 			void run(); //this is the core loop of the game engine.
 			void processEvents();
-			void initializeDisplay();
 			void shutdown();
 			bool isQuit;
 	};

@@ -1,11 +1,10 @@
-#ifndef __TEXT_RENDERER_H__
-#define __TEXT_RENDERER_H__
+#ifndef TEXT_RENDERER_H
+#define TEXT_RENDERER_H
 
 #include "ShaderProgram.h"
 
 namespace Arboria {
 	class Font;
-	class String;
 	struct TextVertexDesc {
 		Vector2<float> screenPosition;
 		Vector2<float> texCoord;

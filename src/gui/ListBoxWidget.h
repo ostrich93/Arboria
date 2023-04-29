@@ -1,5 +1,5 @@
-#ifndef __LISTBOX_WIDGET_H__
-#define __LISTBOX_WIDGET_H__
+#ifndef LISTBOX_WIDGET_H
+#define LISTBOX_WIDGET_H
 
 #include "ScrollAreaWidget.h"
 

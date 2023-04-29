@@ -1,5 +1,5 @@
-#ifndef __WIDGET_ENUMS_H__
-#define __WIDGET_ENUMS_H__
+#ifndef WIDGET_ENUMS_H
+#define WIDGET_ENUMS_H
 
 namespace Arboria {
 	enum WidgetEventType {

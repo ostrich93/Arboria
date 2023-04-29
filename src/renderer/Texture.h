@@ -1,5 +1,5 @@
-#ifndef __TEXTURE_H__
-#define __TEXTURE_H__
+#ifndef TEXTURE_H
+#define TEXTURE_H
 #include "../utils/Vector.h"
 #include "../framework/String.h"
 #include "../framework/Engine.h"

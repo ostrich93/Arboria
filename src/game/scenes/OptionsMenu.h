@@ -1,5 +1,5 @@
-#ifndef __OPTIONS_MENU_H__
-#define __OPTIONS_MENU_H__
+#ifndef OPTIONS_MENU_H
+#define OPTIONS_MENU_H
 
 #include "../../framework/Screen.h"
 

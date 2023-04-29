@@ -1,5 +1,5 @@
-#ifndef __COMBINE_HASH_H
-#define __COMBINE_HASH_H
+#ifndef COMBINE_HASH_H
+#define COMBINE_HASH_H
 
 namespace Arboria {
 	inline size_t combineHash(size_t hash1, size_t hash2) {

@@ -1,5 +1,5 @@
-#ifndef __LIST_H__
-#define __LIST_H__
+#ifndef LIST_H
+#define LIST_H
 
 #include "../Heap.h"
 #include "../utils/math.h"
@@ -29,6 +29,8 @@ namespace Arboria {
 		T* find(T const& elem) const;
 		int findNull() const;
 		void clear();
+		void clearFree();
+		void deleteContents(bool clear);
 		int getLength() const;
 		int getCapacity();
 		int getGranularity();
@@ -67,7 +69,7 @@ namespace Arboria {
 	}
 
 	template<typename T>
-	inline List<T>::List<T>(const std::initializer_list<T>& other) {
+	inline List<T>::List<T>(const std::initializer_list<T>& other) : List() {
 		resize(other.size());
 		auto x = other.begin();
 		while (x != other.end()) {
@@ -77,7 +79,7 @@ namespace Arboria {
 
 	template<typename T>
 	inline List<T>::~List<T>() {
-		clear();
+		clearFree();
 	}
 
 	template <typename T>
@@ -116,7 +118,8 @@ namespace Arboria {
 				newPtr[i] = oldPtr[i];
 			}
 		}
-		deleteListContent<T>(oldPtr, oldSize);
+		if (oldPtr)
+			deleteListContent<T>(oldPtr, oldSize);
 		return newPtr;
 	}
 
@@ -252,10 +255,32 @@ namespace Arboria {
 	template<typename T>
 	inline void List<T>::clear()
 	{
-		deleteListContent<T>(list, capacity);
+		num = 0;
+	}
+
+	template<typename T>
+	inline void List<T>::clearFree()
+	{
+		if (list)
+			delete[] list;
+
 		list = NULL;
 		num = 0;
 		capacity = 0;
+	}
+
+	template<typename T>
+	inline void List<T>::deleteContents(bool clear) {
+		int i;
+		for (i = 0; i < num; i++) {
+			delete list[i];
+			list[i] = NULL;
+		}
+
+		if (clear)
+			clearFree();
+		else
+			memset(list, 0, capacity * sizeof(T));
 	}
 
 	template<typename T>
@@ -309,39 +334,63 @@ namespace Arboria {
 
 	template<typename T>
 	inline void List<T>::resize(int newSize) {
+		T* temp;
+
+		assert(newSize >= 0);
+
 		if (newSize <= 0) {
-			clear();
+			clearFree();
 			return;
 		}
 
 		if (newSize == capacity)
 			return;
 
-		list = (T*)resizeList<T>(list, capacity, newSize, false);
+		temp = list;
 		capacity = newSize;
-		if (capacity < num) {
+		if (capacity < num)
 			num = capacity;
+
+		list = new T[capacity];
+		
+		for (int i = 0; i < num; ++i) {
+			list[i] = temp[i];
 		}
+
+		if (temp)
+			delete[] temp;
+
 	}
 	template<typename T>
 	inline void List<T>::resize(int newSize, int newGranularity)
 	{
+		T* temp;
+		assert(newSize >= 0);
 		assert(newGranularity > 0);
 		granularity = newGranularity;
 
 		if (newSize <= 0) {
-			clear();
+			clearFree();
 			return;
 		}
 
 		if (newSize == capacity)
 			return;
 
-		list = (T*)resizeList(list, capacity, newSize, false);
+		temp = list;
 		capacity = newSize;
-		if (capacity < num) {
+		if (capacity < num)
 			num = capacity;
+
+		list = new T[capacity];
+
+		for (int i = 0; i < num; ++i) {
+			list[i] = temp[i];
 		}
+
+		if (temp)
+			delete[] temp;
+
 	}
 
 	template<typename T>
@@ -372,13 +421,13 @@ namespace Arboria {
 
 	template<typename T>
 	inline List<T>& List<T>::operator=(const List& other) { //copy operator
-		clear();
+		clearFree();
 		num = other.num;
 		capacity = other.capacity;
 		granularity = other.granularity;
 
 		if (capacity) {
-			list = (T*)generateNewList<T>(capacity, false);
+			list = new T[capacity];
 			for (int i = 0; i < capacity; i++) {
 				list[i] = other.list[i];
 			}
@@ -396,6 +445,7 @@ namespace Arboria {
 	template<typename T>
 	inline const T& List<T>::operator[](int index) const
 	{
+		assert(unsigned(index) < unsigned(num));
 		return list[index];
 	}
 }

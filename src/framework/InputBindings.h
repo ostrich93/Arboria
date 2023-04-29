@@ -1,5 +1,5 @@
-#ifndef __INPUT_BINDINGS_H__
-#define __INPUT_BINDINGS_H__
+#ifndef INPUT_BINDINGS_H
+#define INPUT_BINDINGS_H
 
 #include "InputActionType.h"
 #include "../containers/List.h"

@@ -1,51 +1,18 @@
 #include "ShaderProgram.h"
 #include "../framework/String.h"
+#include "../definitions.h"
+#include "../FileSystem.h"
+#include <physfs.h>
 #include <iostream>
-#include <fstream>
-#include <sstream>
 
 namespace Arboria {
-	ShaderProgram::ShaderProgram(const char* vName, const char* fName) : programId(0), currentBuffer(0)
-	{
-		String vertexSource;
-		String fragmentSource;
+	const char* vertexShaderExtension = ".vert";
+	const char* fragmentShaderExtension = ".frag";
 
-		try {
-			std::ifstream vertexShaderFile(vName);
-			std::ifstream fragmentShaderFile(fName);
-			std::stringstream vertexShaderStream, fragmentShaderStream;
-			vertexShaderStream << vertexShaderFile.rdbuf();
-			fragmentShaderStream << fragmentShaderFile.rdbuf();
-			vertexShaderFile.close();
-			fragmentShaderFile.close();
-			vertexSource = vertexShaderStream.str().c_str();
-			fragmentSource = fragmentShaderStream.str().c_str();
-		}
-		catch (std::exception e) {
-			printf("Error loading shader files %s and %s\n", vName, fName);
-			throw std::runtime_error("Failed to load vertex and fragment shaders");
-		}
-
-		vertexShader = new Shader(vertexSource, GL_VERTEX_SHADER);
-		fragmentShader = new Shader(fragmentSource, GL_FRAGMENT_SHADER);
-
-		programId = glCreateProgram();
-		glAttachShader(programId, vertexShader->id);
-		glAttachShader(programId, fragmentShader->id);
-		if (!link()) {
-			char buffer[1024];
-			GLsizei length;
-			glGetProgramInfoLog(programId, sizeof(buffer), &length, buffer);
-
-			printf("Error linking %s and %s", vName, fName);
-			throw std::runtime_error("Failed to link shader program");
-		}
-	}
+	ShaderProgram::ShaderProgram(const String& _name) : name(_name), programId(0), currentBuffer(0){}
 
 	ShaderProgram::~ShaderProgram() {
-		if (vertexShader != NULL) glDetachShader(programId, vertexShader->id);
-		if (fragmentShader != NULL) glDetachShader(programId, fragmentShader->id);
-		glDeleteProgram(programId);
+		destroy();
 	}
 
 	bool ShaderProgram::link() {
@@ -54,6 +21,84 @@ namespace Arboria {
 		GLint linkStatus;
 		glGetProgramiv(programId, GL_LINK_STATUS, &linkStatus);
 		return linkStatus == GL_TRUE;
+	}
+
+	void ShaderProgram::loadAndAttachShader(GLenum type)
+	{
+		if (programId == 0) {
+			printf("Error: Tried to attach a shader to an uninitialized program: %s", name.c_str());
+			exit(0);
+		}
+
+		const char* extension = type == GL_VERTEX_SHADER ? vertexShaderExtension : fragmentShaderExtension;
+		GLuint shader = compileShader(type, name + extension);
+		
+		if (shader == 0) {
+			printf("Failed to attach shader %s%s to program %s", name.c_str(), extension, name.c_str());
+			return;
+		}
+
+		glAttachShader(programId, shader);
+		glDeleteShader(shader);
+
+	}
+
+	void ShaderProgram::loadAndAttachShader(GLenum type, const char* sourceName) //includes file extension in the sourcename
+	{
+		if (programId == 0) {
+			printf("Error: Tried to attach a shader to an uninitialized program: %s", name.c_str());
+			exit(0);
+		}
+
+		GLuint shader = compileShader(type, sourceName);
+
+		if (shader == 0) {
+			printf("Failed to attach shader %s to program %s", sourceName, name.c_str());
+			return;
+		}
+
+		glAttachShader(programId, shader);
+		glDeleteShader(shader);
+	}
+
+	void ShaderProgram::attachVertexShader()
+	{
+		loadAndAttachShader(GL_VERTEX_SHADER);
+	}
+
+	void ShaderProgram::attachVertexShader(const char* sourceName) {
+		loadAndAttachShader(GL_VERTEX_SHADER, sourceName);
+	}
+
+	void ShaderProgram::attachFragmentShader()
+	{
+		loadAndAttachShader(GL_FRAGMENT_SHADER);
+	}
+
+	void ShaderProgram::attachFragmentShader(const char* sourceName) {
+		loadAndAttachShader(GL_FRAGMENT_SHADER, sourceName);
+	}
+
+	void ShaderProgram::initialize() {
+		programId = glCreateProgram();
+	}
+
+	void ShaderProgram::activate() {
+		glUseProgram(programId);
+	}
+
+	void ShaderProgram::deactivate() {
+		if (programId == 0)
+			initialize();
+		glUseProgram(0);
+	}
+
+	void ShaderProgram::destroy() {
+		deactivate();
+		if (programId != 0) {
+			glDeleteProgram(programId);
+			programId = 0;
+		}
 	}
 
 	GLuint ShaderProgram::getAttributeLocation(const char* name) {
@@ -103,5 +148,59 @@ namespace Arboria {
 	void ShaderProgram::setMatrix4(const char* name, glm::mat4& value)
 	{
 		glUniformMatrix4fv(glGetUniformLocation(programId, name), 1, false, glm::value_ptr(value));
+	}
+	
+	GLuint ShaderProgram::compileShader(GLenum type, const char* sourceFilename) {
+		if (!PHYSFS_exists(sourceFilename)) {
+			printf("Error: The shader you're attempting to attach does not exist: %s", sourceFilename);
+			//Mem_Free(&fullFilename);
+			exit(0);
+		}
+		String shaderSource = readShaderFile(sourceFilename);
+		if (shaderSource.isEmpty()) {
+			return 0;
+		}
+
+		GLuint shader = glCreateShader(type);
+		GLint length = shaderSource.size();
+		const char* sourcePtr = shaderSource.c_str();
+		glShaderSource(shader, 1, &sourcePtr, &length);
+		glCompileShader(shader);
+
+		GLint compileResult;
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &compileResult);
+		if (!compileResult) {
+			GLint logLength;
+			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
+			if (!compileResult || logLength > 0) {
+				char* infoLog = new char[logLength];
+				glGetShaderInfoLog(shader, logLength, &logLength, infoLog);
+				infoLog[logLength] = 0;
+				if (logLength > 1) {
+					printf("Failed to compile shader %s: %s\n", sourceFilename, infoLog);
+				}
+			}
+		}
+
+		if (!compileResult) {
+			glDeleteShader(shader);
+			return 0;
+		}
+
+		return shader;
+
+	}
+
+	String readShaderFile(const char* filename) {
+		void* buffer = nullptr;
+		int len = readFileFromPhysFS(filename, &buffer);
+		if (buffer == nullptr) {
+			printf("Warning: Could not open shader file %s", filename);
+			//Mem_Free(&fullFilename);
+			return "";
+		}
+		String contents(static_cast<char*>(buffer), 0, len);
+		Mem_Free(buffer);
+		return contents;
 	}
 }

@@ -28,7 +28,8 @@ namespace Arboria {
 		if (initializeFileSystem() == 0) {
 			PHYSFS_ErrorCode errCd = PHYSFS_getLastErrorCode();
 			printf("Failed to intialize filesystem. PHYSFS error code %i: %s", (int)errCd, PHYSFS_getErrorByCode(errCd));
-			isQuit = true;
+			isQuit = false;
+
 			return;
 		}
 		init();
@@ -38,15 +39,18 @@ namespace Arboria {
 		screenManager->clear();
 
 		freeFileSystem();
-		SDL_Quit();
+		//SDL_Quit();
 		delete textRenderer;
 		delete inputManager;
 		delete screenManager;
 		delete spriteRenderer;
 		delete resourceManager;
+		delete renderDevice;
 	}
 	void Engine::init()
 	{
+		renderDevice = new RenderDevice();
+		renderDevice->initialize();
 		resourceManager = new ResourceManager();
 		inputManager = new InputManager();
 		screenManager = new ScreenManager();
@@ -64,7 +68,7 @@ namespace Arboria {
 		uint64_t elapsedTimeNs = 0;
 		int64_t delay_ms = 0;
 		uint64_t time_ns = 0;
-		while (!isQuit) {
+		while (!_isQuit) {
 			currentTimeNs = getNanoseconds();
 
 			processEvents();
@@ -95,11 +99,11 @@ namespace Arboria {
 						screenManager->push(*screenCommand.nextScene);
 						break;
 					case ScreenCommand::ScreenCommandType::QUIT:
-						isQuit = true;
+						_isQuit = true;
 						screenManager->clear();
 						break;
 				}
-				if (isQuit) break;
+				if (_isQuit) break;
 			}
 			screenManager->getScreenCommands().clear();
 
@@ -141,76 +145,10 @@ namespace Arboria {
 		}
 	}
 
-	void Engine::initializeDisplay()
-	{
-		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS) < 0) {
-			printf("SDL could not intialize: %s\n", SDL_GetError());
-			isQuit = true;
-			return;
-		}
-
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-
-		glewExperimental = true;
-		GLenum glewError = glewInit();
-		if (glewError != GLEW_OK) {
-			printf("Error initializing GLEW! %s\n", glewGetErrorString(glewError));
-		}
-
-		if (SDL_GL_SetSwapInterval(1) < 0) {
-			printf("Warning! Unable to set VSync! SDL_ERROR: %s\n", SDL_GetError());
-			isQuit = true;
-			return;
-		}
-		window = SDL_CreateWindow("Arboria", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
-		if (!window) {
-			printf("Failed to create the window: %s\n", SDL_GetError());
-			isQuit = true;
-			return;
-		}
-		context = SDL_GL_CreateContext(window);
-		if (!context) {
-			printf("Could not create an OpenGL context: %s\n", SDL_GetError());
-			SDL_DestroyWindow(window);
-			isQuit = true;
-			return;
-		}
-
-		SDL_GL_MakeCurrent(window, context);
-		SDL_ShowCursor(SDL_DISABLE);
-		int width, height;
-		SDL_GetWindowSize(window, &width, &height);
-
-		try {
-			fontManager = new FontManager();
-		}
-		catch (std::exception e) {
-			printf(e.what());
-			isQuit = true;
-			return;
-		}
-
-		inputManager = new InputManager();
-		resourceManager = new ResourceManager();
-		spriteRenderer = new SpriteRenderer();
-		textRenderer = new TextRenderer();
-		screenManager = new ScreenManager();
-	}
-
 	void Engine::shutdown()
 	{
 		screenManager->clear();
-		if (!window) return;
-
-		SDL_GL_DeleteContext(context);
-		SDL_DestroyWindow(window);
-		isQuit = true;
+		_isQuit = true;
 	}
 	
 	/*

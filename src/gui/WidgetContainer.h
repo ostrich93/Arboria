@@ -1,5 +1,5 @@
-#ifndef __WIDGET_CONTAINER_H__
-#define __WIDGET_CONTAIENR_H__
+#ifndef WIDGET_CONTAINER_H
+#define WIDGET_CONTAINER_H
 
 #include "Widget.h"
 

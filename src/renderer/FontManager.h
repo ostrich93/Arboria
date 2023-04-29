@@ -1,5 +1,5 @@
-#ifndef __FONT_MANAGER_H__
-#define __FONT_MANAGER_H__
+#ifndef FONT_MANAGER_H
+#define FONT_MANAGER_H
 
 #include <ft2build.h>
 #include FT_FREETYPE_H

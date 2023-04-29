@@ -1,5 +1,5 @@
-#ifndef __RENDERER_H__
-#define __RENDERER_H__
+#ifndef RENDERER_H
+#define RENDERER_H
 
 #include "ShaderProgram.h"
 

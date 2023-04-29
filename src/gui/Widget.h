@@ -1,5 +1,5 @@
-#ifndef __WIDGET_H__
-#define __WIDGET_H__
+#ifndef WIDGET_H
+#define WIDGET_H
 
 #include "../containers/HashTable.h"
 #include "../framework/String.h"

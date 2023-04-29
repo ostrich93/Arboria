@@ -1,5 +1,5 @@
-#ifndef __CONFIG_OPTIONS_H__
-#define __CONFIG_OPTIONS_H__
+#ifndef CONFIG_OPTIONS_H
+#define CONFIG_OPTIONS_H
 
 namespace Arboria {
 	class ConfigOptions {

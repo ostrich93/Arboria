@@ -1,5 +1,5 @@
-#ifndef __SCROLLBAR_WIDGET_H__
-#define __SCROLLBAR_WIDGET_H__
+#ifndef SCROLLBAR_WIDGET_H
+#define SCROLLBAR_WIDGET_H
 
 #include "Widget.h"
 

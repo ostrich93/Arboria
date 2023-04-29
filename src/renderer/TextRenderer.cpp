@@ -6,11 +6,15 @@
 #include "Font.h"
 
 namespace Arboria {
-	TextRenderer::TextRenderer() : textShader("textRenderShader.vert", "textRenderShader.frag") {
+	TextRenderer::TextRenderer() : textShader("textRenderShader") {
 		glGenVertexArrays(1, &vao_id);
 		glBindVertexArray(vao_id);
 		glGenBuffers(1, &vbo_id);
 		glGenBuffers(1, &ibo_id);
+		textShader.initialize();
+		textShader.attachVertexShader();
+		textShader.attachFragmentShader();
+		textShader.link();
 		textShader.use();
 		textureAtlasLocation = textShader.getUniformLocation("texture_atlas");
 		pColorLocation = textShader.getUniformLocation("pColor");
@@ -20,6 +24,7 @@ namespace Arboria {
 		if (vao_id) glDeleteVertexArrays(1, &vao_id);
 		if (vbo_id) glDeleteBuffers(1, &vbo_id);
 		if (ibo_id) glDeleteBuffers(1, &ibo_id);
+		textShader.destroy();
 	}
 
 	void TextRenderer::draw(Font* ft, const Vector2<int>* pos, Vector4<float> color, String& text) {

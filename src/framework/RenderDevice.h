@@ -1,5 +1,5 @@
-#ifndef __RENDER_DEVICE_H__
-#define __RENDER_DEVICE_H__
+#ifndef RENDER_DEVICE_H
+#define RENDER_DEVICE_H
 
 #include <SDL.h>
 #include <GL/glew.h>
@@ -12,7 +12,11 @@ namespace Arboria {
 			SDL_Window* window;
 			SDL_GLContext context;
 		public:
+			~RenderDevice();
 			void initialize();
+			void shutdown();
+			inline SDL_Window* getWindow() const { return window; }
+
 	};
 }
 
