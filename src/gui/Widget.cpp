@@ -29,7 +29,7 @@ namespace Arboria {
 	void Widget::onRender() {}
 
 	void Widget::submitGuiEvent(WidgetEventType weType, Event* _parent) {
-		WidgetEvent* uiEvent = NULL;
+		WidgetEvent* uiEvent = new WidgetEvent();
 		KeyboardEvent* keyEv = NULL;
 		uiEvent->setGuiEventType(weType);
 		uiEvent->setRaisedBy(*this);
@@ -37,13 +37,10 @@ namespace Arboria {
 			case WidgetEventType::KEY_DOWN:
 			case WidgetEventType::KEY_UP:
 			case WidgetEventType::KEY_PRESS:
-				uiEvent = new WidgetEvent();
-				uiEvent->setGuiEventType(weType);
-				uiEvent->setRaisedBy(*this);
 				if (_parent) {
 					uiEvent->setParentEventType(_parent->getEventType());
 				}
-				keyEv = dynamic_cast<KeyboardEvent*>(_parent);
+				keyEv = static_cast<KeyboardEvent*>(_parent);
 				if (keyEv)
 					uiEvent->getData().keyboardData = keyEv->getData();
 				inputManager->submitEvent(uiEvent);
@@ -53,11 +50,8 @@ namespace Arboria {
 			case LIST_BOX_CHANGE_HOVER:
 			case LIST_BOX_CHANGE_SELECT:
 			case LIST_BOX_CHANGE_CANCEL:
-				uiEvent = new WidgetEvent();
-				uiEvent->setGuiEventType(weType);
-				uiEvent->setRaisedBy(*this);
 				if (_parent) {
-					uiEvent = dynamic_cast<WidgetEvent*>(_parent);
+					uiEvent = static_cast<WidgetEvent*>(_parent);
 					uiEvent->setParentEventType(_parent->getEventType());
 				}
 				inputManager->submitEvent(uiEvent);
@@ -77,7 +71,7 @@ namespace Arboria {
 	}
 
 	Widget::Widget(bool focused) : preRenderFunction(NULL), location(0, 0), size(0, 0), selectableSize(0, 0), resolvedLocation(0, 0),
-		visible(true), clickable(false), name("Widget"), hasFocus(focused), enabled(true)
+		visible(true), clickable(false), name("Widget"), hasFocus(focused), enabled(true), parent(NULL)
 	{
 	}
 
@@ -169,7 +163,7 @@ namespace Arboria {
 
 	void Widget::setParent(Widget* _parent) {
 		if (_parent) {
-			_parent->children.append(*parent);
+			_parent->children.append(this);
 			_parent->setDirty();
 		}
 		parent = _parent;

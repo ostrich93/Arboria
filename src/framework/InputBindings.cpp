@@ -7,42 +7,18 @@ namespace Arboria {
 	void InputConfiguration::initialize()
 	{
 		//For the time being, we'll be loading default values here, but that will be separated into its own function once file parsing is implemented
-		InputBinding cancelBinding = inputBindings.allocateNewElement();
-		cancelBinding.setActionType(InputActionType::CANCEL);
-		cancelBinding.setValue(SDL_SCANCODE_Z);
-		InputBinding confirmBinding = inputBindings.allocateNewElement();
-		confirmBinding.setActionType(InputActionType::CONFIRM);
-		confirmBinding.setValue(SDL_SCANCODE_X);
-		InputBinding unitMenuBinding = inputBindings.allocateNewElement();
-		unitMenuBinding.setActionType(InputActionType::UNIT_MENU);
-		unitMenuBinding.setValue(SDL_SCANCODE_S);
-		InputBinding helpBinding = inputBindings.allocateNewElement();
-		helpBinding.setActionType(InputActionType::HELP);
-		helpBinding.setValue(SDL_SCANCODE_E);
-		InputBinding startBinding = inputBindings.allocateNewElement();
-		startBinding.setActionType(InputActionType::START);
-		startBinding.setValue(SDL_SCANCODE_RETURN);
-		InputBinding upBinding = inputBindings.allocateNewElement();
-		upBinding.setActionType(InputActionType::UP);
-		upBinding.setValue(SDL_SCANCODE_UP);
-		InputBinding downBinding = inputBindings.allocateNewElement();
-		downBinding.setActionType(InputActionType::DOWN);
-		downBinding.setValue(SDL_SCANCODE_DOWN);
-		InputBinding leftBinding = inputBindings.allocateNewElement();
-		leftBinding.setActionType(InputActionType::LEFT);
-		leftBinding.setValue(SDL_SCANCODE_LEFT);
-		InputBinding rightBinding = inputBindings.allocateNewElement();
-		rightBinding.setActionType(InputActionType::RIGHT);
-		rightBinding.setValue(SDL_SCANCODE_RIGHT);
-		InputBinding lShiftBinding = inputBindings.allocateNewElement();
-		lShiftBinding.setActionType(InputActionType::LSHIFT);
-		lShiftBinding.setValue(SDL_SCANCODE_D);
-		InputBinding rShiftBinding = inputBindings.allocateNewElement();
-		rShiftBinding.setActionType(InputActionType::RSHIFT);
-		rShiftBinding.setValue(SDL_SCANCODE_F);
-		InputBinding quitBinding = inputBindings.allocateNewElement();
-		quitBinding.setActionType(InputActionType::QUIT);
-		quitBinding.setValue(SDL_SCANCODE_ESCAPE);
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::CANCEL, SDL_SCANCODE_Z });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::CONFIRM, SDL_SCANCODE_X });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::UNIT_MENU, SDL_SCANCODE_S });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::HELP, SDL_SCANCODE_E });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::START, SDL_SCANCODE_RETURN });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::UP, SDL_SCANCODE_UP });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::DOWN, SDL_SCANCODE_DOWN });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::LEFT, SDL_SCANCODE_LEFT });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::RIGHT, SDL_SCANCODE_RIGHT });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::LSHIFT, SDL_SCANCODE_D });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::RSHIFT, SDL_SCANCODE_F });
+		inputBindings.append({ BIND_KEYBOARD, InputActionType::QUIT, SDL_SCANCODE_ESCAPE });
 	}
 
 	InputActionType InputConfiguration::getActionFromInputValue(InputBindType _bindType, int inputCode) {

@@ -5,68 +5,69 @@ namespace Arboria {
     void String::operator=(const char* text) {
         if (!text) {
             ensureAllocated(1, false);
-            data[0] = '\0';
-            len = 0;
+            m_data->data[0] = '\0';
+            m_data->len = 0;
             return;
         }
 
-        if (text == data) return;
+        if (text == m_data->data) return;
 
-        if (text >= data && text <= data + len) {
+        ensureDataWritable();
+
+        if (text >= m_data->data && text <= m_data->data + m_data->len) {
             int i;
-            int diff = text - data;
-            assert(strlen(text) <= (unsigned)len);
+            int diff = text - m_data->data;
+            assert(strlen(text) <= (unsigned)m_data->len);
 
             for (i = 0; text[i]; i++) {
-                data[i] = text[i];
+                m_data->data[i] = text[i];
             }
 
-            data[i] = '\0';
-            len -= diff;
+            m_data->data[i] = '\0';
+            m_data->len -= diff;
             return;
         }
-        int l = strlen(text);
+        int l = static_cast<int>(strlen(text));
         ensureAllocated(l + 1, false);
-        strcpy(data, text);
-        data[l] = '\0';
-        len = l;
+        strcpy(m_data->data, text);
+        m_data->data[l] = '\0';
+        m_data->len = l;
     }
 
     int String::find(const char c, int start, int end) const {
-        if (end == -1) end = len;
-        return String::findChar(data, c, start, end);
+        if (end == -1) end = length();
+        return String::findChar(m_data->data, c, start, end);
     }
 
     int String::find(const char* s, bool caseSensitivity, int start, int end) const {
-        if (end == -1) end = len;
-        return String::findString(data, s, caseSensitivity, start, end);
+        if (end == -1) end = length();
+        return String::findString(m_data->data, s, caseSensitivity, start, end);
     }
 
     void String::reallocate(int amount, bool keepOld)
     {
         assert(amount > 0);
-        allocedAndFlag = unsigned(amount + (STRING_ALLOC_GRAN - 1)) / STRING_ALLOC_GRAN * STRING_ALLOC_GRAN;
         char* newBuffer;
-        newBuffer = new char[allocedAndFlag];
-        if (keepOld && data) {
-            data[len] = '\0';
-            strcpy(newBuffer, data);
-        } if (data && data != baseBuffer) {
-            delete[]data;
+        bool wasAlloced = m_data->alloced != 0;
+        if (amount == 1) {
+            m_data->alloced = 1;
+        } else {
+            m_data->alloced = unsigned(amount + (STRING_ALLOC_GRAN - 1)) / STRING_ALLOC_GRAN * STRING_ALLOC_GRAN;
         }
-        data = baseBuffer;
-    }
+        newBuffer = new char[m_data->alloced];
+        if (keepOld && wasAlloced) {
+            strcpy(newBuffer, m_data->data);
+        }
 
-    void String::freeData() {
-        if (data && data != baseBuffer) {
-            delete[]data;
-            data = baseBuffer;
+        if (m_data->data) {
+            delete[] m_data->data;
         }
+        m_data->data = newBuffer;
     }
 
     int String::findLast(const char c) const {
         for (int i = length(); i > 0; i--) {
-            if (data[i - 1] == c) {
+            if (m_data->data[i - 1] == c) {
                 return i-1;
             }
         }
@@ -77,32 +78,32 @@ namespace Arboria {
     int String::compare(const char* text) const
     {
         assert(text);
-        return String::compare(data, text);
+        return String::compare(m_data->data, text);
     }
 
     int String::compareN(const char* text, size_t n) const
     {
         assert(text);
-        return String::compareN(data, text, n);
+        return String::compareN(m_data->data, text, n);
     }
 
     int String::iCompare(const char* text) const
     {
         assert(text);
-        return String::iCompare(data, text);
+        return String::iCompare(m_data->data, text);
     }
 
     int String::iCompareN(const char* text, size_t n)
     {
         assert(text);
-        return String::iCompareN(data, text, n);
+        return String::iCompareN(m_data->data, text, n);
     }
 
     bool String::replaceChar(const char old, const char nw) {
         bool replaced = false;
         for (int i = 0; i < length(); i++) {
-            if (data[i] == old) {
-                data[i] = nw;
+            if (m_data->data[i] == old) {
+                m_data->data[i] = nw;
                 replaced = true;
             }
         }
@@ -110,34 +111,34 @@ namespace Arboria {
     }
 
     bool String::replace(const char* old, const char* nw) {
-        int oldLen = strlen(old);
-        int newLen = strlen(nw);
+        int oldLen = static_cast<int>(strlen(old));
+        int newLen = static_cast<int>(strlen(nw));
 
         int count = 0;
-        for (int i = 0; i < len; i++) {
-            if (compareN(&data[i], old, oldLen) == 0) {
+        for (int i = 0; i < length(); i++) {
+            if (compareN(&m_data->data[i], old, oldLen) == 0) {
                 count++;
                 i += oldLen - 1;
             }
         }
 
         if (count) {
-            ensureAllocated(len + ((newLen - oldLen) * count) + 1, false);
+            ensureAllocated(m_data->len + ((newLen - oldLen) * count) + 1, false);
 
             int j = 0;
             for (int i = 0; i < oldLen; i++) {
-                if (compareN(&data[i], old, oldLen)) {
-                    memcpy(data + j, nw, newLen);
+                if (compareN(&m_data->data[i], old, oldLen)) {
+                    memcpy(m_data->data + j, nw, newLen);
                     i += oldLen - 1;
                     j += newLen;
                 }
                 else {
-                    data[j] = old[i];
+                    m_data->data[j] = old[i];
                     j++;
                 }
             }
-            data[j] = '\0';
-            len = strlen(data);
+            m_data->data[j] = '\0';
+            m_data->len = strlen(m_data->data);
             return true;
         }
         return false;
@@ -158,9 +159,9 @@ namespace Arboria {
 
     bool String::stripLeading(const char c)
     {
-        if (c != 0x00 && len > 0 && data[0] == c) {
-            memmove(&data[0], &data[1], len);
-            len--;
+        if (c != 0x00 && length() > 0 && m_data->data[0] == c) {
+            memmove(&m_data->data[0], &m_data->data[1], m_data->len);
+            m_data->len--;
             return true;
         }
         return false;
@@ -168,10 +169,10 @@ namespace Arboria {
 
     String& String::stripFileExtension() {
         int i;
-        for (i = len - 1; i >= 0; i--) {
-            if (data[i] == '.') {
-                data[i] = '\0';
-                len = i;
+        for (i = length() - 1; i >= 0; i--) {
+            if (m_data->data[i] == '.') {
+                m_data->data[i] = '\0';
+                m_data->len = i;
                 break;
             }
         }

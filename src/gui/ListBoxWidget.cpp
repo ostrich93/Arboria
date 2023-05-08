@@ -15,7 +15,7 @@ namespace Arboria {
 		Widget::eventOccured(e);
 
 		if (e->getEventType() == EventType::EVENT_UI_INTERACTION) {
-			auto widgetEvent = dynamic_cast<WidgetEvent*>(e);
+			auto widgetEvent = static_cast<WidgetEvent*>(e);
 			Widget* origin = widgetEvent->getData().raisedBy;
 			Widget* descendant = origin != NULL ? origin->getPointOfAncestry(this) : NULL;
 			if (widgetEvent->getData().guiEventType == WidgetEventType::KEY_DOWN || widgetEvent->getData().guiEventType == WidgetEventType::KEY_UP) {

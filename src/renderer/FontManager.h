@@ -25,7 +25,7 @@ namespace Arboria {
 	inline size_t FontHandle::getHash(const FontHandle& fontHandle) {
 		size_t hash1 = String::getHash(fontHandle.fontName);
 		size_t hash2 = combineHash(hash1, String::getHash(fontHandle.fontStyle));
-		return combineHash(hash2, (fontHandle.fontSize + 119));
+		return combineHash(hash2, (static_cast<size_t>(fontHandle.fontSize) + 119));
 	}
 
 	class FontManager {

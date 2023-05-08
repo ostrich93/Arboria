@@ -8,7 +8,7 @@ namespace Arboria {
 
 	class Widget;
 	enum EventType {
-		EVENT_UNDEFINED = -1,
+		EVENT_UNDEFINED,
 		EVENT_WINDOW_ACTIVATE,
 		EVENT_WINDOW_DEACTIVATE,
 		EVENT_WINDOW_RESIZE,
@@ -74,17 +74,18 @@ namespace Arboria {
 	};
 
 	class KeyboardEvent : public Event {
-		private:
+		protected:
 			KeyboardEventData data;
 			friend class Event;
 		public:
+			KeyboardEvent(EventType _eventType) : Event(_eventType) {}
 			KeyboardEvent(EventType _eventType, KeyboardEventData& _data) : Event(_eventType), data(_data) {}
 			KeyboardEventData getData() { return data; }
 			~KeyboardEvent() override = default;
 	};
 
 	class WidgetEvent : public Event {
-		private:
+		protected:
 			GuiEventData data;
 			friend class Event;
 		public:

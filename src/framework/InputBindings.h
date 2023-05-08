@@ -6,6 +6,8 @@
 
 namespace Arboria {
 
+	class InputManager;
+
 	enum InputBindType {
 		BIND_KEYBOARD,
 		BIND_MOUSE,
@@ -35,6 +37,7 @@ namespace Arboria {
 	class InputConfiguration {
 		protected:
 			List<InputBinding> inputBindings;
+			friend class InputManager;
 		public:
 			InputConfiguration() {}
 			~InputConfiguration();

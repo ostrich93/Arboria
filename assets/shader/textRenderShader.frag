@@ -5,5 +5,7 @@ out vec4 color;
 uniform sampler2D texture_atlas;
 uniform vec4 pColor;
 void main() {
-    color = vec4(1.0f, 1.0f, 1.0f, texture2D(texture_atlas, texCoord.r)) * vec4(pColor, 1.0f);
+    float sampleR = texture(texture_atlas, texCoord).r;
+    vec4 sampled = vec4(1.0, 1.0, 1.0, sampleR);
+    color = pColor * sampled;
 }

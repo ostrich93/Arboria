@@ -10,6 +10,29 @@ const int STRING_ALLOC_BASE = 32 - 8 - sizeof(char*);
 const int STRING_ALLOC_GRAN = 32;
 
 namespace Arboria {
+	class StringData {
+		public:
+			StringData() : len(0), referenceCount(0), data(NULL), alloced(0) {}
+			~StringData() {
+				if (data) {
+					delete[] data;
+				}
+			}
+			void addReference() { referenceCount++; }
+			bool deleteReference() {
+				referenceCount--;
+				if (referenceCount < 0) {
+					delete this;
+					return true;
+				}
+				return false;
+			}
+			int len;
+			int referenceCount;
+			char* data;
+			int alloced;
+	};
+
 	class String {
 		public:
 			String();
@@ -59,10 +82,7 @@ namespace Arboria {
 			size_t size() const;
 			int length() const;
 			int allocated() const;
-			void empty();
 			bool isEmpty() const;
-			void clear();
-			void clearFree();
 			void append(const char c);
 			void append(const char* s);
 			void append(const String& text);
@@ -118,45 +138,52 @@ namespace Arboria {
 			static bool charIsWhitespace(char c);
 
 			void reallocate(int amount, bool keepOld);
-			void freeData();
 			int dynamicMemoryUsed() const;
 		protected:
-			int len;
-			char* data;
-			int allocedAndFlag;
-			char baseBuffer[STRING_ALLOC_BASE];
+			StringData* m_data;
 			void ensureAllocated(int amount, bool keepOld = true);
-		private:
-			void construct();
+			void ensureDataWritable();
 	};
 
-	inline void String::construct() {
-		len = 0;
-		allocedAndFlag = STRING_ALLOC_BASE;
-		data = baseBuffer;
-		data[0] = '\0';
-		memset(baseBuffer, 0, sizeof(baseBuffer));
-	}
-
 	inline void String::ensureAllocated(int amount, bool keepOld) {
-		if (amount > allocedAndFlag)
-			reallocate(amount, keepOld);
+		if (!m_data) 
+			m_data = new StringData();
+
+		ensureDataWritable();
+		if (amount < m_data->alloced)
+			return;
+
+		reallocate(amount, keepOld);
 	}
 
-	inline String::String() {
-		construct();
+	inline void String::ensureDataWritable() {
+		assert(m_data);
+		StringData* oldData;
+		int len;
+
+		if (!m_data->referenceCount) return;
+
+		oldData = m_data;
+		len = length();
+
+		m_data = new StringData;
+		ensureAllocated(len + 1, false);
+		strncpy(m_data->data, oldData->data, static_cast<size_t>(len) + 1);
+		m_data->len = len;
+		oldData->deleteReference();
 	}
 
-	inline String::String(const String& text) {
-		construct();
-		int l = text.length();
-		ensureAllocated(l + 1);
-		strcpy(data, text.data);
-		len = l;
+	inline String::String() : m_data(NULL) {
+		ensureAllocated(1);
+		m_data->data[0] = '\0';
 	}
 
-	inline String::String(const String& text, int start, int end) {
-		construct();
+	inline String::String(const String& text) : m_data(NULL) {
+		m_data = text.m_data;
+		m_data->addReference();
+	}
+
+	inline String::String(const String& text, int start, int end) : m_data(NULL){
 		int i;
 		int l;
 
@@ -171,27 +198,26 @@ namespace Arboria {
 		}
 
 		l = end - start;
-		if (l < 0) l = 0;
+		if (l < 0)
+			l = 0;
 		ensureAllocated(l + 1);
-		for (i = 0; i < l; l++) {
-			data[i] = text[start + i];
+		for (i = 0; i < l; i++) {
+			m_data->data[i] = text[start + i];
 		}
-		data[l] = '\0';
-		len = l;
+		m_data->data[l] = '\0';
+		m_data->len = l;
 	}
 
-	inline String::String(const char* text) {
-		construct();
-		int l = strlen(text);
+	inline String::String(const char* text) : m_data(NULL) {
+		int l = static_cast<int>(strlen(text));
 		ensureAllocated(l + 1);
-		strcpy(data, text);
-		len = l;
+		strcpy(m_data->data, text);
+		m_data->len = l;
 	}
 
-	inline String::String(const char* text, int start, int end) {
-		construct();
+	inline String::String(const char* text, int start, int end) : m_data(NULL) {
 		int i;
-		int l = strlen(text);
+		int l = static_cast<int>(strlen(text));
 
 		if (end > l) {
 			end = l;
@@ -207,53 +233,55 @@ namespace Arboria {
 			l = 0;
 		}
 		ensureAllocated(l + 1);
-		for (i = 0; i < l; l++) {
-			data[i] = text[start + i];
+		for (i = 0; i < l; i++) {
+			m_data->data[i] = text[start + i];
 		}
-		data[l] = '\0';
-		len = l;
+		m_data->data[l] = '\0';
+		m_data->len = l;
 	}
 
-	inline String::String(const bool b) {
-		construct();
+	inline String::String(const bool b) : m_data(NULL){
 		ensureAllocated(2);
-		data[0] = b ? '1' : '0';
-		data[1] = '\0';
-		len = 1;
+		m_data->data[0] = b ? '1' : '0';
+		m_data->data[1] = '\0';
+		m_data->len = 1;
 	}
 
-	inline String::String(const char c) {
-		construct();
+	inline String::String(const char c) : m_data(NULL) {
 		ensureAllocated(2);
-		data[0] = c;
-		data[1] = '\0';
-		len = 1;
+		m_data->data[0] = c;
+		m_data->data[1] = '\0';
+		m_data->len = 1;
 	}
 
-	inline String::String(const int i) {
+	inline String::String(const int i) : m_data(NULL) {
 		char text[64];
 		int l;
 
-		construct();
-		l = sprintf(text, "%d", i);
+		sprintf(text, "%d", i);
+		l = static_cast<int>(strlen(text));
 		ensureAllocated(l + 1);
-		strcpy(data, text);
-		len = l;
+		strcpy(m_data->data, text);
+		m_data->len = l;
 	}
 
-	inline String::String(const unsigned u) {
+	inline String::String(const unsigned u) : m_data(NULL) {
 		char text[64];
 		int l;
 
-		construct();
-		l = sprintf(text, "%u", u);
+		sprintf(text, "%u", u);
+		l = static_cast<int>(strlen(text));
 		ensureAllocated(l + 1);
-		strcpy(data, text);
-		len = l;
+		strcpy(m_data->data, text);
+		m_data->len = l;
 	}
 
 	inline String::~String() {
-		freeData();
+		if (m_data) {
+			m_data->deleteReference();
+			m_data = NULL;
+		}
+		//freeData();
 	}
 
 	inline size_t String::size() const {
@@ -261,16 +289,13 @@ namespace Arboria {
 	}
 
 	inline int String::allocated() const {
-		if (data != baseBuffer) {
-			return allocedAndFlag;
-		}
-		else {
-			return 0;
-		}
+		if (m_data != NULL) return m_data->alloced;
+		return 0;
 	}
 
 	inline const char* String::c_str() const {
-		return data;
+		assert(m_data);
+		return m_data->data;
 	}
 
 	inline String::operator const char* () const {
@@ -282,21 +307,19 @@ namespace Arboria {
 	}
 
 	inline char String::operator[](int index) const {
-		assert(index >= 0 && index <= len);
-		return data[index];
+		assert(index >= 0 && index <= m_data->len);
+		return m_data->data[index];
 	}
 
 	inline char& String::operator[](int index) {
-		assert(index >= 0 && index <= len);
-		return data[index];
+		assert(index >= 0 && index <= m_data->len);
+		return m_data->data[index];
 	}
 
 	inline void String::operator=(const String& text) {
-		int l = text.length();
-		ensureAllocated(l + 1, false);
-		memcpy(data, text, l);
-		data[l] = '\0';
-		len = l;
+		text.m_data->addReference();
+		m_data->deleteReference();
+		m_data = text.m_data;
 	}
 
 	inline String operator+(const String& a, const String& b)
@@ -397,17 +420,17 @@ namespace Arboria {
 	}
 
 	inline bool operator==(const String& a, const String& b) {
-		return (!String::compare(a.data, b.data));
+		return (!String::compare(a.c_str(), b.c_str()));
 	}
 
 	inline bool operator==(const String& a, const char* b) {
 		assert(b);
-		return (!String::compare(a.data, b));
+		return (!String::compare(a.c_str(), b));
 	}
 
 	inline bool operator==(const char* a, const String& b) {
 		assert(a);
-		return (!String::compare(a, b.data));
+		return (!String::compare(a, b.c_str()));
 	}
 
 	inline bool operator !=(const String& a, const String& b) {
@@ -423,61 +446,39 @@ namespace Arboria {
 	}
 
 	inline int String::length() const {
-		return len;
-	}
-
-	inline void String::empty() {
-		ensureAllocated(1);
-		data[0] = '\0';
-		len = 0;
+		if (m_data != NULL) return m_data->len;
+		return 0;
 	}
 
 	inline bool String::isEmpty() const {
-		return String::compare(data, "") == 0;
-	}
-
-	inline void String::clear() {
-		ensureAllocated(1);
-		data[0] = '\0';
-		len = 0;
-	}
-
-	inline void String::clearFree() {
-		freeData();
-		construct();
+		return String::compare(c_str(), "") == 0;
 	}
 
 	inline void String::append(char c) {
-		ensureAllocated(len + 2);
-		data[len] = c;
-		len++;
-		data[len] = '\0';
+		ensureAllocated(m_data->len + 2);
+		m_data->data[m_data->len] = c;
+		m_data->len++;
+		m_data->data[m_data->len] = '\0';
 	}
 
 	inline void String::append(const String& text) {
-		int newLen = len + text.length();
+		int newLen = length() + text.length();
 		int i;
 
 		ensureAllocated(newLen + 1);
-		for (i = 0; i < text.len; i++) {
-			data[len + i] = text[i];
-		}
-		data[newLen] = '\0';
-		len = newLen;
+		strcat(m_data->data, text.c_str());
+		m_data->len = newLen;
 	}
 
 	inline void String::append(const char* text) {
+		assert(text);
 		int newLen;
-		int i;
 
 		if (text) {
-			newLen = len + strlen(text);
+			newLen = length() +static_cast<int>(strlen(text));
 			ensureAllocated(newLen + 1);
-			for (i = 0; text[i]; i++) {
-				data[len + i] = text[i];
-			}
-			data[newLen] = '\0';
-			len = newLen;
+			strcat(m_data->data, text);
+			m_data->len = newLen;
 		}
 	}
 
@@ -486,75 +487,77 @@ namespace Arboria {
 		int i;
 
 		if (text && index) {
-			newLen = len + index;
+			newLen = length() + index;
 			ensureAllocated(newLen + 1);
-			for (i = 0; text[i]; i++) {
-				data[len + i] = text[i];
+			for (i = 0; text[i] && i < index; i++) {
+				m_data->data[m_data->len + i] = text[i];
 			}
-			data[newLen] = '\0';
-			len = newLen;
+			m_data->data[newLen] = '\0';
+			m_data->len = newLen;
 		}
 	}
 
 	inline void String::insert(const char c, int index) {
 		int i, l;
+		int _length = length();
 
 		if (index < 0) {
 			index = 0;
 		}
-		else if (index > len) {
-			index = len;
+		else if (index > _length) {
+			index = _length;
 		}
 
 		l = 1;
-		ensureAllocated(len + l + 1);
-		for (i = len; i >= index; i--) {
-			data[i + 1] = data[i];
+		ensureAllocated(_length + l + 1);
+		for (i = _length; i >= index; i--) {
+			m_data->data[i + 1] = m_data->data[i];
 		}
-		data[index] = c;
-		len++;
+		m_data->data[index] = c;
+		m_data->len++;
 	}
 
 	inline void String::insert(const char* s, int index) {
 		int i, l;
+		int _length = length();
 
 		if (index < 0) {
 			index = 0;
 		}
-		else if (index > len) {
-			index = len;
+		else if (index > _length) {
+			index = _length;
 		}
 
-		l = strlen(s);
-		ensureAllocated(len + l + 1);
-		for (i = len; i >= index; i--) {
-			data[i + 1] = data[i];
+		l = static_cast<int>(strlen(s));
+		ensureAllocated(_length + l + 1);
+		for (i = _length; i >= index; i--) {
+			m_data->data[i + 1] = m_data->data[i];
 		}
 		for (i = 0; i < l; i++) {
-			data[index + i] = s[i];
+			m_data->data[index + i] = s[i];
 		}
-		len += 1;
+		m_data->len += 1;
 	}
 
 	inline void String::toLower() {
-		for (int i = 0; data[i]; i++) {
-			if (charIsUpper(data[i])) {
-				data[i] += ('a' - 'A');
+		for (int i = 0; m_data->data[i]; i++) {
+			if (charIsUpper(m_data->data[i])) {
+				m_data->data[i] += ('a' - 'A');
 			}
 		}
 	}
 
 	inline void String::toUpper() {
-		for (int i = 0; data[i]; i++) {
-			if (charIsLower(data[i])) {
-				data[i] -= ('a' - 'A');
+		for (int i = 0; m_data->data[i]; i++) {
+			if (charIsLower(m_data->data[i])) {
+				m_data->data[i] -= ('a' - 'A');
 			}
 		}
 	}
 
 	inline bool String::isNumeric() const {
-		for (int i = 0; i < len; i++) {
-			if (!charIsNumeric(data[i])) {
+		for (int i = 0; i < length(); i++) {
+			if (!charIsNumeric(m_data->data[i])) {
 				return false;
 			}
 		}
@@ -648,15 +651,15 @@ namespace Arboria {
 
 		ensureAllocated(l + 1);
 		for (int i = 0; i < l; i++) {
-			data[i] = text[start + i];
+			m_data->data[i] = text[start + i];
 		}
 
-		data[l] = '\0';
-		len = l;
+		m_data->data[l] = '\0';
+		m_data->len = l;
 	}
 
 	inline int String::dynamicMemoryUsed() const {
-		return (data == baseBuffer) ? 0 : allocedAndFlag;
+		return (m_data != NULL) ? m_data->alloced : 0;
 	}
 }
 

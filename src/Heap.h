@@ -1,6 +1,9 @@
 #ifndef HEAP_H
 #define HEAP_H
 
+#include <cstdlib>
+#include <cstddef>
+
 void* Mem_Alloc16(const size_t size);
 void Mem_Free16(void* ptr);
 void* Mem_ClearedAlloc(const size_t size); //allocate memory and set the bytes to NULL values.

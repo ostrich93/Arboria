@@ -1,13 +1,16 @@
 #include "ResourceManager.h"
 #include "../renderer/Texture.h"
+#include "../definitions.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "../renderer/stb_image.h"
+#include <physfs.h>
 
 namespace Arboria {
 	Texture* ResourceManager::loadTextureFromFile(String& filename) {
 		Texture* image = new Texture(filename);
 		int width, height, nChannels;
-		unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nChannels, 0);
+		String fullfilepath = PHYSFS_getRealDir(filename.c_str()) + filename;
+		unsigned char* data = stbi_load(PHYSFS_getRealDir(fullfilepath.c_str()), &width, &height, &nChannels, 0);
 		image->generateTexture(width, height, data);
 		stbi_image_free(data);
 		return image;
@@ -16,7 +19,8 @@ namespace Arboria {
 	Texture* ResourceManager::loadTextureFromFile(const char* filename) {
 		Texture* image = new Texture(filename);
 		int width, height, nChannels;
-		unsigned char* data = stbi_load(filename, &width, &height, &nChannels, 0);
+		String fullfilepath = String::join({ PHYSFS_getRealDir(filename), filename }, "");
+		unsigned char* data = stbi_load(fullfilepath, &width, &height, &nChannels, 0);
 		image->generateTexture(width, height, data);
 		stbi_image_free(data);
 		return image;

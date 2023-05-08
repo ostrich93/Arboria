@@ -58,6 +58,7 @@ namespace Arboria {
 	template<typename T>
 	inline List<T>::List<T>(int newGranularity) {
 		num = 0;
+		capacity = 0;
 		granularity = newGranularity;
 		list = NULL;
 	}

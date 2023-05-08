@@ -27,14 +27,14 @@ namespace Arboria {
 	{
 		List<String> pathTokens;
 		if (!style || strlen(style) == 0) {
-			pathTokens = { PHYSFS_getBaseDir(), "assets", DIR_SEPARATOR_STR, "fonts", DIR_SEPARATOR_STR, family, ".ttf"};
+			pathTokens = {family, ".ttf"};
 		}
 		else {
-			pathTokens = { PHYSFS_getBaseDir(), "assets", DIR_SEPARATOR_STR, "fonts", DIR_SEPARATOR_STR, family, "-", style, ".ttf" };
+			pathTokens = {family, "-", style, ".ttf" };
 		}
 
 		String pathName = String::join(pathTokens, "");
-		return pathName.c_str();
+		return PHYSFS_getRealDir(pathName.c_str()) + pathName;
 	}
 
 	int FontManager::loadFont(const char* family, const char* style, unsigned int size)

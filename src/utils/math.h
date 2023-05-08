@@ -31,8 +31,8 @@ namespace Arboria {
 	static const float HALF_PI = 0.5f * PI;
 	static const float QUARTER_PI = 0.25f * PI;
 	static const float THREE_HALVES_PI = 1.5f * PI;
-	static const float INV_PI = 0.31830988618379067154;
-	static const float INV_TWO_PI = 0.63661977236758134308;
+	static const float INV_PI = 0.31830988618379067154f;
+	static const float INV_TWO_PI = 0.63661977236758134308f;
 	static const float E = 2.71828182845904523536f;
 	static const float LOG2E = 1.4426950408889634074f;
 	static const float LOG10E = 0.43429448190325182765f;

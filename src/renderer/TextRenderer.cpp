@@ -28,7 +28,10 @@ namespace Arboria {
 	}
 
 	void TextRenderer::draw(Font* ft, const Vector2<int>* pos, Vector4<float> color, String& text) {
+		textShader.use();
 		GlyphAtlas ga = *ft->getGlyphAtlas();
+		textShader.setVector4f("pColor", color);
+		ga.initialize();
 		float u0, v0, u1, v1;
 		float minX, minY, maxX, maxY;
 		Vector2<int> cursor = *pos;

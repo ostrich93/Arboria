@@ -44,6 +44,8 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
+option(ASAN_ENABLED "Build this target with AddressSanitizer" ON)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 Find_Package(OpenGL REQUIRED)
@@ -152,6 +154,15 @@ set (ARBORIA_HEADER_FILES
 file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
 
 add_executable (${CMAKE_PROJECT_NAME} ${ARBORIA_SOURCE_FILES} ${ARBORIA_HEADER_FILES})
+if(ASAN_ENABLED)
+  if(MSVC)
+    target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC /fsanitize=address /GR)
+  else()
+    target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -fsanitize=address)
+    target_link_options(${CMAKE_PROJECT_NAME} PUBLIC -fsanitize=address)
+  endif()
+  set(ASAN_SAVE_DUMPS, "ArboriaCrash.dmp")
+endif()
 #add_executable (${CMAKE_PROJECT_NAME} ${ARBORIA_LIST_SOURCE_FILES} ${ARBORIA_LIST_HEADER_FILES})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${PHYSFS_INCLUDE_DIR})

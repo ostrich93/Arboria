@@ -126,13 +126,14 @@ namespace Arboria {
 	void Engine::processEvents() {
 		inputManager->translateSdlEvents();
 		while (!inputManager->isQueueEmpty() && !screenManager->isEmpty()) {
-			Event& e = inputManager->getFront();
+			Event* e;
+			e = &inputManager->getFront();
 			inputManager->popFront();
-			if (e.getEventType() == EventType::EVENT_WINDOW_CLOSE) {
+			if (e->getEventType() == EventType::EVENT_WINDOW_CLOSE) {
 				shutdown();
 			}
 			else {
-				screenManager->getCurrent()->eventOccured(&e);
+				screenManager->getCurrent()->eventOccured(e);
 			}
 		}
 
@@ -141,7 +142,7 @@ namespace Arboria {
 			screenManager->getCurrent()->draw();
 			//flush renderer
 			//start new frame in renderer
-			//SDL_GL_SwapWindow(SDL_Window
+			SDL_GL_SwapWindow(renderDevice->getWindow());
 		}
 	}
 

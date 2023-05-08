@@ -5,9 +5,14 @@ namespace Arboria {
 		head = 0;
 		tail = 0;
 		lastKeyState = NULL;
+		lastAction = -1;
+		memset(keyBindings, -1, sizeof(InputActionType) * 128);
 		keyboardEventFactory = new KeyboardEventFactory();
 		inputConfiguration = new InputConfiguration();
 		inputConfiguration->initialize();
+		for (int i = 0; i < inputConfiguration->inputBindings.getLength(); i++) {
+			keyBindings[inputConfiguration->inputBindings[i].getValue()] = inputConfiguration->inputBindings[i].getActionType();
+		}
 		//read in configuration file
 	}
 
@@ -25,6 +30,15 @@ namespace Arboria {
 
 		while (SDL_PollEvent(&_se)) {
 			switch (_se.type) {
+				case SDL_QUIT:
+					_isQuit = true;
+					break;
+				case SDL_WINDOWEVENT:
+					if (_se.window.event == SDL_WINDOWEVENT_CLOSE) {
+						_se.type = SDL_QUIT;
+						SDL_PushEvent(&_se);
+					}
+					break;
 				case SDL_KEYDOWN:
 				case SDL_KEYUP:
 					if (keyboardEventFactory == NULL) {
@@ -35,12 +49,6 @@ namespace Arboria {
 						e = keyboardEventFactory->generateEvent(_se);
 						this->submitEvent(e);
 						this->updateKeyInputState(dynamic_cast<KeyboardEvent*>(e));
-					}
-					break;
-				case SDL_WINDOWEVENT:
-					if (_se.window.event == SDL_WINDOWEVENT_CLOSE) {
-						_se.type = SDL_QUIT;
-						SDL_PushEvent(&_se);
 					}
 					break;
 				default:
