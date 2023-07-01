@@ -1,10 +1,9 @@
-#include "Engine.h"
 #include "../game/scenes/MainMenu.h"
-#include "../renderer/TextRenderer.h"
-#include "InputManager.h"
+//#include "../renderer/TextRenderer.h"
 #include "ResourceManager.h"
 #include "ScreenManager.h"
-#include "../renderer/FontManager.h"
+#include "../renderer/Font.h"
+#include "ActionManager.h"
 #include "../renderer/Renderer.h"
 #include "../renderer/Texture.h"
 #include "../globals.h"
@@ -17,9 +16,11 @@ namespace Arboria {
 	ScreenManager* screenManager = NULL;
 	FontManager* fontManager = NULL;
 	ResourceManager* resourceManager = NULL;
-	SpriteRenderer* spriteRenderer = NULL;
-	TextRenderer* textRenderer = NULL;
+	//SpriteRenderer* spriteRenderer = NULL;
+	//TextRenderer* textRenderer = NULL;
 	RenderDevice* renderDevice = NULL;
+	ActionManager* actionManager = NULL;
+	Renderer* renderer = NULL;
 	bool _isQuit = false;
 
 	const short MAX_FPS = 60;
@@ -40,10 +41,11 @@ namespace Arboria {
 
 		freeFileSystem();
 		//SDL_Quit();
-		delete textRenderer;
+		//delete textRenderer;
 		delete inputManager;
 		delete screenManager;
-		delete spriteRenderer;
+		delete renderer;
+		//delete spriteRenderer;
 		delete resourceManager;
 		delete renderDevice;
 	}
@@ -55,8 +57,11 @@ namespace Arboria {
 		inputManager = new InputManager();
 		screenManager = new ScreenManager();
 		fontManager = new FontManager();
-		spriteRenderer = new SpriteRenderer();
-		textRenderer = new TextRenderer();
+		renderer = new Renderer();
+		renderer->initialize();
+		//spriteRenderer = new SpriteRenderer();
+		//textRenderer = new TextRenderer();
+		actionManager = new ActionManager();
 	}
 
 	void Engine::run() {
@@ -107,8 +112,10 @@ namespace Arboria {
 			}
 			screenManager->getScreenCommands().clear();
 
-			if (screenManager->getScreenCommands().getLength() > 0) {
+			if (screenManager->getCurrent()) {
 				screenManager->getCurrent()->draw();
+				renderer->flush();
+				SDL_GL_SwapWindow(renderDevice->getWindow());
 			}
 			elapsedTimeNs = getNanoseconds() - currentTimeNs;
 			delay_ms = Math::floor(1000.f / MAX_FPS - elapsedTimeNs / 1e6);
@@ -126,14 +133,14 @@ namespace Arboria {
 	void Engine::processEvents() {
 		inputManager->translateSdlEvents();
 		while (!inputManager->isQueueEmpty() && !screenManager->isEmpty()) {
-			Event* e;
+			AEvent* e;
 			e = &inputManager->getFront();
 			inputManager->popFront();
-			if (e->getEventType() == EventType::EVENT_WINDOW_CLOSE) {
+			if (e->eventType == EventType::EVENT_WINDOW_CLOSE) {
 				shutdown();
 			}
 			else {
-				screenManager->getCurrent()->eventOccured(e);
+				screenManager->getCurrent()->onEvent(e);
 			}
 		}
 
@@ -142,7 +149,6 @@ namespace Arboria {
 			screenManager->getCurrent()->draw();
 			//flush renderer
 			//start new frame in renderer
-			SDL_GL_SwapWindow(renderDevice->getWindow());
 		}
 	}
 
@@ -150,6 +156,57 @@ namespace Arboria {
 	{
 		screenManager->clear();
 		_isQuit = true;
+	}
+
+	void Engine::printWarning(const char* warning, ...)
+	{
+		va_list argptr;
+		char text[4096];
+
+		va_start(argptr, warning);
+		vsprintf(text, warning, argptr);
+		va_end(argptr);
+
+		printf("Warning: %s", text);
+		return;
+	}
+
+	void Engine::printLog(const char* log, ...)
+	{
+		va_list argptr;
+		char text[4096];
+
+		va_start(argptr, log);
+		vsprintf(text, log, argptr);
+		va_end(argptr);
+
+		printf("%s", text);
+		return;
+	}
+
+	void Engine::printError(const char* error, ...)
+	{
+		va_list argptr;
+		char text[4096];
+
+		va_start(argptr, error);
+		vsprintf(text, error, argptr);
+		va_end(argptr);
+
+		printf("Error: %s", text);
+		return;
+	}
+
+	void Engine::fatalError(const char* error, ...) {
+		va_list argptr;
+		char text[4096];
+
+		va_start(argptr, error);
+		vsprintf(text, error, argptr);
+		va_end(argptr);
+
+		printf("Fatal Error: %s", text);
+		exit(0);
 	}
 	
 	/*

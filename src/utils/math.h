@@ -49,6 +49,7 @@ namespace Arboria {
 	static const float INFINITE = 1e30f;
 	static const float FLT_EPSILON = 1.192092896e-07f;
 	static const int NAN_VALUE = 0x7f800000;
+	static const int INDEFINITE = 0xffc00000;
 	static const int SMALLEST_NON_DENORMAL = 1 << IEEE_FLT_MANTISSA_BITS;
 	static const float FLT_SMALLEST_NON_DENORMAL = *reinterpret_cast<const float*>(&SMALLEST_NON_DENORMAL);
 

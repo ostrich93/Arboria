@@ -1,9 +1,10 @@
 #include "TextRenderer.h"
-#include "GlyphAtlas.h"
-#include "FontManager.h"
+#include "Font.h"
 #include "../containers/List.h"
 #include "../framework/String.h"
 #include "Font.h"
+#include "../framework/Camera.h"
+#include "Texture.h"
 
 namespace Arboria {
 	TextRenderer::TextRenderer() : textShader("textRenderShader") {
@@ -18,6 +19,7 @@ namespace Arboria {
 		textShader.use();
 		textureAtlasLocation = textShader.getUniformLocation("texture_atlas");
 		pColorLocation = textShader.getUniformLocation("pColor");
+		textShader.setMatrix4("projection", renderDevice->getCamera()->getViewProjection());
 	}
 
 	TextRenderer::~TextRenderer() {
@@ -29,7 +31,7 @@ namespace Arboria {
 
 	void TextRenderer::draw(Font* ft, const Vector2<int>* pos, Vector4<float> color, String& text) {
 		textShader.use();
-		GlyphAtlas ga = *ft->getGlyphAtlas();
+		TextureAtlas ga = *ft->getGlyphAtlas();
 		textShader.setVector4f("pColor", color);
 		ga.initialize();
 		float u0, v0, u1, v1;

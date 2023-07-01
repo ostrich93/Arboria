@@ -50,6 +50,7 @@
 #define CONCATENATE(arg1, arg2)		CONCATENATE1(arg1, arg2)
 #define CONCATENATE1(arg1, arg2)	CONCATENATE2(arg1, arg2)
 #define CONCATENATE2(arg1, arg2)	arg1##arg2
+#define ARRAY_ELEMENT_SIZE(a)		(sizeof(a)/sizeof(a[0]))
 
 #define PHYSFS_SEPARATOR	"/"
 #if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)

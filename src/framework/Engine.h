@@ -6,10 +6,12 @@
 namespace Arboria {
 	class ScreenManager;
 	class FontManager;
-	class TextRenderer;
+	//class TextRenderer;
 	class ResourceManager;
-	class SpriteRenderer;
+	//class SpriteRenderer;
 	class InputManager;
+	class ActionManager;
+	class Renderer;
 	class Engine {
 		public:
 			Engine();
@@ -19,15 +21,22 @@ namespace Arboria {
 			void processEvents();
 			void shutdown();
 			bool isQuit;
+
+			static void printWarning(const char* warning, ...);
+			static void printLog(const char* log, ...);
+			static void printError(const char* error, ...);
+			static void fatalError(const char* error, ...);
 	};
 
 	extern InputManager* inputManager;
 	extern ScreenManager* screenManager;
 	extern FontManager* fontManager;
 	extern ResourceManager* resourceManager;
-	extern SpriteRenderer* spriteRenderer;
-	extern TextRenderer* textRenderer;
+	//extern SpriteRenderer* spriteRenderer;
+	//extern TextRenderer* textRenderer;
 	extern RenderDevice* renderDevice;
+	extern ActionManager* actionManager;
+	extern Renderer* renderer;
 	extern bool _isQuit;
 }
 

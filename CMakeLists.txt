@@ -61,32 +61,39 @@ Find_Package(PhysFS REQUIRED)
 set (ARBORIA_SOURCE_FILES
 		./src/FileSystem.cpp
 		./src/Heap.cpp
+		./src/containers/HashIndex.cpp
 		./src/events/Event.cpp
+		./src/framework/ActionManager.cpp
 		./src/framework/Camera.cpp
+		./src/framework/CVariableSystem.cpp
 		./src/framework/Engine.cpp
-		./src/framework/InputBindings.cpp
 		./src/framework/InputManager.cpp
+		./src/framework/Lexer.cpp
 		./src/framework/RenderDevice.cpp
 		./src/framework/ResourceManager.cpp
-		./src/framework/Screen.cpp
 		./src/framework/ScreenManager.cpp
 		./src/framework/String.cpp
+		./src/framework/SystemCVars.cpp
+		./src/framework/Token.cpp
+		./src/framework/UIContext.cpp
 		./src/game/scenes/MainMenu.cpp
 		./src/game/scenes/OptionsMenu.cpp
 		./src/gui/Label.cpp
 		./src/gui/ListBoxWidget.cpp
 		./src/gui/ScrollAreaWidget.cpp
 		./src/gui/ScrollbarWidget.cpp
-		./src/gui/ButtonWidget.cpp
+		./src/gui/SliderWidget.cpp
 		./src/gui/Widget.cpp
-		./src/gui/WidgetContainer.cpp
+		./src/renderer/DrawColoredPrimitiveShader.cpp
+		./src/renderer/DrawSurfaceShader.cpp
+		./src/renderer/DrawTextShader.cpp
 		./src/renderer/Font.cpp
-		./src/renderer/FontManager.cpp
-		./src/renderer/GlyphAtlas.cpp
 		./src/renderer/Renderer.cpp
 		./src/renderer/ShaderProgram.cpp
 		./src/renderer/Texture.cpp
-		./src/renderer/TextRenderer.cpp
+		#./src/renderer/TextRenderer.cpp
+		./src/utils/Color.cpp
+		./src/utils/Rectangle.cpp
 		./src/main.cpp
 )
 set (ARBORIA_HEADER_FILES
@@ -94,45 +101,53 @@ set (ARBORIA_HEADER_FILES
 		./src/globals.h
 		./src/FileSystem.h
 		./src/Heap.h
+		./src/containers/HashIndex.h
 		./src/containers/HashTable.h
 		./src/containers/List.h
 		./src/events/Event.h
+		./src/framework/ActionManager.h
 		./src/framework/Camera.h
 		./src/framework/ConfigOptions.h
 		./src/framework/Cursor.h
+		./src/framework/CVariableSystem.h
 		./src/framework/Engine.h
+		./src/framework/Exception.h
 		./src/framework/InputActionType.h
-		./src/framework/InputBindings.h
 		./src/framework/InputManager.h
+		./src/framework/Lexer.h
 		./src/framework/RenderDevice.h
 		./src/framework/ResourceManager.h
-		./src/framework/Screen.h
 		./src/framework/ScreenManager.h
+		./src/framework/Session.h
 		./src/framework/String.h
+		./src/framework/SystemCVars.h
+		./src/framework/Token.h
+		./src/framework/UIContext.h
 		./src/game/scenes/MainMenu.h
 		./src/game/scenes/OptionsMenu.h
 		./src/gui/Label.h
-		./src/gui/ButtonWidget.h
 		./src/gui/ListBoxWidget.h
 		./src/gui/ScrollAreaWidget.h
-		./src/gui/ScrollbarWidget.h
+		./src/gui/ScrollbarWidget.h	
+		./src/gui/SliderWidget.h
 		./src/gui/Widget.h
-		./src/gui/WidgetContainer.h
 		./src/gui/WidgetEnums.h
-		./src/gui/WindowWidget.h
+		./src/renderer/DrawColoredPrimitiveShader.h
+		./src/renderer/DrawSurfaceShader.h
+		./src/renderer/DrawTextShader.h
 		./src/renderer/Font.h
-		./src/renderer/FontManager.h
-		./src/renderer/GlyphAtlas.h
 		./src/renderer/Renderer.h
 		./src/renderer/ShaderProgram.h
 		./src/renderer/stb_image.h
 		./src/renderer/Texture.h
-		./src/renderer/TextRenderer.h
+		#./src/renderer/TextRenderer.h
 		./src/utils/check_static_cast.h
+		./src/utils/Color.h
 		./src/utils/combine_hash.h
 		./src/utils/math.h
+		./src/utils/Rectangle.h
 		./src/utils/Vector.h
- )
+)
 
 #set(ARBORIA_LIST_SOURCE_FILES
 #	./src/Heap.cpp

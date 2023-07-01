@@ -44,6 +44,7 @@ namespace Arboria {
 			explicit String(const char c);
 			explicit String(const int i);
 			explicit String(const unsigned u);
+			explicit String(const float f);
 			~String();
 			const char* c_str() const;
 
@@ -113,6 +114,8 @@ namespace Arboria {
 
 			static int getHash(const char* string);
 			static int getHash(const char* string, int length);
+			static int getCaseInsensitiveHash(const char* string);
+			static int getCaseInsensitiveHash(const char* string, int length);
 
 			//cstring replace methods
 			static int findChar(const char* str, char c, int start = 0, int end = -1);
@@ -136,6 +139,8 @@ namespace Arboria {
 			static bool charIsNumeric(char c);
 			static bool charIsNewline(char c);
 			static bool charIsWhitespace(char c);
+
+			static bool isNumeric(const char* s);
 
 			void reallocate(int amount, bool keepOld);
 			int dynamicMemoryUsed() const;
@@ -271,6 +276,18 @@ namespace Arboria {
 
 		sprintf(text, "%u", u);
 		l = static_cast<int>(strlen(text));
+		ensureAllocated(l + 1);
+		strcpy(m_data->data, text);
+		m_data->len = l;
+	}
+
+	inline String::String(const float f) : m_data(NULL)
+	{
+		char text[64];
+		int l;
+		l = snprintf(text, sizeof(text), "%f", f);
+		while (l > 0 && text[l - 1] == '0') text[--l] = '\0';
+		while (l > 0 && text[l - 1] == '.') text[--l] = '\0';
 		ensureAllocated(l + 1);
 		strcpy(m_data->data, text);
 		m_data->len = l;
@@ -639,6 +656,22 @@ namespace Arboria {
 		int i, hash = 0;
 		for (i = 0; i < length; i++) {
 			hash += (*string++) * (i + 119);
+		}
+		return hash;
+	}
+
+	inline int String::getCaseInsensitiveHash(const char* string) {
+		int i, hash = 0;
+		for (i = 0; *string != '\0'; i++) {
+			hash += toLower(*string++) * (i + 119);
+		}
+		return hash;
+	}
+
+	inline int String::getCaseInsensitiveHash(const char* string, int length) {
+		int i, hash = 0;
+		for (i = 0; i < length; i++) {
+			hash += toLower(*string++) * (i + 119);
 		}
 		return hash;
 	}

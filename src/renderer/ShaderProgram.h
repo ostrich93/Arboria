@@ -13,10 +13,24 @@
 //PFNGLVERTEXATTRIBDIVISORPROC	glVertexAttribDivisor;
 
 namespace Arboria {
+	class Shader {
+		private:
+			GLenum type;
+			GLuint id = 0;
+			String getShaderFileName(const String& name);
+		public:
+			Shader(const char* name, GLenum _type);
+			~Shader();
+
+			inline GLuint getShaderId() { return id; }
+	};
+
 	class ShaderProgram {
 		protected:
 			String name;
 			GLuint programId;
+			Shader* vertexShader;
+			Shader* fragmentShader;
 			GLuint currentBuffer;
 		public:
 			GLuint usedBuffers = 0;
@@ -44,6 +58,8 @@ namespace Arboria {
 
 			void setFloat(const char* name, GLfloat value);
 			void setInteger(const char* name, GLint value);
+			void setVector2i(const char* name, GLint x, GLint y);
+			void setVector2i(const char* name, Vector2<int>& value);
 			void setVector2f(const char* name, GLfloat x, GLfloat y);
 			void setVector2f(const char* name, Vector2<float>& value);
 			void setVector3f(const char* name, GLfloat x, GLfloat y, GLfloat z);

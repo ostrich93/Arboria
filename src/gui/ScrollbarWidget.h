@@ -14,7 +14,7 @@ namespace Arboria {
 		protected:
 			int minimum, maximum;
 			bool menuFlag;
-			Vector4<float> color;
+			Color color;
 		public:
 			ScrollbarWidget(Texture* scrollerImage = NULL, bool _isMenu = false, Orientation orientation = Orientation::VERTICAL);
 			~ScrollbarWidget() override;
@@ -24,14 +24,14 @@ namespace Arboria {
 			int getMinimum() const { return minimum; }
 			int getMaximum() const { return maximum; }
 			bool getMenuFlag() const { return menuFlag; }
-			Vector4<float> getColor() { return color; }
-			void setColor(Vector4<float> _color) { color = _color; }
+			Color getColor() { return color; }
+			void setColor(Color _color) { color = _color; }
 			void setMenuFlag(bool flag) { menuFlag = flag; }
 			void setScrollValue(int value);
 			void scrollMin() { setScrollValue(minimum); }
 			void scrollMax() { setScrollValue(maximum); }
 
-			void eventOccured(Event* e) override;
+			bool onEvent(AEvent* e) override;
 			void onRender() override;
 			void run() override;
 

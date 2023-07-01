@@ -326,4 +326,24 @@ namespace Arboria {
         strncpy(dest, src, n - 1);
         dest[n-1] = '\0';
     }
+
+    bool String::isNumeric(const char* s) {
+
+        int i;
+        bool hasDecimal = false;
+
+        if (*s == '-')
+            s++;
+
+        for (i = 0; s[i]; s++) {
+            if (!charIsNumeric(s[i])) {
+                if (s[i] == '.' && !hasDecimal) {
+                    hasDecimal = true;
+                    continue;
+                }
+                return false;
+            }
+        }
+        return true;
+    }
 }

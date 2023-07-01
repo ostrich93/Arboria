@@ -1,8 +1,8 @@
-#include "Screen.h"
+#include "UIContext.h"
 #include "../events/Event.h"
 
 namespace Arboria {
-	ScreenCommand::ScreenCommand(ScreenCommandType _commandType, Screen* next)
+	ScreenCommand::ScreenCommand(ScreenCommandType _commandType, UIContext* next)
 	{
 		commandType = _commandType;
 		nextScene = next;

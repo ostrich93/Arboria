@@ -1,6 +1,8 @@
 #include "Camera.h"
 
 namespace Arboria {
+	Camera::Camera() : cameraPosition({ 0.f, 0.f }), viewProjection(glm::ortho( 0.f, 0.f, 0.f, 0.f, -1.f, -1.f )), viewMatrix({1.f, 1.f, 1.f, 1.f}){}
+
 	Camera::Camera(float left, float right, float bottom, float top) {
 		cameraPosition = Vector2<float>(0);
 		viewProjection = glm::ortho(left, right, bottom, top, -1.f, 1.f);

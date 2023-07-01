@@ -9,6 +9,12 @@
 #include <Windows.h>
 #endif
 
+#ifdef __GNUC__
+#define ar_attribute(x) __attribute__(x)
+#else
+#define ar_attribute(x)
+#endif
+
 namespace Arboria {
 	inline void NoP(void*) {
 		return;

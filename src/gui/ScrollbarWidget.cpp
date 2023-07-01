@@ -1,11 +1,11 @@
 #include "ScrollbarWidget.h"
-#include "../framework/InputManager.h"
+#include "../framework/ActionManager.h"
 #include "../framework/ResourceManager.h"
 #include "../renderer/Renderer.h"
 #include "../renderer/Texture.h"
 
 namespace Arboria {
-	ScrollbarWidget::ScrollbarWidget(Texture* scrollerImage, bool _isMenu, Orientation orientation) : Widget(), scrollValue(0), scrollStep(1), barOrientation(orientation), maximum(1), minimum(0), menuFlag(_isMenu), scrollbarImage(scrollerImage), color({ 255.f, 255.f, 255.f, 128.f }) {
+	ScrollbarWidget::ScrollbarWidget(Texture* scrollerImage, bool _isMenu, Orientation orientation) : Widget(), scrollValue(0), scrollStep(1), barOrientation(orientation), maximum(1), minimum(0), menuFlag(_isMenu), scrollbarImage(scrollerImage), color({ (uint8_t)255, (uint8_t)255, (uint8_t)255, (uint8_t)128 }) {
 		if (!scrollbarImage) {
 			scrollbarImage = resourceManager->loadTexture("gui/scroller.png");
 		}
@@ -21,7 +21,6 @@ namespace Arboria {
 			return;
 
 		scrollValue = value;
-		submitGuiEvent(WidgetEventType::SCROLLBAR_CHANGE, NULL);
 		setDirty();
 	}
 
@@ -41,36 +40,33 @@ namespace Arboria {
 		setDirty();
 	}
 
-	void ScrollbarWidget::eventOccured(Event* e) {
-		Widget::eventOccured(e);
+	bool ScrollbarWidget::onEvent(AEvent* e) {
+		Widget::onEvent(e);
 
-		if (e->getEventType() == EventType::EVENT_UI_INTERACTION) {
-			int pos = static_cast<int>(segmentSize * (scrollValue - minimum));
-			auto widgetEvent = dynamic_cast<WidgetEvent*>(e);
-			if (widgetEvent->getData().raisedBy == this && widgetEvent->getData().guiEventType == WidgetEventType::KEY_DOWN) {
-				InputActionType action = inputManager->getActionTranslation(&widgetEvent->getData().keyboardData);
-				switch (barOrientation) {
-					case Orientation::HORIZONTAL:
-						if (action == InputActionType::RIGHT) {
-							setScrollValue(scrollValue + 1);
-						}
-						else if (action == InputActionType::LEFT) {
-							setScrollValue(scrollValue - 1);
-						}
-						break;
-					case Orientation::VERTICAL:
-					default:
-						if (action == InputActionType::DOWN) {
-							setScrollValue(scrollValue + 1);
-						}
-						else if (action == InputActionType::UP) {
-							setScrollValue(scrollValue - 1);
-						}
-						break;
-				}
-			}
+		int action = actionManager->getAction(*e);
+		int newCursor;
+		switch (action) {
+		case 6: //UP
+			if (barOrientation == Orientation::VERTICAL)
+				setScrollValue(scrollValue - 1);
+			break;
+		case 7: //DOWN
+			if (barOrientation == Orientation::VERTICAL)
+				setScrollValue(scrollValue + 1);
+			break;
+		case 8: //LEFT
+			if (barOrientation == Orientation::HORIZONTAL)
+				setScrollValue(scrollValue - 1);
+			break;
+		case 9: //RIGHT
+			if (barOrientation == Orientation::HORIZONTAL)
+				setScrollValue(scrollValue + 1);
+			break;
+		default:
+			break;
 		}
- 	}
+		return e->isHandled;
+	}
 
 	void ScrollbarWidget::onRender() {
 		Widget::onRender();
@@ -82,22 +78,23 @@ namespace Arboria {
 		switch (barOrientation) {
 			case Orientation::VERTICAL:
 				newPos = { 0, position };
-				newSize = { size.x, static_cast<int>(segmentSize * (maximum - minimum)) };
+				newSize = { rect.w, static_cast<int>(segmentSize * (maximum - minimum)) };
 				break;
 			case Orientation::HORIZONTAL:
 			default:
 				newPos = { position, 0 };
-				newSize = { static_cast<int>(segmentSize * (maximum - minimum)), size.y };
+				newSize = { static_cast<int>(segmentSize * (maximum - minimum)), rect.h };
 				break;
 		}
-		spriteRenderer->draw(scrollbarImage, newPos, newSize, color);
+		renderer->draw(scrollbarImage, newPos, color, barOrientation == Orientation::VERTICAL ? newSize.y / segmentSize : newSize.x / segmentSize);
+		//spriteRenderer->draw(scrollbarImage, newPos, newSize, color);
 	}
 
 	void ScrollbarWidget::run() {
 		Widget::run();
 
 		int numSegments = (maximum - minimum) + 1;
-		int bsize = barOrientation == Orientation::VERTICAL ? size.y : size.x;
+		int bsize = barOrientation == Orientation::VERTICAL ? rect.h : rect.w;
 		segmentSize = bsize / static_cast<float>(numSegments);
 	}
 }

@@ -1,89 +1,54 @@
-#include "Widget.h"
-#include "../framework/InputManager.h"
+#include "./Widget.h"
+#include "../framework/InputActionType.h"
+#include "../framework/ActionManager.h"
+#include "../renderer/Renderer.h"
 
 namespace Arboria {
-	void Widget::eventOccured(Event* e) {
-		for (int i = 0; i < children.getLength(); i++) {
-			Widget child = children[i];
-			if (child.visible && child.enabled) {
-				child.eventOccured(e);
-				if (e->isHandled) {
-					return;
+	bool Widget::onEvent(AEvent* e)
+	{
+		if (flags & WidgetStateFlags::WIDGET_VISIBLE) {
+			if (flags & WidgetStateFlags::WIDGET_INTERACTIVE) {
+				for (int i = 0; i < children.getLength(); i++) {
+					children[i]->onEvent(e);
+					if (e->isHandled) {
+						setDirty();
+						return true;
+					}
 				}
+				
+				int action = actionManager->getAction(*e);
+				if (action > 0 && callbacks[action - 1] != NULL) {
+					setDirty();
+					callbacks[action - 1](this);
+					return true;
+				}
+
+				return false;
 			}
 		}
-		if ((e->getEventType() == EventType::EVENT_KEY_DOWN) || (e->getEventType() == EventType::EVENT_KEY_UP)) {
-			if (hasFocus) {
-				submitGuiEvent(e->getEventType() == EventType::EVENT_KEY_DOWN ? WidgetEventType::KEY_DOWN : WidgetEventType::KEY_UP, e);
-				e->isHandled = true;
-			}
-		}
-		if (e->getEventType() == EventType::EVENT_KEY_PRESS) {
-			if (hasFocus) {
-				submitGuiEvent(WidgetEventType::KEY_PRESS, e);
-				e->isHandled = true;
-			}
-		}
+		return e->isHandled;
 	}
 
 	void Widget::onRender() {}
 
-	void Widget::submitGuiEvent(WidgetEventType weType, Event* _parent) {
-		WidgetEvent* uiEvent = new WidgetEvent();
-		KeyboardEvent* keyEv = NULL;
-		uiEvent->setGuiEventType(weType);
-		uiEvent->setRaisedBy(*this);
-		switch (weType) {
-			case WidgetEventType::KEY_DOWN:
-			case WidgetEventType::KEY_UP:
-			case WidgetEventType::KEY_PRESS:
-				if (_parent) {
-					uiEvent->setParentEventType(_parent->getEventType());
-				}
-				keyEv = static_cast<KeyboardEvent*>(_parent);
-				if (keyEv)
-					uiEvent->getData().keyboardData = keyEv->getData();
-				inputManager->submitEvent(uiEvent);
-				setDirty();
-				break;
-			case SCROLLBAR_CHANGE:
-			case LIST_BOX_CHANGE_HOVER:
-			case LIST_BOX_CHANGE_SELECT:
-			case LIST_BOX_CHANGE_CANCEL:
-				if (_parent) {
-					uiEvent = static_cast<WidgetEvent*>(_parent);
-					uiEvent->setParentEventType(_parent->getEventType());
-				}
-				inputManager->submitEvent(uiEvent);
-				setDirty();
-				break;
-			default:
-				break;
-		}
-
-		this->triggerCallbacks(uiEvent);
+	Widget::Widget() : deviceContext(renderDevice), maxScale({ 1,1 }), name(""), parent(NULL), preRenderFunction(NULL), flags(0), borderSize(0), borderColor({ 0, 0, 0, 0 }), data(NULL) {
 	}
 
-	void Widget::triggerCallbacks(WidgetEvent* event) {
-		for (int j = 0; j < callbacks.get(event->getData().guiEventType).getLength(); j++) {
-			callbacks.get(event->getData().guiEventType)[j](event);
-		}
-	}
-
-	Widget::Widget(bool focused) : preRenderFunction(NULL), location(0, 0), size(0, 0), selectableSize(0, 0), resolvedLocation(0, 0),
-		visible(true), clickable(false), name("Widget"), hasFocus(focused), enabled(true), parent(NULL)
+	void Widget::setFlag(unsigned int f)
 	{
+		flags |= static_cast<uint32_t>(f);
 	}
 
-	bool Widget::isPointInsideSelectBoundaries(int x, int y) const {
-		const Vector2<int>& trueSize = ((selectableSize.x == 0) || (selectableSize.y == 0)) ?
-			size : selectableSize; //in case the selectable size isn't set, use default size of ui object
+	void Widget::clearFlag(unsigned int f) {
+		flags & ~static_cast<uint32_t>(f);
+	}
 
-		return x >= resolvedLocation.x && x < resolvedLocation.x + size.x && y >= resolvedLocation.y && y < resolvedLocation.y + size.y;
+	void Widget::toggleFlag(unsigned int f) {
+		flags ^ static_cast<uint32_t>(f);
 	}
 
 	void Widget::setDirty() {
-		dirty = true;
+		setFlag(WidgetStateFlags::WIDGET_DIRTY);
 		if (parent) {
 			parent->setDirty();
 		}
@@ -94,21 +59,21 @@ namespace Arboria {
 		auto parentControl = parent;
 
 		if (parentControl == NULL) {
-			resolvedLocation.x = location.x;
-			resolvedLocation.y = location.y;
+			resolvedLocation.x = rect.x;
+			resolvedLocation.y = rect.y;
 		}
 		else {
-			if (location.x > parentControl->size.x || location.y > parentControl->size.y) {
+			if (rect.x > parentControl->rect.w || rect.y > parentControl->rect.h) {
 				resolvedLocation.x = -99999;
 				resolvedLocation.y = -99999;
 			}
 			else {
-				resolvedLocation.x = location.x + parentControl->resolvedLocation.x;
-				resolvedLocation.y = location.y + parentControl->resolvedLocation.y;
+				resolvedLocation.x = rect.x + parentControl->resolvedLocation.x;
+				resolvedLocation.y = rect.y + parentControl->resolvedLocation.y;
 			}
 		}
 		for (int i = 0; i < children.getLength(); i++) {
-			Widget child = children[i];
+			Widget child = *children[i];
 			child.resolveLocation();
 		}
 		if (previousLocation != resolvedLocation) {
@@ -118,22 +83,26 @@ namespace Arboria {
 
 	void Widget::render()
 	{
-		if (!visible || size.x == 0 || size.y == 0) {
+		if (!(flags & WidgetStateFlags::WIDGET_VISIBLE) || rect.w == 0 || rect.h == 0) {
 			return;
 		}
 
-		if (dirty) {
+		if (flags & WidgetStateFlags::WIDGET_DIRTY) {
 			onRender();
 			postRender();
 		}
 
-		dirty = false;
+		clearFlag(WidgetStateFlags::WIDGET_DIRTY);
+
+		renderer->draw(surface, { rect.x, rect.y }, { backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a });
+		//spriteRenderer->draw(surface, { rect.x, rect.y }, { rect.w, rect.h }, { backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a });
+		
 	}
 
 	void Widget::preRender()
 	{
 		for (int i = 0; i < children.getLength(); i++) {
-			children[i].preRender();
+			children[i]->preRender();
 		}
 		if (preRenderFunction != NULL) {
 			preRenderFunction(this);
@@ -143,7 +112,7 @@ namespace Arboria {
 	void Widget::postRender() {
 		Widget child;
 		for (int i = 0; i < children.getLength(); i++) {
-			child = children[i];
+			child = *children[i];
 			if (child.isVisible()) {
 				child.render();
 			}
@@ -154,30 +123,12 @@ namespace Arboria {
 	{
 	}
 
-	void Widget::setVisible(bool _visibility) {
-		if (_visibility != visible) {
-			visible = _visibility;
-			setDirty();
-		}
-	}
-
 	void Widget::setParent(Widget* _parent) {
 		if (_parent) {
 			_parent->children.append(this);
 			_parent->setDirty();
 		}
 		parent = _parent;
-	}
-
-	Vector2<int> Widget::getParentSize() const
-	{
-		if (parent != NULL) {
-			return parent->size;
-		}
-		else {
-			//return screen size in options
-			return Vector2<int>(800, 600);
-		}
 	}
 
 	int Widget::align(HorizontalAlignment _halign, int parentWidth, int childWidth) {
@@ -213,11 +164,11 @@ namespace Arboria {
 	}
 
 	void Widget::align(HorizontalAlignment _halign) {
-		location.x = this->align(_halign, parent->size.x, size.x);
+		rect.x = this->align(_halign, parent->rect.w, rect.w);
 	}
 
 	void Widget::align(VerticalAlignment _valign) {
-		location.y = this->align(_valign, parent->size.y, size.y);
+		rect.y = this->align(_valign, parent->rect.h, rect.h);
 	}
 
 	void Widget::align(HorizontalAlignment _halign, VerticalAlignment _valign) {
@@ -235,13 +186,16 @@ namespace Arboria {
 		return poa;
 	}
 
-	void Widget::addCallback(WidgetEventType eType, widgetCallback callback) {
-		callbacks.get(eType).append(callback);
+	void Widget::addCallback(int actionType, windowCallback callback)
+	{
+		if (actionType > 0) {
+			callbacks[actionType - 1] = callback;
+		}
 	}
 
 	void Widget::run() {
 		for (int i = 0; i < children.getLength(); i++) {
-			Widget child = children[i];
+			Widget child = *children[i];
 			child.run();
 		}
 	}

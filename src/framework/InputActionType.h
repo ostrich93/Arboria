@@ -3,9 +3,9 @@
 
 namespace Arboria{
 	typedef enum {
-		INVALID = -1,
-		CANCEL = 0,
+		INVALID = 0,
 		CONFIRM,
+		CANCEL,
 		UNIT_MENU,
 		HELP,
 		START,

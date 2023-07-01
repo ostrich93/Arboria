@@ -1,7 +1,6 @@
 #include "Label.h"
 #include "../renderer/Font.h"
-#include "../renderer/FontManager.h"
-#include "../renderer/TextRenderer.h"
+#include "../renderer/Renderer.h"
 #include "WidgetEnums.h"
 
 namespace Arboria {
@@ -9,17 +8,18 @@ namespace Arboria {
 
 	Label::~Label() = default;
 
-	void Label::eventOccured(Event* e) {
-		Widget::eventOccured(e);
+	bool Label::onEvent(AEvent* e) {
+		return Widget::onEvent(e);
 	}
 
 	void Label::onRender() {
 		Widget::onRender();
-		int xpos = align(halign, size.x, font->getSize().max_width);
-		int ypos = align(valign, size.y, font->getSize().max_height);
+		int xpos = align(halign, rect.w, font->getSize().max_width);
+		int ypos = align(valign, rect.h, font->getSize().max_height);
 
 		//go through each character in the text. Each time, 
-		textRenderer->draw(font, &location, tint, text);
+		renderer->drawText(text, font, { rect.x, rect.y }, tint);
+		//textRenderer->draw(font, new Vector2<int>(rect.x, rect.y), tint, text);
 	}
 
 	void Label::run()
@@ -33,6 +33,12 @@ namespace Arboria {
 	}
 
 	void Label::setText(String& _text) { 
+		text = _text;
+		setDirty();
+	}
+
+	void Label::setText(const char* _text)
+	{
 		text = _text;
 		setDirty();
 	}

@@ -18,9 +18,9 @@ namespace Arboria {
 		List(const std::initializer_list<T>& other);
 		~List();
 
-		void append(const T& elem);
-		void append(const List& other);
-		void insert(const T& elem, int index = 0);
+		int append(const T& elem);
+		int append(const List& other);
+		int insert(const T& elem, int index = 0);
 		bool remove(T const& elem);
 		bool removeAt(int index);
 		bool removeLast();
@@ -42,6 +42,7 @@ namespace Arboria {
 		void resize(int newSize, int newGranularity);
 		void setNum(int newNum);
 		T* getPtr();
+		const T* getPtr() const;
 		T& allocateNewElement();
 
 		//operators
@@ -125,7 +126,7 @@ namespace Arboria {
 	}
 
 	template<typename T>
-	inline void List<T>::append(const T& elem) {
+	inline int List<T>::append(const T& elem) {
 		if (!list) {
 			resize(granularity);
 		}
@@ -136,10 +137,12 @@ namespace Arboria {
 		}
 		list[num] = elem;
 		num++;
+
+		return num - 1;
 	}
 
 	template<typename T>
-	inline void List<T>::append(const List<T>& other) {
+	inline int List<T>::append(const List<T>& other) {
 		if (!list) {
 			resize(granularity);
 		}
@@ -152,10 +155,12 @@ namespace Arboria {
 		for (int i = 0; i < otherSize; i++) {
 			append(other[i]);
 		}
+
+		return num - 1;
 	}
 
 	template<typename T>
-	inline void List<T>::insert(const T& elem, int index) {
+	inline int List<T>::insert(const T& elem, int index) {
 		if (!list) {
 			resize(granularity);
 		}
@@ -175,6 +180,8 @@ namespace Arboria {
 		}
 		list[index] = elem;
 		num++;
+
+		return num - 1;
 	}
 
 	template<typename T>
@@ -260,11 +267,10 @@ namespace Arboria {
 	}
 
 	template<typename T>
-	inline void List<T>::clearFree()
-	{
-		if (list)
+	inline void List<T>::clearFree() {
+		if (list) {
 			delete[] list;
-
+		}
 		list = NULL;
 		num = 0;
 		capacity = 0;
@@ -404,6 +410,11 @@ namespace Arboria {
 
 	template<typename T>
 	inline T* List<T>::getPtr() {
+		return list;
+	}
+
+	template<typename T>
+	inline const T* List<T>::getPtr() const {
 		return list;
 	}
 

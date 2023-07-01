@@ -13,8 +13,10 @@ namespace Arboria {
 		protected:
 			virtual void configureScrollbar(Orientation _orientation);
 			Vector2<int> indexOffset = { 0, 0 };
-			int elementDisplayCount = 1;
+			uint32_t elementDisplayCount = 1;
+			uint32_t columns;
 		public:
+			ScrollAreaWidget(uint32_t columNumber, uint32_t rowNum = 1);
 			ScrollAreaWidget(int displayCount = 1, Orientation _scrollOrientation = Orientation::VERTICAL, ScrollbarViewPolicy _viewP = ScrollbarViewPolicy::AlwaysOff);
 			ScrollAreaWidget(ScrollbarWidget* widget);
 			~ScrollAreaWidget() override;
@@ -26,12 +28,13 @@ namespace Arboria {
 			void setYOffset(int y) { indexOffset.y = y; }
 
 			/*virtual void run();
-			virtual void eventOccured(Event* e) override;
+			virtual void eventOccured(SystemEvent* e) override;
 			virtual void onRender();
 			virtual void preRender();
 			virtual void postRender();*/
 
 			ScrollbarWidget* scrollbar;
+			ScrollbarWidget* horizontalScrollbar;
 			ScrollbarViewPolicy viewPolicy;
 			Orientation viewOrientation;
 	};

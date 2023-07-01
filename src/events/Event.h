@@ -6,8 +6,16 @@
 namespace Arboria {
 	enum WidgetEventType;
 
+	enum class InputDeviceType : uint8_t {
+		INPUT_DEVICE_NONE = 0,
+		INPUT_DEVICE_KEYBOARD,
+		INPUT_DEVICE_CONTROLLER_BUTTON,
+		INPUT_DEVICE_CONTROLLER_AXIS,
+		INPUT_DEVICE_MOUSE
+	};
+
 	class Widget;
-	enum EventType {
+	enum class EventType : uint32_t {
 		EVENT_UNDEFINED,
 		EVENT_WINDOW_ACTIVATE,
 		EVENT_WINDOW_DEACTIVATE,
@@ -26,87 +34,64 @@ namespace Arboria {
 		EVENT_BUTTON_PRESS,
 		EVENT_UI_INTERACTION,
 		EVENT_TEXT_INPUT,
-		EVENT_TIMER
+		EVENT_TIMER,
+		EVENT_MAX_VALUE = 0x7fffffff
 	};
 
-	typedef struct KeyboardEventData {
-		int keyCode;
-		int scanCode;
-		unsigned int mods;
-	} KeyboardEventData;
+	enum class GUIEventType : uint32_t {
+		GUI_FOCUS_LEFT = 0,
+		GUI_FOCUS_OBTAINED,
+		GUI_MENU_SELECT_CHANGE,
+		GUI_MENU_CONFIRM,
+		GUI_MENU_CANCEL
+	};
 
-	/*typedef struct MouseEventData {
-		int x;
-		int y;
-		int deltaX;
-		int deltaY;
-		int button;
-	} MouseEventData;
+	class AEvent {
+		public:
+			struct GUIEvent {
+				Widget* raisedBy;
+				GUIEventType eventType;
+			};
 
-	typedef struct ControllerEventData {
-		int id;
-		int axis;
-		int stick;
-		int hat;
-		int position;
-		int button;
-	} ControllerEventData;*/
+			struct KeyInputEvent {
+				unsigned short scancode;
+				int32_t keyCode;
+				uint16_t mods;
+				bool keyState : 1;
+			};
 
-	typedef struct GuiEventData {
-		Widget* raisedBy;
-		EventType parentEventType;
-		WidgetEventType guiEventType;
-		KeyboardEventData keyboardData;
-		//MouseEventData mouseData;
-		//ControllerEventData controllerData;
-	} GuiEventData;
+			struct JoystickEvent {
+				enum JoystickAxis {
+					AXIS_X = 0,
+					AXIS_Y,
+					AXIS_Z,
+					AXIS_R,
+					AXIS_U,
+					AXIS_V,
+					AXIS_COUNT
+				};
 
-	class Event {
-		protected:
-			Event(EventType _eventType) : eventType(_eventType), isHandled(false) {}
+				signed short axisValues[JoystickAxis::AXIS_COUNT];
+				uint8_t joystickId;
+				uint8_t button;
+				bool buttonState : 1;
+			};
+
+			struct UserEvent {
+				void* userData1;
+				void* userData2;
+			};
+
+			InputDeviceType inputDeviceType;
 			EventType eventType;
-		public:
-			Event() : eventType(EventType::EVENT_UNDEFINED), isHandled(false) {}
-			EventType getEventType() { return eventType; }
-			const EventType getEventType() const { return eventType; }
 			bool isHandled;
-			virtual ~Event() = default;
-	};
 
-	class KeyboardEvent : public Event {
-		protected:
-			KeyboardEventData data;
-			friend class Event;
-		public:
-			KeyboardEvent(EventType _eventType) : Event(_eventType) {}
-			KeyboardEvent(EventType _eventType, KeyboardEventData& _data) : Event(_eventType), data(_data) {}
-			KeyboardEventData getData() { return data; }
-			~KeyboardEvent() override = default;
-	};
-
-	class WidgetEvent : public Event {
-		protected:
-			GuiEventData data;
-			friend class Event;
-		public:
-			WidgetEvent() : Event(EVENT_UI_INTERACTION) {}
-			void setGuiEventType(WidgetEventType _type) { data.guiEventType = _type; }
-			void setRaisedBy(Widget& widget) { data.raisedBy = &widget; }
-			void setParentEventType(EventType eType) { data.parentEventType = eType; }
-			GuiEventData getData() { return data; }
-			~WidgetEvent() override = default;
-	};
-
-	class EventFactory {
-		public:
-			virtual Event* generateEvent(SDL_Event sdl_event) = 0;
-	};
-
-	class KeyboardEventFactory : public EventFactory {
-		private:
-			KeyboardEventData generateData(SDL_Event _sdlEvent);
-		public:
-			Event* generateEvent(SDL_Event sdl_event) override;
+			union {
+				struct GUIEvent guiEvent;
+				struct KeyInputEvent keyboardEvent;
+				struct JoystickEvent controllerEvent;
+				struct UserEvent userEvent;
+			};
 	};
 }
 

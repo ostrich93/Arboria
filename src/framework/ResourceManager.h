@@ -10,14 +10,15 @@ namespace Arboria {
 	class ResourceManager {
 		private:
 			HashTable<String, Texture*> imageCache;
-			Texture* loadTextureFromFile(String& filename);
-			Texture* loadTextureFromFile(const char* filename);
 		public:
 			HashTable<String, Texture*>& getImageCache();
 			const HashTable<String, Texture*>& getImageCache() const;
 			Texture* loadTexture(String& filename);
 			Texture* loadTexture(const char* filename);
 	};
+
+	static Texture* loadTextureFromFile(String& filename, GLuint _format = GL_RED);
+	static Texture* loadTextureFromFile(const char* filename, GLuint _format = GL_RED);
 }
 
 #endif

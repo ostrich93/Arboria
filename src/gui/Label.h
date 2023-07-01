@@ -14,17 +14,18 @@ namespace Arboria {
 			VerticalAlignment valign;
 			HorizontalAlignment halign;
 			bool wordWrap;
-			Vector4<size_t> tint{ 255, 255, 255, 255 };
+			Color tint{ 255, 255, 255, 255 };
 			//font stuff
 
 			Label(const String& textContent = "", Font* _font = NULL);
 			~Label() override;
-			void eventOccured(Event* e) override;
+			bool onEvent(AEvent* e) override;
 			void onRender() override;
 			void run() override;
 
 			String getText() const;
 			void setText(String& _text);
+			void setText(const char* _text);
 
 			Font* getFont() const;
 			void setFont(Font* _font);

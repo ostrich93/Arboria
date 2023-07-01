@@ -1,5 +1,6 @@
 #include "FileSystem.h"
 #include "Heap.h"
+#include "framework/Engine.h"
 #include <physfs.h>
 #include "definitions.h"
 #include "SDL2/SDL.h"
@@ -115,7 +116,7 @@ namespace Arboria {
 
 		file = PHYSFS_openRead(filename);
 		if (file == NULL) {
-			printf("Error on PHYSFS when opening %s: %d", filename, PHYSFS_getLastErrorCode());
+			Engine::printError("Error on PHYSFS when opening %s: %d", filename, PHYSFS_getLastErrorCode());
 			if (buffer) {
 				*buffer = NULL;
 			}

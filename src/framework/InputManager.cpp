@@ -1,32 +1,25 @@
 #include "InputManager.h"
+#include "../Heap.h"
 
 namespace Arboria {
 	InputManager::InputManager() {
 		head = 0;
 		tail = 0;
 		lastKeyState = NULL;
-		lastAction = -1;
-		memset(keyBindings, -1, sizeof(InputActionType) * 128);
-		keyboardEventFactory = new KeyboardEventFactory();
-		inputConfiguration = new InputConfiguration();
-		inputConfiguration->initialize();
-		for (int i = 0; i < inputConfiguration->inputBindings.getLength(); i++) {
-			keyBindings[inputConfiguration->inputBindings[i].getValue()] = inputConfiguration->inputBindings[i].getActionType();
-		}
+		//inputConfiguration = new InputConfiguration();
+		//inputConfiguration->initialize();
 		//read in configuration file
 	}
 
 	InputManager::~InputManager() {
 		clearQueue();
-		memset(keyBindings, 0, sizeof(keyBindings));
 		memset(keyStates, 0, sizeof(keyStates));
 		Mem_Free(lastKeyState);
-		Mem_Free(keyboardEventFactory);
 	}
 
 	void InputManager::translateSdlEvents() {
 		SDL_Event _se;
-		Event* e;
+		AEvent e = {};
 
 		while (SDL_PollEvent(&_se)) {
 			switch (_se.type) {
@@ -35,21 +28,41 @@ namespace Arboria {
 					break;
 				case SDL_WINDOWEVENT:
 					if (_se.window.event == SDL_WINDOWEVENT_CLOSE) {
-						_se.type = SDL_QUIT;
-						SDL_PushEvent(&_se);
+						e.eventType = EventType::EVENT_WINDOW_CLOSE;
+						this->submitEvent(&e);
 					}
 					break;
-				case SDL_KEYDOWN:
 				case SDL_KEYUP:
-					if (keyboardEventFactory == NULL) {
-						keyboardEventFactory = new KeyboardEventFactory();
+					if (_se.key.keysym.scancode < 128) {
+						e.inputDeviceType = InputDeviceType::INPUT_DEVICE_KEYBOARD;
+						e.keyboardEvent.scancode = _se.key.keysym.scancode;
+						e.keyboardEvent.keyCode = _se.key.keysym.sym;
+						e.keyboardEvent.mods = SDL_GetModState();
+						e.keyboardEvent.keyState = _se.key.state == SDL_PRESSED;
+						this->submitEvent(&e);
 					}
-
-					if (_se.key.keysym.scancode < 128 && keyBindings[_se.key.keysym.scancode] != InputActionType::INVALID) {
-						e = keyboardEventFactory->generateEvent(_se);
-						this->submitEvent(e);
-						this->updateKeyInputState(dynamic_cast<KeyboardEvent*>(e));
-					}
+					break;
+				case SDL_JOYAXISMOTION:
+					e.inputDeviceType = InputDeviceType::INPUT_DEVICE_CONTROLLER_AXIS;
+					e.controllerEvent.joystickId = _se.jaxis.which;
+					e.controllerEvent.axisValues[_se.jaxis.axis] = _se.jaxis.value;
+					e.controllerEvent.button = _se.jaxis.value;
+					e.controllerEvent.buttonState = _se.jaxis.value != 0 ? 1 : 0;
+					this->submitEvent(&e);
+					break;
+				case SDL_JOYBUTTONUP:
+					e.inputDeviceType = InputDeviceType::INPUT_DEVICE_CONTROLLER_BUTTON;
+					e.controllerEvent.joystickId = _se.jbutton.which;
+					e.controllerEvent.button = _se.jbutton.button;
+					e.controllerEvent.buttonState = _se.jbutton.state == SDL_PRESSED;
+					this->submitEvent(&e);
+					break;
+				case SDL_CONTROLLERBUTTONUP:
+					e.inputDeviceType = InputDeviceType::INPUT_DEVICE_CONTROLLER_BUTTON;
+					e.controllerEvent.joystickId = _se.cbutton.which;
+					e.controllerEvent.button = _se.cbutton.button;
+					e.controllerEvent.buttonState = _se.cbutton.state == SDL_PRESSED;
+					this->submitEvent(&e);
 					break;
 				default:
 					break;
@@ -57,17 +70,17 @@ namespace Arboria {
 		}
 	}
 
-	void InputManager::submitEvent(const Event* ev) {
+	void InputManager::submitEvent(const AEvent* ev) {
 		//if head - tail >= MAX_EVENT_COUNT, yield
 		queue[tail] = *ev;
 		tail = (tail + 1) & (MAX_EVENT_COUNT - 1); //basically a modulo
 	}
 
-	const Event& InputManager::getFront() const {
+	const AEvent& InputManager::getFront() const {
 		return queue[head];
 	}
 
-	Event& InputManager::getFront() {
+	AEvent& InputManager::getFront() {
 		return queue[head];
 	}
 
@@ -81,54 +94,5 @@ namespace Arboria {
 		memset(queue, 0, sizeof(queue));
 		head = 0;
 		tail = 0;
-	}
-
-	void InputManager::updateKeyInputState(KeyboardEvent* _keyEv)
-	{
-		InputActionType submittedAction = keyBindings[_keyEv->getData().scanCode];
-		if (_keyEv->getEventType() == EVENT_KEY_DOWN) {
-			keyStates[submittedAction].down = true;
-			keyStates[submittedAction].up = false;
-			keyStates[submittedAction].scancode = _keyEv->getData().scanCode;
-
-			if (lastKeyState != NULL) {
-				if (lastKeyState->bindValue == submittedAction && lastKeyState->down && !lastKeyState->up) {
-					keyStates[submittedAction].repeats++;
-					lastKeyState->repeats = keyStates[submittedAction].repeats;
-				}
-			}
-		}
-		else if (_keyEv->getEventType() == EVENT_KEY_UP) {
-			keyStates[submittedAction].down = true;
-			keyStates[submittedAction].up = true;
-			keyStates[submittedAction].scancode = _keyEv->getData().scanCode;
-			keyStates[submittedAction].repeats = 0;
-			if (lastKeyState == NULL) {
-				lastKeyState = new KeyState();
-			}
-			lastKeyState->down = keyStates[submittedAction].down;
-			lastKeyState->up = keyStates[submittedAction].up;
-			lastKeyState->scancode = keyStates[submittedAction].scancode;
-			lastKeyState->repeats = 0;
-		}
-	}
-
-	InputActionType InputManager::getActionTranslation(KeyboardEventData* keyboardEventData)
-	{
-		if (keyboardEventData == NULL) return InputActionType::INVALID;
-
-		if (keyboardEventData->scanCode > 127 && keyboardEventData->scanCode < 0) {
-			return InputActionType::INVALID;
-		}
-		return keyBindings[keyboardEventData->scanCode];
-	}
-
-	InputActionType InputManager::getActionTranslation(KeyboardEvent* _keyEv)
-	{
-		if (_keyEv == NULL) return InputActionType::INVALID;
-
-		if (_keyEv->getData().scanCode > 127 && _keyEv->getData().scanCode < 0)
-			return InputActionType::INVALID;
-		return keyBindings[_keyEv->getData().scanCode];
 	}
 }

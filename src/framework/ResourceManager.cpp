@@ -6,23 +6,30 @@
 #include <physfs.h>
 
 namespace Arboria {
-	Texture* ResourceManager::loadTextureFromFile(String& filename) {
+
+	Texture* loadTextureFromFile(String& filename, GLuint _format) {
 		Texture* image = new Texture(filename);
 		int width, height, nChannels;
 		String fullfilepath = PHYSFS_getRealDir(filename.c_str()) + filename;
 		unsigned char* data = stbi_load(PHYSFS_getRealDir(fullfilepath.c_str()), &width, &height, &nChannels, 0);
-		image->generateTexture(width, height, data);
-		stbi_image_free(data);
+		image->intializePixelData(width, height, _format);
+		if (data != NULL && image->getHeight() != 0 && image->getWidth() != 0) {
+			memcpy(image->getPixelData(), data, width * height);
+			stbi_image_free(data);
+		}
 		return image;
 	}
 
-	Texture* ResourceManager::loadTextureFromFile(const char* filename) {
+	Texture* loadTextureFromFile(const char* filename, GLuint _format) {
 		Texture* image = new Texture(filename);
 		int width, height, nChannels;
 		String fullfilepath = String::join({ PHYSFS_getRealDir(filename), filename }, "");
-		unsigned char* data = stbi_load(fullfilepath, &width, &height, &nChannels, 0);
-		image->generateTexture(width, height, data);
-		stbi_image_free(data);
+		unsigned char* data = stbi_load(fullfilepath.c_str(), &width, &height, &nChannels, 0);
+		image->intializePixelData(width, height, _format);
+		if (data != NULL && image->getHeight() != 0 && image->getWidth() != 0) {
+			memcpy(image->getPixelData(), data, width * height);
+			stbi_image_free(data);
+		}
 		return image;
 	}
 
