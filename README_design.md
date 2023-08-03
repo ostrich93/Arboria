@@ -38,6 +38,11 @@ The flags can also potentially be used to prioritize what widgets should be rend
 
 ## Render System
 
+The Arboria Engine currently has a singular Renderer class capable of both singular rendering and batch rendering, the latter of which is used for drawing text and primitive shapes (e.g rectangles, lines, etc.) with no image file data. The engine (and by extension the renderer) currently runs on a single thread but should a multithreaded approach later prove necessary,
+it might be best to do so through the use of worker threads and parallel jobs.
+
+The renderer is a work in progress and currently nonfunctioning. The reason why I am able to know that the ui interaction and input systems work despite this is because the inputs match the expected results (e.g moving to the quit button in the main menu and pressing enter exits the program, as expected).
+
 ## CVariable System
 
 **Console Variables** (**CVars**) are mainly used to hold variables that can be accessed and changed from a console or that can be read from or be written to configuration files. They can also be used to hold global variables, such as default values for configurable values. Their presence can aid significantly in the debugging process, and they are the backbone of the configuration
