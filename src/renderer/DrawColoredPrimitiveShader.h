@@ -27,7 +27,7 @@ namespace Arboria {
 			DrawColoredPrimitiveShader();
 			~DrawColoredPrimitiveShader() override;
 			void drawLineInstances(const List<DrawColoredPrimitiveCommand>& instances);
-			void drawRectInstances(const List<DrawColoredPrimitiveCommand>& instances);
+			//void drawRectInstances(const List<DrawColoredPrimitiveCommand>& instances);
 		private:
 			void getLocations();
 	};

@@ -23,11 +23,13 @@ namespace Arboria {
 		canvas.setFlag(WidgetStateFlags::WIDGET_CONTAINER);
 		canvas.enabled = true;
 
+		Texture* bTexture = resourceManager->loadTexture("Button01.png");
 		ListBoxWidget* optionsList = canvas.createChild<ListBoxWidget>(4, 1);
 		optionsList->name = "MAIN_MENU_SELECT";
 		optionsList->rect = { 320, 400, 200, 180 };
 		optionsList->itemSize = 40;
 		optionsList->itemSpacing = 5;
+		optionsList->setSurface(bTexture);
 		optionsList->setBackgroundColor(*new Color( 20, 45, 210, 192));
 		optionsList->setFlag(WidgetStateFlags::WIDGET_VISIBLE);
 		optionsList->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
@@ -37,7 +39,6 @@ namespace Arboria {
 		
 		Font* font = fontManager->getFont("logotypegothicregular", "", 24);
 
-		Texture* bTexture = resourceManager->loadTexture("Button01.png");
 		Widget* newGameButton = new Widget();
 		newGameButton->rect = { 0, 0, 200, 40 };
 		newGameButton->setSurface(bTexture);

@@ -63,7 +63,7 @@ namespace Arboria {
 			return false;
 
 		if (e.inputDeviceType == InputDeviceType::INPUT_DEVICE_KEYBOARD) {
-			return (e.keyboardEvent.scancode == key && e.keyboardEvent.mods == mods);
+			return (e.keyboardEvent.scancode == key && e.keyboardEvent.mods == mods | KMOD_NUM);
 		}
 		else if (e.inputDeviceType == InputDeviceType::INPUT_DEVICE_CONTROLLER_BUTTON) {
 			return (e.controllerEvent.button == key);

@@ -77,18 +77,24 @@ namespace Arboria {
 		surfaceShader = new DrawSurfaceShader(200);
 		textShader = new DrawTextShader();
 		coloredPrimitiveShader = new DrawColoredPrimitiveShader();
+		glViewport(0, 0, renderDevice->getWindowWidth(), renderDevice->getWindowHeight());
+		glEnable(GL_BLEND);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_DST_ALPHA);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	}
 
 	void Renderer::draw(Texture* _texture, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale)
 	{
-		DrawSurfaceCommand& drawCmd = surfaceCommandBuffer.allocateNewElement();
+		Vector2<GLfloat> texSize = { _texture->getWidth(), _texture->getHeight() };
+		surfaceShader->drawTexture(_texture, _screenPosition, texSize, texSize, { 0,0 }, 0, _color);
+		/*DrawSurfaceCommand& drawCmd = surfaceCommandBuffer.allocateNewElement();
 		drawCmd.screenSize = { renderDevice->getWindowWidth(), renderDevice->getWindowHeight() };
 		drawCmd.screenPosition = _screenPosition;
 		drawCmd.texturePosition = { 0, 0 };
 		drawCmd.textureSize = { _texture->getWidth(), _texture->getHeight() };
 		drawCmd.boundaries = { 0, 0, _texture->getWidth(), _texture->getHeight() };
 		drawCmd.color = { _color.r, _color.g, _color.b, _color.a };
-		drawCmd.scaleValue = _scale;
+		drawCmd.scaleValue = _scale;*/
 	}
 
 	void Renderer::drawText(const char* text, Font* font, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale)
@@ -120,7 +126,7 @@ namespace Arboria {
 		glDepthFunc(GL_LESS);
 
 		flushLines();
-		flushRectangles();
+		//flushRectangles();
 		flushSurfaceCommands();
 		flushText();
 	}
@@ -153,11 +159,11 @@ namespace Arboria {
 		lineCommandBuffers.clearFree();
 	}
 
-	void Renderer::flushRectangles() {
+	/*void Renderer::flushRectangles() {
 		if (!rectCommandBuffers.getLength()) return;
 
 		coloredPrimitiveShader->use();
 		coloredPrimitiveShader->drawRectInstances(rectCommandBuffers);
 		rectCommandBuffers.clearFree();
-	}
+	}*/
 }

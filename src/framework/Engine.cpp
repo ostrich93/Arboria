@@ -145,11 +145,7 @@ namespace Arboria {
 		}
 
 		inputManager->clearQueue();
-		if (!screenManager->isEmpty()) {
-			screenManager->getCurrent()->draw();
-			//flush renderer
-			//start new frame in renderer
-		}
+		
 	}
 
 	void Engine::shutdown()
