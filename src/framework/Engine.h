@@ -2,6 +2,7 @@
 #define ENGINE_H
 
 #include "RenderDevice.h"
+#include <memory>
 
 namespace Arboria {
 	class ScreenManager;
@@ -12,12 +13,16 @@ namespace Arboria {
 	class InputManager;
 	class ActionManager;
 	class Renderer;
+
+	struct IDrawEngine;
+
 	class Engine {
 		public:
 			Engine();
 			~Engine();
 			void init(); //used to initialize all the systems and managers necessary to run the engine
 			void run(); //this is the core loop of the game engine.
+			IDrawEngine* getDrawEngine();
 			void processEvents();
 			void shutdown();
 			bool isQuit;
@@ -26,7 +31,13 @@ namespace Arboria {
 			static void printLog(const char* log, ...);
 			static void printError(const char* error, ...);
 			static void fatalError(const char* error, ...);
+
+			static Engine* instance;
+		private:
+			std::unique_ptr<IDrawEngine> _drawEngine;
 	};
+
+	Engine* getEngineContext();
 
 	extern InputManager* inputManager;
 	extern ScreenManager* screenManager;

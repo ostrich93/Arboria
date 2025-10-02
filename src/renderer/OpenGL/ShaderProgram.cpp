@@ -1,7 +1,7 @@
 #include "ShaderProgram.h"
-#include "../framework/String.h"
-#include "../definitions.h"
-#include "../FileSystem.h"
+#include "../../framework/Engine.h"
+#include "../../definitions.h"
+#include "../../FileSystem.h"
 #include <physfs.h>
 #include <iostream>
 
@@ -54,7 +54,7 @@ namespace Arboria {
 		glDeleteShader(id);
 	}
 
-	ShaderProgram::ShaderProgram(const String& _name) : name(_name), programId(0), currentBuffer(0) {
+	ShaderProgram::ShaderProgram(const String& _name) : name(_name), programId(0) {
 		vertexShader = new Shader(_name.c_str(), GL_VERTEX_SHADER);
 		fragmentShader = new Shader(_name.c_str(), GL_FRAGMENT_SHADER);
 		initialize();
@@ -167,16 +167,24 @@ namespace Arboria {
 	}
 
 	GLuint ShaderProgram::getAttributeLocation(const char* name) {
-		return glGetAttribLocation(programId, name);
+		auto res = glGetAttribLocation(programId, name);
+		if (res == -1)
+			Engine::printError("Atrribute \"%s\" not found in shader program", name);
+		return res;
 	}
 
 	GLuint ShaderProgram::getUniformLocation(const char* name) {
-		return glGetUniformLocation(programId, name);
+		auto res = glGetUniformLocation(programId, name);
+		if (res == -1)
+			Engine::printError("Uniform \"%s\" not found in shader program", name);
+		return res;
 	}
 
-	ShaderProgram& ShaderProgram::use() {
-		glUseProgram(programId);
-		return *this;
+	void ShaderProgram::use() {
+		if (OpenGLState::currentProgram != programId) {
+			OpenGLState::currentProgram = programId;
+			glUseProgram(programId);
+		}
 	}
 
 	void ShaderProgram::setFloat(const char* name, GLfloat value) {

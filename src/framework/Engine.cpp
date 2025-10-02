@@ -8,6 +8,7 @@
 #include "../renderer/Texture.h"
 #include "../globals.h"
 #include "../FileSystem.h"
+#include "Scene.h"
 #include <physfs.h>
 
 namespace Arboria {

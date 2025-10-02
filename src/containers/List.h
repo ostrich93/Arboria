@@ -3,7 +3,6 @@
 
 #include "../Heap.h"
 #include "../utils/math.h"
-#include <new>
 #include <stdlib.h>
 #include <assert.h>
 #include <initializer_list>
@@ -72,7 +71,8 @@ namespace Arboria {
 
 	template<typename T>
 	inline List<T>::List<T>(const std::initializer_list<T>& other) : List() {
-		resize(other.size());
+		setNum(other.size());
+
 		auto x = other.begin();
 		while (x != other.end()) {
 			append(*x++);
@@ -117,11 +117,11 @@ namespace Arboria {
 			//get the min between the oldSize and newSize, then copy the first min bytes from the oldptr to the newptr
 			int carryOver = Math::iMin(oldSize, newSize);
 			for (int i = 0; i < carryOver; ++i) {
-				newPtr[i] = oldPtr[i];
+				//newPtr[i] = oldPtr[i];
+				newPtr[i] = std::move(oldPtr[i]);
 			}
 		}
-		if (oldPtr)
-			deleteListContent<T>(oldPtr, oldSize);
+		deleteListContent<T>(ptr, oldSize);
 		return newPtr;
 	}
 
@@ -269,18 +269,20 @@ namespace Arboria {
 	template<typename T>
 	inline void List<T>::clearFree() {
 		if (list) {
-			delete[] list;
+			deleteListContent(list, size);
 		}
 		list = NULL;
 		num = 0;
 		capacity = 0;
 	}
 
+	//Calls destructor for elements in list. ONLY WORKS ON LISTS CONTAINING POINTERS TO OBJECTS
 	template<typename T>
 	inline void List<T>::deleteContents(bool clear) {
 		int i;
 		for (i = 0; i < num; i++) {
-			delete list[i];
+			if (list[i])
+				delete list[i];
 			list[i] = NULL;
 		}
 
@@ -339,10 +341,10 @@ namespace Arboria {
 		return num * sizeof(*list);
 	}
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
 	template<typename T>
 	inline void List<T>::resize(int newSize) {
-		T* temp;
-
 		assert(newSize >= 0);
 
 		if (newSize <= 0) {
@@ -353,25 +355,17 @@ namespace Arboria {
 		if (newSize == capacity)
 			return;
 
-		temp = list;
+		list = (T*)resizeList(list, capacity, newSize, false);
 		capacity = newSize;
 		if (capacity < num)
 			num = capacity;
 
-		list = new T[capacity];
-		
-		for (int i = 0; i < num; ++i) {
-			list[i] = temp[i];
-		}
-
-		if (temp)
-			delete[] temp;
-
 	}
+#pragma GCC diagnostic pop
+
 	template<typename T>
 	inline void List<T>::resize(int newSize, int newGranularity)
 	{
-		T* temp;
 		assert(newSize >= 0);
 		assert(newGranularity > 0);
 		granularity = newGranularity;
@@ -383,21 +377,11 @@ namespace Arboria {
 
 		if (newSize == capacity)
 			return;
-
-		temp = list;
+		
+		list = (T*)resizeList(list, capacity, newSize, false);
 		capacity = newSize;
 		if (capacity < num)
 			num = capacity;
-
-		list = new T[capacity];
-
-		for (int i = 0; i < num; ++i) {
-			list[i] = temp[i];
-		}
-
-		if (temp)
-			delete[] temp;
-
 	}
 
 	template<typename T>
@@ -439,7 +423,7 @@ namespace Arboria {
 		granularity = other.granularity;
 
 		if (capacity) {
-			list = new T[capacity];
+			list = (T*)generateNewList<T>(capacity, false);
 			for (int i = 0; i < capacity; i++) {
 				list[i] = other.list[i];
 			}

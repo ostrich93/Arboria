@@ -3,6 +3,7 @@
 
 #include "Engine.h"
 #include "../events/Event.h"
+#include "../containers/RingBuffer.h"
 
 const int MAX_EVENT_COUNT = 64;
 
@@ -20,14 +21,11 @@ namespace Arboria {
 	class InputManager {
 		private:
 			//InputConfiguration* inputConfiguration;
-			AEvent queue[64];
-			unsigned int head;
-			unsigned int tail;
+			RingBuffer<AEvent, 64> ringBuffer;
 		protected:
 			//InputActionType keyBindings[128]; //the index of each array represents a scancode, with unbound codes having a value of -1.
 			uint8_t keysPressed[256];
 			uint32_t lastKeyPressed;
-			const uint8_t* kStates;
 			KeyState keyStates[128];
 			KeyState* lastKeyState;
 		public:
@@ -38,7 +36,7 @@ namespace Arboria {
 			const AEvent& getFront() const;
 			AEvent& getFront();
 			void popFront();
-			bool isQueueEmpty() const { return head == tail; }
+			bool isQueueEmpty() const { return ringBuffer.isEmpty(); }
 			void clearQueue();
 			//void updateKeyInputState(AEvent* _keyEv);
 	};

@@ -53,6 +53,7 @@ find_package(Freetype REQUIRED)
 Find_Package(SDL2 CONFIG REQUIRED)
 target_compile_definitions(SDL2::SDL2 INTERFACE SDL_MAIN_HANDLED)
 Find_Package(SDL2_image REQUIRED)
+Find_package(SDL2_ttf REQUIRED)
 Find_Package(GLEW REQUIRED)
 Find_Package(GLM REQUIRED)
 Find_Package(HarfBuzz REQUIRED)
@@ -75,7 +76,7 @@ set (ARBORIA_SOURCE_FILES
 		./src/framework/String.cpp
 		./src/framework/SystemCVars.cpp
 		./src/framework/Token.cpp
-		./src/framework/UIContext.cpp
+		./src/framework/Scene.cpp
 		./src/game/scenes/MainMenu.cpp
 		./src/game/scenes/OptionsMenu.cpp
 		./src/gui/Label.cpp
@@ -89,9 +90,10 @@ set (ARBORIA_SOURCE_FILES
 		./src/renderer/DrawTextShader.cpp
 		./src/renderer/Font.cpp
 		./src/renderer/Renderer.cpp
-		./src/renderer/ShaderProgram.cpp
 		./src/renderer/Texture.cpp
-		#./src/renderer/TextRenderer.cpp
+		./src/renderer/OpenGL/ShaderProgram.cpp
+		./src/renderer/OpenGL/FrameBuffer.cpp
+		./src/renderer/OpenGL/OpenGLApi.cpp
 		./src/utils/Color.cpp
 		./src/utils/Rectangle.cpp
 		./src/main.cpp
@@ -104,6 +106,7 @@ set (ARBORIA_HEADER_FILES
 		./src/containers/HashIndex.h
 		./src/containers/HashTable.h
 		./src/containers/List.h
+		./src/containers/RingBuffer.h
 		./src/events/Event.h
 		./src/framework/ActionManager.h
 		./src/framework/Camera.h
@@ -122,7 +125,8 @@ set (ARBORIA_HEADER_FILES
 		./src/framework/String.h
 		./src/framework/SystemCVars.h
 		./src/framework/Token.h
-		./src/framework/UIContext.h
+		./src/framework/Scene.h
+		./src/framework/Timer.h
 		./src/game/scenes/MainMenu.h
 		./src/game/scenes/OptionsMenu.h
 		./src/gui/Label.h
@@ -132,23 +136,27 @@ set (ARBORIA_HEADER_FILES
 		./src/gui/SliderWidget.h
 		./src/gui/Widget.h
 		./src/gui/WidgetEnums.h
+		./src/renderer/Drawing.h
+		./src/renderer/IDrawContext.h
+		./src/renderer/IDrawEngine.h
 		./src/renderer/DrawColoredPrimitiveShader.h
 		./src/renderer/DrawSurfaceShader.h
 		./src/renderer/DrawTextShader.h
 		./src/renderer/Font.h
 		./src/renderer/Renderer.h
-		./src/renderer/ShaderProgram.h
+		./src/renderer/OpenGL/ShaderProgram.h
+		./src/renderer/OpenGL/SwapFramebuffer.h
 		./src/renderer/stb_image.h
 		./src/renderer/Texture.h
-		#./src/renderer/TextRenderer.h
+		./src/renderer/OpenGL/FrameBuffer.h
+		./src/renderer/OpenGL/OpenGLApi.h
 		./src/utils/check_static_cast.h
 		./src/utils/Color.h
 		./src/utils/combine_hash.h
 		./src/utils/math.h
 		./src/utils/Rectangle.h
 		./src/utils/Vector.h
-)
-
+ )
 #set(ARBORIA_LIST_SOURCE_FILES
 #	./src/Heap.cpp
 #	./src/main.cpp

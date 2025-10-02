@@ -12,6 +12,7 @@
 namespace Arboria {
 	class Texture;
 	typedef void (*windowCallback)(Widget*);
+	using WidgetIndex = uint16_t;
 	
 	class Widget {
 	private:
@@ -59,8 +60,8 @@ namespace Arboria {
 		float getMaxScaleY() const { return maxScale.y; }
 		void setMaxScaleY(float y) { maxScale.y = y; }
 		Vector2<float> getMaxScale() const { return maxScale; }
-		bool isDirty() const { return flags & WidgetStateFlags::WIDGET_DIRTY != 0; }
-		bool isVisible() const { return flags & WidgetStateFlags::WIDGET_VISIBLE != 0; }
+		bool isDirty() const { return (flags & WidgetStateFlags::WIDGET_DIRTY) != 0; }
+		bool isVisible() const { return (flags & WidgetStateFlags::WIDGET_VISIBLE) != 0; }
 		void setParent(Widget* _parent);
 		Widget* getParent() const { return parent; }
 		Texture* getSurface() const { return surface; }

@@ -7,10 +7,11 @@
 namespace Arboria {
 	class Camera {
 		public:
-			Camera();
+			Camera(Vector2<size_t> viewportSize);
+			Camera(Vector2<size_t> viewportSize, Vector2<float> cameraPosition, float zoom = 1.0f, float maxZoomOut = 0.005f, float defaultZoomRotation = 1.0f);
 			Camera(float x, float y, float bottom, float top);
-
-			inline void setPosition(Vector2<float> position) { cameraPosition = position; recalculateViewMatrix(); }
+			~Camera() = default;
+			
 			const Vector2<float>& getPosition() const { return cameraPosition; }
 
 			const glm::mat4& getViewMatrix() const { return viewMatrix; }
@@ -20,7 +21,14 @@ namespace Arboria {
 		protected:
 			void recalculateViewMatrix();
 		private:
+			Vector2<size_t> viewportSize;
 			Vector2<float> cameraPosition;
+			float zoom;
+			float maxZoomOut;
+			float defaultZoomRatio;
+			bool zoomChanged;
+			bool viewPortChanged;
+			bool moved;
 			glm::mat4 viewMatrix;
 			glm::mat4 viewProjection;
 	};

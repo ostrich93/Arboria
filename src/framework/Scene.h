@@ -1,14 +1,14 @@
-#ifndef UICONTEXT_H
-#define UICONTEXT_H
+#ifndef SCENE_H
+#define SCENE_H
 
 #include <typeinfo>
 
 namespace Arboria {
 	class AEvent;
-	class UIContext {
+	class Scene {
 		public:
-			UIContext() {}
-			virtual ~UIContext() = default;
+			Scene() {}
+			virtual ~Scene() = default;
 			virtual void draw() = 0;
 			virtual void enter() = 0;
 			virtual bool onEvent(AEvent* ev) = 0;
@@ -17,13 +17,13 @@ namespace Arboria {
 			virtual void pause() = 0;
 			virtual void resume() = 0;
 			virtual void run() = 0;
-			bool operator==(const UIContext& other) const {
+			bool operator==(const Scene& other) const {
 				if (typeid(*this) != typeid(other))
 					return false;
 				return compare(other);
 			}
 		protected:
-			virtual bool compare(const UIContext& other) const {
+			virtual bool compare(const Scene& other) const {
 				return this == &other;
 			}
 	};
@@ -38,9 +38,9 @@ namespace Arboria {
 			QUIT
 		};
 		ScreenCommandType commandType;
-		UIContext* nextScene;
+		Scene* nextScene;
 		ScreenCommand() : commandType(ScreenCommandType::CONTINUE), nextScene(NULL){}
-		ScreenCommand(ScreenCommandType _commandType, UIContext* next);
+		ScreenCommand(ScreenCommandType _commandType, Scene* next);
 	};
 
 }

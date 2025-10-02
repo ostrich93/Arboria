@@ -1,9 +1,10 @@
 #ifndef FRAMEBUFFER_H
 #define FRAMEBUFFER_H
 
-#include "Texture.h"
+#include "./OpenGLApi.h"
+#include "../Drawing.h"
 
-//struct SDL_Window;
+struct SDL_Window;
 
 namespace Arboria {
 	class FrameBuffer {
@@ -29,12 +30,16 @@ namespace Arboria {
 				return size;
 			}
 			GLuint getTexture() const { return textureId; }
+			GLuint getFBO() const { return fboId; }
 			void bind();
 			void bindDraw();
 			void bindRead();
+			void getPixels(RenderTarget& rt) const;
+
 			void blitPixels(FrameBuffer& src, GLenum filter);
 			void swapColorBuffer(FrameBuffer& other);
 			void copyBuffer(FrameBuffer& src, GLenum filter);
+			void setPixels(const RenderTarget& rt);
 	};
 }
 

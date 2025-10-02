@@ -1,3 +1,4 @@
+#include <SDL_video.h>
 #include "FrameBuffer.h"
 
 namespace Arboria {
@@ -18,8 +19,8 @@ namespace Arboria {
 		size.y = height;
 
 		glGenTextures(1, &textureId);
-		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, textureId);
+		//glActiveTexture(GL_TEXTURE3);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -27,10 +28,19 @@ namespace Arboria {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 		glGenFramebuffers(1, &fboId);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
-		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
-		if (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		glBindFramebuffer(GL_FRAMEBUFFER, fboId);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 			Engine::printError("FrameBuffer constuctor error: FrameBuffer for surface could not be generated.\n");
+
+		const GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
+		glDrawBuffers(1, drawBuffers);
+
+		glClearColor(0, 0, 0, 0);
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	FrameBuffer::FrameBuffer(Vector2<unsigned int> _size)
@@ -38,7 +48,7 @@ namespace Arboria {
 		size = _size;
 
 		glGenTextures(1, &textureId);
-		glActiveTexture(GL_TEXTURE3);
+		//glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, textureId);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -47,10 +57,19 @@ namespace Arboria {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 		glGenFramebuffers(1, &fboId);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
-		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
-		if (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		glBindFramebuffer(GL_FRAMEBUFFER, fboId);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 			Engine::printError("FrameBuffer constuctor error: FrameBuffer for surface could not be generated.\n");
+
+		const GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
+		glDrawBuffers(1, drawBuffers);
+
+		glClearColor(0, 0, 0, 0);
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	FrameBuffer::~FrameBuffer()
@@ -97,5 +116,9 @@ namespace Arboria {
 		src.bindRead();
 		glBlitFramebuffer(0, 0, src.getWidth(), src.getHeight(), 0, 0, getWidth(), getHeight(), GL_COLOR_BUFFER_BIT, filter);
 		bind();
+	}
+
+	void FrameBuffer::getPixels(RenderTarget& rt) const {
+		
 	}
 }

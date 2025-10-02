@@ -3,8 +3,9 @@
 
 namespace Arboria {
 	InputManager::InputManager() {
-		head = 0;
-		tail = 0;
+		memset(keysPressed, 0, sizeof(keysPressed));
+		memset(keyStates, 0, sizeof(keyStates));
+		lastKeyPressed = 0;
 		lastKeyState = NULL;
 		//inputConfiguration = new InputConfiguration();
 		//inputConfiguration->initialize();
@@ -72,27 +73,23 @@ namespace Arboria {
 
 	void InputManager::submitEvent(const AEvent* ev) {
 		//if head - tail >= MAX_EVENT_COUNT, yield
-		queue[tail] = *ev;
-		tail = (tail + 1) & (MAX_EVENT_COUNT - 1); //basically a modulo
+		ringBuffer.pushBack(*ev);
 	}
 
 	const AEvent& InputManager::getFront() const {
-		return queue[head];
+		return ringBuffer.getFront();
 	}
 
 	AEvent& InputManager::getFront() {
-		return queue[head];
+		return ringBuffer.getFront();
 	}
 
 	void InputManager::popFront() {
-		if (head == tail) return;
-		head = (head + 1) & (MAX_EVENT_COUNT - 1);
+		ringBuffer.popFront();
 	}
 
 	void InputManager::clearQueue()
 	{
-		memset(queue, 0, sizeof(queue));
-		head = 0;
-		tail = 0;
+		ringBuffer.clear();
 	}
 }

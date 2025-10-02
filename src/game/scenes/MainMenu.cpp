@@ -9,7 +9,7 @@
 #include "../../gui/Label.h"
 
 namespace Arboria {
-	MainMenuScreen::MainMenuScreen() : UIContext()
+	MainMenuScreen::MainMenuScreen() : Scene()
 	{
 		/*
 			1. build ListBox MAIN_MENU_SELECT, 4 options, set labels as "NEW_GAME", "LOAD_GAME", "OPTIONS", and "QUIT"

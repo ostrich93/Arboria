@@ -1,9 +1,9 @@
 #ifndef SHADER_PROGRAM_H
 #define SHADER_PROGRAM_H
 
-#include "../framework/Engine.h"
-#include "../framework/String.h"
-#include "../utils/Vector.h"
+#include "OpenGLApi.h"
+#include "../../framework/String.h"
+#include "../../utils/Vector.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -31,7 +31,6 @@ namespace Arboria {
 			GLuint programId;
 			Shader* vertexShader;
 			Shader* fragmentShader;
-			GLuint currentBuffer;
 		public:
 			GLuint usedBuffers = 0;
 			ShaderProgram(const String& _name);
@@ -54,7 +53,7 @@ namespace Arboria {
 			GLuint getUniformLocation(const char* name);
 			GLuint getProgramId() { return programId; }
 			const GLuint getProgramId() const { return programId; }
-			ShaderProgram& use();
+			void use();
 
 			void setFloat(const char* name, GLfloat value);
 			void setInteger(const char* name, GLint value);

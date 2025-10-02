@@ -1,5 +1,5 @@
 #include "ScreenManager.h"
-#include "UIContext.h"
+#include "Scene.h"
 
 namespace Arboria {
     void ScreenManager::clear() {
@@ -8,7 +8,7 @@ namespace Arboria {
         }
     }
 
-    UIContext* ScreenManager::getCurrent() {
+    Scene* ScreenManager::getCurrent() {
         if (isEmpty()) {
             return NULL;
         }
@@ -16,7 +16,7 @@ namespace Arboria {
         return stack[stack.getLength() - 1];
     }
 
-    UIContext* ScreenManager::getPrevious(UIContext& from) {
+    Scene* ScreenManager::getPrevious(Scene& from) {
         int idx = stack.findIndex(&from);
         if (idx <= 0) {
             return NULL;
@@ -30,8 +30,8 @@ namespace Arboria {
         return stack.getLength() == 0;
     }
 
-    UIContext* ScreenManager::pop() {
-        UIContext* retVal = getCurrent();
+    Scene* ScreenManager::pop() {
+        Scene* retVal = getCurrent();
         if (retVal) {
             retVal->leave();
             stack.removeLast();
@@ -44,7 +44,7 @@ namespace Arboria {
         return retVal;
     }
 
-    void ScreenManager::push(UIContext& scene) {
+    void ScreenManager::push(Scene& scene) {
         if (getCurrent()) {
             getCurrent()->pause();
         }
@@ -52,7 +52,7 @@ namespace Arboria {
         stack.append(&scene);
         scene.enter();
     }
-    void ScreenManager::push(UIContext* screen)
+    void ScreenManager::push(Scene* screen)
     {
         if (!screen)
             return; //throw error

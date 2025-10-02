@@ -1,11 +1,11 @@
 #ifndef OPTIONS_MENU_H
 #define OPTIONS_MENU_H
 
-#include "../../framework/UIContext.h"
+#include "../../framework/Scene.h"
 #include "../../gui/Widget.h"
 
 namespace Arboria {
-	class OptionsMenu : public UIContext {
+	class OptionsMenu : public Scene {
 		private:
 			Widget container;
 			Widget* currentWindow;

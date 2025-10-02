@@ -2,20 +2,32 @@
 #define CONFIG_OPTIONS_H
 
 namespace Arboria {
-	class ConfigOptions {
-		private:
-			unsigned int screenWidth;
-			unsigned int screenHeight;
-			unsigned char targetFPS;
-		public:
-			ConfigOptions() : screenWidth(800), screenHeight(640), targetFPS(60) {}
-			unsigned int getScreenWidth const() { return screenWidth; }
-			void setScreenWidth(unsigned int _windowWidth) { screenWidth = _windowWidth; }
-			unsigned int getScreenHeight const() { return screenHeight; }
-			void setScreenHeight(unsigned int _windowHeight) { screenHeight = _windowHeight; }
-			unsigned char getTargetFPS() { return targetFPS; }
-			void setTargetFPS(unsigned char target) { targetFPS = target; }
+	struct ConfigOptions {
+		ConfigOptions() = default;
+		//make sure there are no copies
+		ConfigOptions(const ConfigOptions&) = delete;
+
+		unsigned int defaultDisplay;
+		unsigned int screenWidth;
+		unsigned int screenHeight;
+		unsigned int fullscreenMode;
+		unsigned int fullscreenWidth;
+		unsigned int fullscreenHeight;
+		int drawEngine;
+		float windowScale;
+		float gamma;
+		float brightness;
+		float musicVolume;
+		float soundVolume;
+		unsigned char targetFPS;
+		bool useVSync;
+		bool showFPS;
+		bool minimizeFullscreenOnFocusLoss;
 	};
+
+	ConfigOptions& getConfig();
+	bool setDefaults();
+	bool saveConfig();
 }
 
 #endif
