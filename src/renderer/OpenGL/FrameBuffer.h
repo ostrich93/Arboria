@@ -31,9 +31,9 @@ namespace Arboria {
 			}
 			GLuint getTexture() const { return textureId; }
 			GLuint getFBO() const { return fboId; }
-			void bind();
-			void bindDraw();
-			void bindRead();
+			void bind() const;
+			void bindDraw() const;
+			void bindRead() const;
 			void getPixels(RenderTarget& rt) const;
 
 			void blitPixels(FrameBuffer& src, GLenum filter);

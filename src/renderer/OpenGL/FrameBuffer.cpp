@@ -80,16 +80,17 @@ namespace Arboria {
 		}
 	}
 
-	void FrameBuffer::bind()
+	void FrameBuffer::bind() const
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, fboId);
+		glViewport(0, 0, static_cast<size_t>(size.x), static_cast<size_t>(size.y));
 	}
 
-	void FrameBuffer::bindDraw() {
+	void FrameBuffer::bindDraw() const {
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
 	}
 
-	void FrameBuffer::bindRead() {
+	void FrameBuffer::bindRead() const {
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, fboId);
 	}
 
