@@ -17,13 +17,37 @@ namespace Arboria {
 		float v1;
 	};
 
-	
+	class RGBAImage;
+	class PaletteImage;
+	class TextureCache;
 	class Font;
+	class Palette;
+	class Surface;
+
 	class Renderer {
 		private:
+			unsigned int spriteBufferSize = 16384;
+			unsigned int spriteBufferCount = 40;
+			unsigned int spritesheetPageSize = 2048;
+			Vector2<int> maxSpritePackSize = { 256, 256 };
 			DrawSurfaceShader* surfaceShader;
 			DrawTextShader* textShader;
 			DrawColoredPrimitiveShader* coloredPrimitiveShader;
+			Palette* current_palette = nullptr;
+
+			enum RendererState {
+				Idle,
+				BatchingSprites
+			};
+
+			Surface* default_surface;
+			Surface* current_surface;
+
+			RendererState state;
+
+			uint32_t _drawCount = 0;
+			uint32_t _ttfGlId = 0;
+
 			List<DrawSurfaceCommand> surfaceCommandBuffer;
 			List<DrawTextBatchCommand> textCommandBuffers;
 			List<DrawColoredPrimitiveCommand> lineCommandBuffers;
@@ -32,7 +56,7 @@ namespace Arboria {
 			Renderer(): surfaceShader(NULL), textShader(NULL), coloredPrimitiveShader(NULL){}
 			~Renderer();
 			void initialize();
-			void draw(Texture* _texture, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale = 1.0f);
+			void draw(Image* _texture, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale = 1.0f);
 			//void draw(TextureAtlas* _textureAtlas, Vector2<GLfloat> _screenPosition, Color _color, GLint _clipIndex = 0, GLfloat _scale = 1.0f);
 			void drawText(const char* text, Font* font, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale = 1.0f);
 			void drawLine(Vector2<GLfloat> _positions[2], Color _colors[2]);
@@ -58,7 +82,7 @@ namespace Arboria {
 
 		~SpriteRenderer();
 
-		void draw(Texture* texture, Vector2<int> position, Vector2<int> size, Vector4<float> tint, float rotate = 0);
+		void draw(Image* texture, Vector2<int> position, Vector2<int> size, Vector4<float> tint, float rotate = 0);
 	};
 }
 

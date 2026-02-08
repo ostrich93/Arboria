@@ -1,51 +1,20 @@
 #include "Texture.h"
+#include "Palette.h"
+#include "../utils/math.h"
 
 namespace Arboria {
-	Texture::Texture(const char* _textureName, size_t _rowAlign) : textureName(_textureName), textureId(0), format(NULL), height(0), width(0), pitch(0), pixelData(NULL), rowAlignment(_rowAlign), refCount(0) {}
-	Texture::~Texture() = default;
+	Image::Image(Vector2<unsigned int> size, size_t _rowAlign) : format(NULL), internalFormat(NULL), imageSize(size), rowAlignment(_rowAlign), refCount(0), dirty(false) {}
+	Image::~Image() = default;
 
-	void Texture::intializePixelData(GLuint imWidth, GLuint imHeight, GLuint imFormat)
-	{
-		if (imWidth > 0 && imHeight > 0) {
-			//free any current texture data
-			freeTexture();
-
-			GLuint imSize = imWidth * imHeight;
-			pixelData = (GLubyte*)Mem_ClearedAlloc(imSize); //8 bit
-
-			height = imHeight;
-			width = imWidth;
-			format = imFormat;
-		}
-
-	}
-
-	void Texture::freeTexture()
-	{
-		if (textureId != 0) {
-			glDeleteTextures(1, &textureId);
-			textureId = 0;
-		}
-
-		if (pixelData != NULL) {
-			delete[] pixelData;
-			pixelData = NULL;
-		}
-
-		width = 0;
-		height = 0;
-		format = NULL;
-	}
-
-	unsigned int Texture::getReferenceCount() const
+	unsigned int Image::getReferenceCount() const
 	{
 		return refCount;
 	}
-	void Texture::ref()
+	void Image::ref()
 	{
 		refCount++;
 	}
-	bool Texture::deref()
+	bool Image::deref()
 	{
 		refCount--;
 		if (refCount < 0) {
@@ -54,33 +23,8 @@ namespace Arboria {
 		}
 		return false;
 	}
-	bool Texture::generateTexture()
-	{
-		bool success = true;
-		if (textureId == 0 && pixelData != NULL) {
-			glGenTextures(1, &textureId);
-			glBindTexture(GL_TEXTURE_2D, textureId);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, pixelData);
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
-		else {
-			if (textureId != 0) {
-				Engine::printError("Texture::generateTexture: Texture already loaded\n");
-			}
-			else if (pixelData == NULL) {
-				Engine::printError("Texture::generateTexture: No pixels to create the texture from.\n");
-			}
-			success = false;
-		}
-		return success;
-	}
 
-	TextureAtlas::TextureAtlas(const char* _textureName, size_t _rowAlign) : Texture(_textureName, _rowAlign) {}
+	TextureAtlas::TextureAtlas(const char* _textureName, size_t _rowAlign) : Image(_textureName, _rowAlign) {}
 
 	TextureAtlas::~TextureAtlas() {
 		freeTexture();
@@ -100,7 +44,7 @@ namespace Arboria {
 
 	void TextureAtlas::freeTexture() {
 		freeAtlas();
-		Texture::freeTexture();
+		Image::freeTexture();
 	}
 	void TextureAtlas::blitPixels(Rectangle& clip, uint8_t* pixels)
 	{
@@ -125,7 +69,7 @@ namespace Arboria {
 		}
 		else {
 			if (textureId != 0) {
-				Engine::printError("TextureAtlas::generateTexture: Texture already loaded\n");
+				Engine::printError("TextureAtlas::generateTexture: Image already loaded\n");
 			}
 			else if (pixelData == NULL) {
 				Engine::printError("TextureAtlas::generateTexture: No pixels to create the texture from.\n");
@@ -181,4 +125,105 @@ namespace Arboria {
 		}
 		return isBound;
 	}
+
+	PaletteImage::PaletteImage(Vector2<unsigned int> sz, uint8_t initialIndex) : Image(sz), indices(new uint8_t[sz.x * sz.y])
+	{
+		memset(indices, 0, sz.x * sz.y);
+	}
+
+	PaletteImage::~PaletteImage() = default;
+
+	RGBAImage* PaletteImage::toRGBImage(Palette* p)
+	{
+		RGBAImage* i = new RGBAImage(imageSize);
+		RGBAImageLock imgLock(i, ImageLockUse::Write);
+		for (unsigned int y = 0; y < imageSize.y; y++) {
+			for (unsigned x = 0; x < imageSize.x; x++) {
+				uint8_t idx = indices[y * imageSize.x + x];
+				imgLock.set({ x, y }, p->getColor(idx));
+			}
+		}
+		return i;
+	}
+
+	void PaletteImage::blit(PaletteImage* src, PaletteImage* dst, Vector2<unsigned int> srcOffset, Vector2<unsigned int> dstOffset)
+	{
+		PaletteImageLock read(src, ImageLockUse::Read);
+		PaletteImageLock write(dst, ImageLockUse::Write);
+
+		Vector2<unsigned int> size = { Math::iMin(src->getWidth() - srcOffset.x, dst->getWidth() - dstOffset.x),
+									Math::iMin(src->getHeight() - srcOffset.y, dst->getHeight() - dstOffset.y) };
+
+		Vector2<unsigned int> pos;
+		for (pos.y = 0; pos.y < size.y; pos.y++) {
+			for (pos.x = 0; pos.x < size.x; pos.x++) {
+				Vector2<unsigned int> readPos = srcOffset + pos;
+				Vector2<unsigned int> writePos = dstOffset + pos;
+				write.set(writePos, read.get(readPos));
+			}
+		}
+	}
+
+	RGBAImage::RGBAImage(Vector2<unsigned int> sz, Color initialColor) :
+		Image(sz), pixels(reinterpret_cast<Color*>(operator new[](imageSize.x * imageSize.y * sizeof(Color))))
+	{
+		if (initialColor.r == initialColor.g && initialColor.r == initialColor.b && initialColor.r == initialColor.a)
+		{
+			memset(reinterpret_cast<void*>(pixels), initialColor.r, sizeof(Color) * imageSize.x * imageSize.y);
+		}
+		else {
+			for (unsigned int i = 0; i < imageSize.x * imageSize.y; i++) {
+				pixels[i] = initialColor;
+			}
+		}
+	}
+
+	RGBAImage::~RGBAImage() = default;
+
+	void RGBAImage::blit(RGBAImage* src, RGBAImage* dst, Vector2<unsigned int> srcOffset, Vector2<unsigned int> dstOffset)
+	{
+		RGBAImageLock read{ src, ImageLockUse::Read };
+		RGBAImageLock write{ dst, ImageLockUse::Write };
+
+		Vector2<unsigned int> size = { Math::iMin(src->getWidth() - srcOffset.x, dst->getWidth() - dstOffset.x),
+									 Math::iMin(src->getHeight() - srcOffset.y, dst->getHeight() - dstOffset.y)};
+
+		Vector2<unsigned int> pos;
+		for (pos.y = 0; pos.y < size.y; pos.y++) {
+			for (pos.x = 0; pos.x < size.x; pos.x++) {
+				Vector2<unsigned int> readPos = srcOffset + pos;
+				Vector2<unsigned int> writePos = dstOffset + pos;
+				write.set(writePos, read.get(readPos));
+			}
+		}
+	}
+
+	PaletteImageLock::PaletteImageLock(PaletteImage* image, ImageLockUse _use) :
+		img(image), use(_use)
+	{
+	}
+
+	PaletteImageLock::~PaletteImageLock() = default;
+
+	void* PaletteImageLock::getData()
+	{
+		return img->indices;
+	}
+
+	RGBAImageLock::RGBAImageLock(RGBAImage* image, ImageLockUse _use) :
+		img(image), use(_use)
+	{
+	}
+
+	RGBAImageLock::~RGBAImageLock() = default;
+
+	void* RGBAImageLock::getData() {
+		return img->pixels;
+	}
+
+	Surface::Surface(Vector2<unsigned int> sz) : Image(sz)
+	{
+	}
+
+	Surface::~Surface() = default;
 }

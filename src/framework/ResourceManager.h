@@ -3,22 +3,25 @@
 
 #include "../containers/HashTable.h"
 #include "Engine.h"
-#include "String.h"
+#include "ResourceObject.h"
 
 namespace Arboria {
-	class Texture;
+	class Font;
+	class Palette;
+	class PaletteImage;
+	class Image;
 	class ResourceManager {
-		private:
-			HashTable<String, Texture*> imageCache;
 		public:
-			HashTable<String, Texture*>& getImageCache();
-			const HashTable<String, Texture*>& getImageCache() const;
-			Texture* loadTexture(String& filename);
-			Texture* loadTexture(const char* filename);
-	};
+			static ResourceManager* createResourceManager();
+			virtual ~ResourceManager() = default;
+			ResourceManager() {}
 
-	static Texture* loadTextureFromFile(String& filename, GLuint _format = GL_RED);
-	static Texture* loadTextureFromFile(const char* filename, GLuint _format = GL_RED);
+			virtual Image* loadTexture(const uint32_t resourceId, bool isPaletted = false) = 0;
+			virtual Font* loadFont(const String& filename, const int ptSize) = 0;
+
+			virtual PaletteImage* getFontStringCacheEntry(Font* font, const String& text) = 0;
+			virtual void putFontStringCacheEntry(Font* font, const String& text, PaletteImage*& img) = 0;
+	};
 }
 
 #endif

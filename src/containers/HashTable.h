@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <assert.h>
+#include <initializer_list>
 #include "../utils/math.h"
 #include "../framework/String.h"
 
@@ -41,6 +42,7 @@ namespace Arboria {
 		public:
 			HashTable(const int tableSize = 256);
 			HashTable(const HashTable<K, V>& other);
+			HashTable(const std::initializer_list<HashNode<K,V>>& other);
 			HashTable<K, V>& operator=(const HashTable<K, V>& other);
 			~HashTable();
 
@@ -81,6 +83,23 @@ namespace Arboria {
 	template<typename K, typename V>
 	inline HashTable<K, V>::HashTable(const HashTable<K, V>& other) {
 		copy(other);
+	}
+
+	template<typename K, typename V>
+	inline HashTable<K, V>::HashTable(const std::initializer_list<HashNode<K,V>>& other) : HashTable()
+	{
+		if (other.size() > tableSize) {
+			//set new tablesize to the nearest power of 2
+			this->tableSize = other.size();
+			buckets = new HashNode<K, V>* [tableSize];
+			memset(buckets, 0, sizeof(HashNode<K, V>*) * tableSize);
+			tableMask = tableSize - 1;
+		}
+		
+		auto n = other.begin();
+		while (n != other.end()) {
+			set(n->key, n->value);
+		}
 	}
 
 	template<typename K, typename V>

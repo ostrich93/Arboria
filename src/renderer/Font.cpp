@@ -1,251 +1,528 @@
+#include "DrawLock.h"
 #include "Font.h"
 #include "Texture.h"
 #include "../globals.h"
 #include "../definitions.h"
 #include "../FileSystem.h"
 #include "../Heap.h"
+#include "../framework/ResourceManager.h"
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_OUTLINE_H
+#include FT_STROKER_H
+#include FT_GLYPH_H
+#include FT_TRUETYPE_IDS_H
+
 #include <cstdio>
 #include <exception>
+#include <mutex>
 #include <physfs.h>
+
+#pragma warning(disable : 4018) //'<': signed/unsigned mismatch
+
+#define UNICODE_BOM_NATIVE 0xFEFF
+#define UNICODE_BOM_SWAPPED 0xFFFE
+
+#define TTF_STYLE_NORMAL 0x00
+#define TTF_STYLE_BOLD 0x01
+#define TTF_STYLE_ITALIC 0x02
+#define TTF_STYLE_UNDERLINE 0x04
+#define TTF_STYLE_STRIKETHROUGH 0x08
+
+#define FT_FLOOR(X) (((X) & -64)/64)
+#define FT_CEIL(X) ((((X) + 63) & -64)/64)
+
+#define CACHED_METRICS 0x10
+#define CACHED_BITMAP 0x01
+#define CACHED_PIXMAP 0x02
 
 namespace Arboria {
 
-	Font::Font(const char* name, unsigned int _format, unsigned char ptSz, unsigned _width, unsigned _height) : wasInitialized(false), fontHandle{ name, "", ptSz }, format(_format), width(_width), height(_height), fontSize(ptSz), length(0), size{ ptSz, 0, 0, {0,0} }, glyphAtlas(NULL) {
-		
-	}
+	static FT_Library library;
+	static int TTF_initialized = 0;
+	static bool _ttfInitialized = false;
+	static std::mutex _mutex;
 
-	Font::Font(const char* name, const char* family, unsigned int _format, unsigned char ptSz, unsigned _width, unsigned _height) : wasInitialized(false), fontHandle{ name, family, ptSz }, format(_format), width(_width), height(_height), fontSize(ptSz), length(0), size{ ptSz, 0, 0, {0,0} }, glyphAtlas(NULL) {
-		
-	}
-
-	Font::Font(FontHandle& fname, unsigned int _format, unsigned _width, unsigned _height) : wasInitialized(false), fontHandle(fname), format(_format), width(_width), height(_height), fontSize(fname.fontSize), length(0), size{ fname.fontSize, 0, 0, { 0, 0 } }, glyphAtlas(NULL) {}
-
-	Font::~Font()
+	bool TTFInitialize()
 	{
+		DrawUniqueLock<std::mutex> lock(_mutex);
+
+		if (_ttfInitialized)
+			return true;
+
+		if (TTF_Init() != 0) {
+			return false;
+		}
+
+		_ttfInitialized = true;
+
+		return true;
 	}
 
-	int Font::initialize() {
-		if (wasInitialized) return 1;
+	int TTF_Init(void) {
+		int status = 0;
 
-		String fontfilename = fontManager->getFontFilename(fontHandle.fontName, fontHandle.fontStyle);
-		FT_Face face = fontManager->getCurrentFace();
-		if (FT_New_Face(fontManager->getFontLibrary(), fontfilename.c_str(), 0, &face)) {
-			fprintf(stderr, "FreeType Error: Could not open font %s\n", fontHandle.fontName.c_str());
-			FT_Done_Face(fontManager->getCurrentFace());
-			return 0;
-		}
-
-		if (FT_Set_Pixel_Sizes(face, size.ptSize, size.ptSize)) {
-			FT_Done_Face(face);
-			fprintf(stderr, "FreeType Error: Could not set sizes\n");
-			return 0;
-		}
-
-		FT_Glyph_Metrics metrics[256];
-		int maxBearing = 0;
-		int minHang = 0;
-		unsigned int maxWidth = 0;
-		unsigned int cellH = 0;
-		Vector2<unsigned int> maxAdvance = { 0, 0 };
-		int glyphSize = 0;
-		FT_Error error;
-		for (unsigned int c = 0; c < 256; c++) {
-			error = FT_Load_Char(face, c, FT_LOAD_RENDER);
+		if (!TTF_initialized) {
+			FT_Error error = FT_Init_FreeType(&library);
 			if (error) {
-				Engine::printError("Freetype Error %d: Could not load character %c.\n", error, c);
+				//TTF_SetFTError()
+				status = -1;
+			}
+		}
+
+		if (status == 0)
+			++TTF_initialized;
+
+		return status;
+	}
+
+	static unsigned long RWread(FT_Stream stream, unsigned long offset, unsigned char* buffer, unsigned long count)
+	{
+		FILE* src;
+
+		src = static_cast<FILE*>(stream->descriptor.pointer);
+		fseek(src, static_cast<int>(offset), SEEK_SET);
+		if (count == 0)
+		{
+			return 0;
+		}
+		return static_cast<unsigned long>(fread(buffer, 1, static_cast<int>(count), src));
+	}
+
+	static size_t fsize(FILE* file)
+	{
+		size_t origPos = ftell(file);
+		fseek(file, 0, SEEK_END);
+		size_t size = ftell(file);
+		fseek(file, static_cast<long>(origPos), SEEK_SET);
+		return size;
+	}
+
+	static Font* TTF_OpenFontIndexRW(FILE* src, int freesrc, int ptSize, long index) {
+		Font* font = new Font();
+		FT_Error error;
+		FT_Face face;
+		FT_Fixed scale;
+		FT_Open_Args args;
+		FT_Stream stream;
+		FT_CharMap found;
+		int64_t position;
+		int i;
+
+		if (!TTF_initialized) {
+			//TTF_SetError("Library not initialized");
+			if (src && freesrc) {
+				fclose(src);
+			}
+			return NULL;
+			free(font);
+		}
+
+		if (!src) {
+			//TTF_SetError("Passed a NULL font source");
+			return NULL;
+			free(font);
+		}
+
+		position = ftell(src);
+		if (position < 0) {
+			//TTF_SetError("Cannot seek in stream");
+			if (freesrc)
+				fclose(src);
+			free(font);
+			return NULL;
+		}
+
+		stream = static_cast<FT_Stream>(malloc(sizeof(*stream)));
+		if (stream == NULL) {
+			//TTF_SetError("Ran out of memory");
+			FT_Done_Face(face);
+			if (freesrc)
+				free(src);
+			//TTF_CloseFont(font);
+			return NULL;
+		}
+		std::fill_n(reinterpret_cast<uint8_t*>(stream), sizeof(*stream), 0x00);
+
+		stream->read = RWread;
+		stream->descriptor.pointer = src;
+		stream->pos = static_cast<unsigned long>(position);
+		stream->size = static_cast<unsigned long>(fsize(src) - position);
+
+		args.flags = FT_OPEN_STREAM;
+		args.stream = stream;
+
+		error = FT_Open_Face(library, &args, index, &face);
+		if (error) {
+			//TTF_SetFTError("Couldn't load font file", &font->face);
+			FT_Done_Face(face);
+			if (args.stream)
+				free(args.stream);
+			if (freesrc)
+				free(src);
+			free(font);
+			return NULL;
+		}
+		//face = font->face;
+
+		//set the charmap for loaded font
+		found = 0;
+		for (i = 0; i < face->num_charmaps; i++) {
+			FT_CharMap charmap = face->charmaps[i];
+			if ((charmap->platform_id == 3 && charmap->encoding == 1)
+				|| (charmap->platform_id == 3 && charmap->encoding == 0)
+				|| (charmap->platform_id == 2 && charmap->encoding == 1)
+				|| (charmap->platform_id == 0))
+			{
+				found = charmap;
+				break;
+			}
+		}
+		if (found) {
+			FT_Set_Charmap(face, found);
+		}
+
+		if (FT_IS_SCALABLE(face)) {
+			error = FT_Set_Char_Size(face, 0, ptSize * 64, 0, 0);
+			if (error) {
+				//TTF_SetFTError("Couldn't set the font size", error);
+				FT_Done_Face(face);
+				if (args.stream)
+					free(args.stream);
+				if (freesrc)
+					free(src);
+				//TTF_CloseFont(font);
+				free(font);
+				return NULL;
+			}
+
+			scale = face->size->metrics.y_scale;
+			font->ascent = FT_CEIL(FT_MulFix(face->ascender, scale));
+			font->descent = FT_CEIL(FT_MulFix(face->descender, scale));
+			font->height = font->ascent - font->descent + 1;
+			font->lineskip = FT_CEIL(FT_MulFix(face->height, scale));
+			font->underline_offset = FT_FLOOR(FT_MulFix(face->underline_position, scale));
+			font->underline_height = FT_FLOOR(FT_MulFix(face->underline_thickness, scale));
+		}
+		else {
+			if (ptSize >= face->num_fixed_sizes)
+				ptSize = face->num_fixed_sizes - 1;
+			font->font_size_family = ptSize;
+			error = FT_Set_Pixel_Sizes(face, face->available_sizes[ptSize].width, face->available_sizes[ptSize].height);
+
+			font->ascent = face->available_sizes[ptSize].height;
+			font->descent = 0;
+			font->height = face->available_sizes[ptSize].height;
+			font->lineskip = FT_CEIL(font->ascent);
+			font->underline_offset = FT_FLOOR(face->underline_position);
+			font->underline_height = FT_FLOOR(face->underline_thickness);
+		}
+
+		if (font->underline_height < 1)
+			font->underline_height = 1;
+
+		font->face_style = TTF_STYLE_NORMAL;
+		if (face->style_flags & FT_STYLE_FLAG_BOLD)
+			font->face_style |= TTF_STYLE_BOLD;
+		if (face->style_flags & FT_STYLE_FLAG_ITALIC)
+			font->face_style |= TTF_STYLE_ITALIC;
+
+		font->style = font->face_style;
+		font->outline = 0;
+		font->kerning = 1;
+		font->glyph_overhang = face->size->metrics.y_ppem / 10;
+		font->glyph_italics = 0.207f;
+		font->glyph_italics *= font->height;
+
+		//load glyphs here?
+
+		FT_GlyphSlot glyph;
+		FT_Glyph_Metrics* metrics;
+		FT_Outline* outline;
+		for (int g = 0; g < 257; g++) {
+			Glyph newGlyph;
+			newGlyph.index = FT_Get_Char_Index(face, g);
+			//error = FT_Load_Glyph(face, newGlyph.index, FT_LOAD_DEFAULT | font->hinting);
+			error = FT_Load_Glyph(face, newGlyph.index, FT_LOAD_DEFAULT);
+			if (error) {
+				FT_Done_Face(face);
+				free(args.stream);
+				fclose(src);
+				return font;
+			}
+			glyph = face->glyph;
+			metrics = &glyph->metrics;
+			outline = &glyph->outline;
+			if (FT_IS_SCALABLE(face)) {
+				newGlyph.minx = FT_FLOOR(metrics->horiBearingX);
+				newGlyph.maxx = FT_CEIL(metrics->horiBearingX * newGlyph.minx);
+				newGlyph.maxy = FT_FLOOR(metrics->horiBearingY);
+				newGlyph.miny = newGlyph.maxy - FT_CEIL(metrics->height);
+				newGlyph.yoffset = font->ascent - newGlyph.maxy;
+				newGlyph.advance = FT_CEIL(metrics->horiAdvance);
 			}
 			else {
-				metrics[c] = face->glyph->metrics;
-				glyphInfo[c].glyph.advance.x = face->glyph->metrics.horiAdvance >> 6;
-				glyphInfo[c].glyph.advance.y = face->glyph->metrics.vertAdvance >> 6;
-				glyphInfo[c].glyph.bearing.x = metrics[c].horiBearingX >> 6;
-				glyphInfo[c].glyph.bearing.y = metrics[c].horiBearingY >> 6;
-				glyphInfo[c].glyph.size.x = face->glyph->bitmap.width;
-				glyphInfo[c].glyph.size.y = face->glyph->bitmap.rows;
-				glyphInfo[c].glyph.left = face->glyph->bitmap_left;
-				glyphInfo[c].glyph.top = face->glyph->bitmap_top;
-				
-				if (c > 0) {
-					FT_Vector kerning;
-					error = FT_Get_Kerning(face, c - 1, c, FT_KERNING_DEFAULT, &kerning);
-					if (error) {
-						Engine::printError("Freetype Error %d: Could not load kerning for character %c.\n", error, c);
-					}
-					else {
-						glyphInfo[c].glyph.kerning.x = kerning.x >> 6;
-						glyphInfo[c].glyph.kerning.y = kerning.y >> 6;
-					}
+				newGlyph.minx = FT_FLOOR(metrics->horiBearingX);
+				newGlyph.maxx = FT_CEIL(metrics->horiBearingX * newGlyph.minx);
+				newGlyph.maxy = FT_FLOOR(metrics->horiBearingY);
+				newGlyph.miny = newGlyph.maxy - FT_CEIL(face->available_sizes[font->font_size_family].height);
+				newGlyph.yoffset = 0;
+				newGlyph.advance = FT_CEIL(metrics->horiAdvance);
+			}
+
+			error = FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL);
+			if (error) {
+				FT_Done_Face(face);
+				free(args.stream);
+				fclose(src);
+				return font;
+			}
+
+			auto width = glyph->bitmap.width;
+			auto height = glyph->bitmap.rows;
+
+			FT_Bitmap* _src = &glyph->bitmap;
+			PaletteImage* dst = new PaletteImage({ width, height });
+			PaletteImageLock l(dst, ImageLockUse::Write);
+
+			for (int y = 0; y <= _src->rows >> 1; y++) {
+				int row0 = y * _src->pitch;
+				int row1 = (_src->rows - y - 1) * _src->pitch;
+				for (int x = 0; x < _src->pitch; x++) {
+					l.set({ x, y }, _src->buffer[row1 + x]);
+					l.set({ x, (_src->rows - y - 1) }, _src->buffer[row0 + x]);
 				}
-
-				maxBearing = Math::iMax(maxBearing, glyphInfo[c].glyph.bearing.y);
-				maxWidth = Math::iMax(maxWidth, metrics[c].width >> 6);
-				maxAdvance.x = Math::iMax(maxAdvance.x, glyphInfo[c].glyph.advance.x);
-				maxAdvance.y = Math::iMax(maxAdvance.y, glyphInfo[c].glyph.advance.y);
-				int glyphHang = (metrics[c].horiBearingY - metrics[c].height) >> 6;
-				minHang = Math::iMin(minHang, glyphHang);
 			}
+			newGlyph.img = dst;
+			font->glyphs[g] = newGlyph;
 		}
-		cellH = maxBearing - minHang;
-		size.max_height = cellH;
-		size.max_width = maxWidth;
-		size.max_advance = maxAdvance;
-		TextureAtlas* gAtlas = new TextureAtlas(fontHandle.fontName.c_str());
-		//unsigned int _length = (unsigned int)Math::ceil(Math::sqrt(face->num_glyphs));
-		
-		length = 16;
-		unsigned int fwidth = 16 * maxWidth;
-		unsigned int fheight = 16 * cellH;
-		gAtlas->intializePixelData(fwidth, fheight, GL_RED);
-		gAtlas->generateTexture();
 
-		int currRow = 0;
-		int currCol = 0;
-		int s = 0;
-		int t = 0;
-		Rectangle rect = { 0, 0, (float)maxWidth, (float)cellH };
-		for (unsigned int ch = 0; ch < 256; ch++) {
-			Glyph glyph = glyphInfo[ch].glyph;
-			currRow = ch / 16;
-			currCol = ch % 16;
-			s = maxWidth * currCol + glyph.left;
-			t = cellH * currRow + glyph.top;
-			glyphInfo[ch].u0 = s / fwidth;
-			glyphInfo[ch].v0 = t / fheight;	
-			glyphInfo[ch].u1 = s + glyph.size.x / fwidth;
-			glyphInfo[ch].v1 = t + glyph.size.y / fheight;
-
-			rect.x = (float)s;
-			rect.y = (float)t;
-			rect.w = maxWidth;
-			rect.h = cellH;
-			gAtlas->addSubtexture(s, t, glyph.size.x, glyph.size.y, face->glyph->bitmap.buffer, GL_RED);
-			gAtlas->addClip({rect.x, rect.y, (float)glyph.size.x, (float)glyph.size.y});
-			gAtlas->unbindAtlas();
-		}
-		
 		FT_Done_Face(face);
-		wasInitialized = true;
-		return 1;
+		free(args.stream);
+		fclose(src);
+
+		return font;
 
 	}
 
-	GlyphEntry* Font::getGlyphEntry(unsigned int codePoint)
-	{
-		if (codePoint > 255 || codePoint < 0)
+	static Font* TTF_OpenFontIndex(const char* file, int ptSize, long index) {
+		String filename = getFontPath(file);
+		FILE* rw = fopen(filename.c_str(), "rb"); //bug here: not loading file
+		if (rw == NULL)
 			return NULL;
-
-		return &glyphInfo[codePoint];
+		return TTF_OpenFontIndexRW(rw, 1, ptSize, index);
 	}
 
-	List<int> Font::getGlyphs(const String& string)
+	Font* TTF_OpenFont(const char* file, int ptSize)
 	{
-		List<int> glyphs;
-		for (int i = 0; i < string.length(); i++) {
-			glyphs.append(string[i]);
-		}
-		return glyphs;
+		return TTF_OpenFontIndex(file, ptSize, 0);
 	}
 
-	List<int> Font::getGlyphs(const char* string) {
-		List<int> glyphs;
-		for (int i = 0; i < strlen(string); i++) {
-			glyphs.append(string[i]);
+#define UNKNOWN_UNICODE 0xFFFD
+	static uint32_t UTF8_getChar(const char** src, size_t* srclen) {
+		const uint8_t* p = *reinterpret_cast<const uint8_t**>(src);
+		size_t remaining = 0;
+		bool overlong = false;
+		uint32_t ch = UNKNOWN_UNICODE;
+
+		if (*srclen == 0)
+			return UNKNOWN_UNICODE;
+
+		if ((p[0] & 0xf8) == 0xf0) { //4 byte utf8
+			if (p[0] == 0xf0 && (p[1] & 0xf0) == 0x80) { //if not overlong
+				overlong = true;
+			}
+			ch = static_cast<uint32_t>(p[0] & 0x07);
+			remaining = 3;
 		}
-		return glyphs;
+		else if ((p[0] & 0xf0) == 0xe0) { //3 byte utf8
+			if (p[0] == 0xe0 && (p[1] & 0xe0) == 0x80) {
+				overlong = true;
+			}
+			ch = static_cast<uint32_t>(p[0] & 0x0f);
+			remaining = 2;
+		}
+		else if ((p[0] & 0xe0) == 0xc0) { //2 bytes
+			if ((p[0] & 0x1e) == 0) {
+				overlong = true;
+			}
+			ch = static_cast<uint32_t>(p[0] & 0x1f);
+			remaining = 1;
+		}
+		else if ((p[0] & 0x80) == 0x00) {
+			ch = static_cast<uint32_t>(p[0]);
+		}
+		++ * src;
+		--*srclen;
+		while (remaining > 0 && *srclen > 0) { //multi-byte utf8
+			++p;
+			if ((p[0] & 0xc0) != 0x80) { //if the following byte is NOT a continuation byte, it's wrong
+				ch = UNKNOWN_UNICODE;
+				break;
+			}
+			ch <<= 6;
+			ch |= (p[0] && 0x3f);
+			++*src;
+			--*srclen;
+			--remaining;
+		}
+		if (overlong || remaining > 0) { //if there's an underflow or its overlong, return unknowncode
+			ch = UNKNOWN_UNICODE;
+		}
+		//if character is a surrogate, special character 0xfffe/0xffff, or greater than 4 bytes, return unknown unicode.
+		if ((ch >= 0xd800 && ch <= 0xdfff) || (ch == 0xfffe) || (ch == 0xffff) || ch >= 0x10ffff)
+			ch = UNKNOWN_UNICODE;
+
+		return ch;
 	}
 
-	Glyph* Font::getGlyph(unsigned int _codePoint)
-	{
-		if (_codePoint > 255 || _codePoint < 0)
-			return NULL;
+	void TTFDispose() {
+		DrawUniqueLock<std::mutex> lock(_mutex);
 
-		return &glyphInfo[_codePoint].glyph;
+		if (!_ttfInitialized) return;
+
+		TTF_Quit();
+
+		_ttfInitialized = false;
 	}
 
-	FontManager::FontManager() {
-		if (FT_Init_FreeType(&fontLibrary) != 0) {
-			const char* errMessage = "FreeType Error: Could not init FreeType Library\n";
-			fprintf(stderr, errMessage);
-			throw new std::exception(errMessage);
-		}
-	}
-
-	FontManager::~FontManager() {
-		FT_Done_FreeType(fontLibrary);
-	}
-
-	const String FontManager::getFontFilename(const char* family, const char* style)
-	{
-		List<String> pathTokens;
-		if (!style || strlen(style) == 0) {
-			pathTokens = {family, ".ttf"};
-		}
-		else {
-			pathTokens = {family, "-", style, ".ttf" };
-		}
-
-		String pathName = String::join(pathTokens, "");
-		return PHYSFS_getRealDir(pathName.c_str()) + pathName;
-	}
-
-	int FontManager::loadFont(const char* family, const char* style, unsigned int size)
-	{
-		Font font { family, style, 0, static_cast<unsigned char>(size) };
-		
-		int result = font.initialize();
-		if (!result) {
-			fprintf(stderr, "FontManager::loadFont failed to load font");
-			font.~Font();
-		}
-		else {
-			fontCache.set(FontHandle::getHash(font.getFontName()), &font);
-			result = 1;
-		}
-
-		return result;
-	}
-
-	int FontManager::loadFont(FontHandle& fontHandle) {
-		Font font = Font{ fontHandle, 0 };
-
-		int result = font.initialize();
-		if (!result) {
-			fprintf(stderr, "FontManager::loadFont failed to load font");
-			font.~Font();
-		}
-		else {
-			fontCache.set(FontHandle::getHash(font.getFontName()), &font);
-			result = 1;
-		}
-
-		return result;
-	}
-
-	Font* FontManager::getFont(const char* family, const char* style, unsigned int size)
-	{
-		FontHandle fnm{ family, style, static_cast<unsigned char>(size) };
-		size_t fontHash = FontHandle::getHash(fnm);
-		if (!fontCache.contains(fontHash)) {
-			int rslt = loadFont(fnm);
-			if (!rslt) {
-				return NULL;
+	void TTF_Quit(void) {
+		if (TTF_initialized) {
+			if (--TTF_initialized == 0) {
+				FT_Done_FreeType(library);
 			}
 		}
-		return fontCache.get(fontHash);
 	}
 
-	Font* FontManager::getFont(FontHandle& fontHandle) {
-		size_t fontHash = FontHandle::getHash(fontHandle);
-		if (!fontCache.contains(fontHash)) {
-			int rslt = loadFont(fontHandle);
-			if (!rslt) {
-				return NULL;
+	int Font::getTextWidth(const String& text) {
+		int x, z;
+		int minx, maxx;
+		size_t textlen;
+
+		auto text_string = text.c_str();
+		textlen = strlen(text_string);
+		int w = 0;
+		minx = maxx = 0;
+		x = 0;
+
+		while (textlen > 0) {
+			uint16_t c = UTF8_getChar(&text_string, &textlen);
+
+			if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
+				continue;
+
+			if (glyphs.contains(c)) {
+				return -1;
 			}
+
+			Glyph glyph = glyphs[c];
+
+			z = x + glyph.minx;
+			if (minx > z)
+				minx = z;
+			//if (TTF_HANDLE_STYLE_BOLD(font)) x+= font->glyph_overhang;
+			if (glyph.advance > glyph.maxx)
+				z = x + glyph.advance;
+			else
+				z += x + glyph.maxx;
+			if (maxx < z)
+				maxx = z;
+			x += glyph.advance;
+			//prev_index = glyph->index;
+
+			w = maxx - minx;
 		}
-		return fontCache.get(fontHash);
+
+		return w;
 	}
 
-	FontHandle::FontHandle(const char* _fontName, const char* _fontFamily, unsigned char _fontSize): fontName(_fontName), fontStyle(_fontFamily), fontSize(_fontSize) {}
+	int Font::getTextHeight() const {
+		return height;
+	}
 
-	FontHandle::FontHandle(const char* _fontName, unsigned char _fontSize) : FontHandle(_fontName, "", _fontSize) {}
+	int Font::getTextHeight(const String& text)
+	{
+		return getMaxHeight(text);
+	}
+
+	int Font::getMaxHeight(const String& text)
+	{
+		int minY, maxY;
+		size_t textlen;
+		auto text_string = text.c_str();
+		textlen = strlen(text_string);
+		minY = maxY = 0;
+		int h = 0;
+
+		while (textlen > 0) {
+			uint16_t c = UTF8_getChar(&text_string, &textlen);
+
+			if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
+				continue;
+
+			if (glyphs.contains(c)) {
+				return -1;
+			}
+
+			Glyph glyph = glyphs[c];
+
+			if (glyph.miny < minY)
+				minY = glyph.miny;
+			if (glyph.maxy > maxY)
+				maxY = glyph.maxy;
+
+			if (maxY - minY > h)
+				h = maxY - minY;
+		}
+		if (h < maxY) {
+			return maxY;
+		}
+
+		return h;
+	}
+
+	PaletteImage* Font::getString(const String& text) {
+		size_t textlen;
+
+		int width = getTextWidth(text);
+		int height = getTextHeight(text);
+
+		if (width <= 0) {
+			return nullptr;
+		}
+
+		auto img = resourceManager->getFontStringCacheEntry(this, text);
+		if (img)
+			return img;
+
+		img = new PaletteImage({ width, height });
+
+		auto text_string = text.c_str();
+
+		textlen = strlen(text_string);
+		int pos = 0;
+		int dX = 0;
+		while (textlen > 0) {
+			uint16_t c = UTF8_getChar(&text_string, &textlen);
+
+			if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
+				continue;
+
+			if (glyphs.contains(c)) {
+				return nullptr;
+			}
+
+			Glyph glyph = glyphs[c];
+			if (glyph.img->getWidth() != 0) {
+				PaletteImage::blit(glyph.img, img, { 0,0 }, { pos, 0 });
+				dX = glyph.img->getWidth();
+			}
+			pos += dX;
+		}
+
+		resourceManager->putFontStringCacheEntry(this, text, img);
+
+		return img;
+	}
 }

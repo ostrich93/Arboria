@@ -43,7 +43,7 @@ namespace Arboria {
         buffers.clearFree();
     }
 
-    void DrawSurfaceShader::drawTexture(Texture* img, Vector2<float> displayOnScreenSize, Vector2<float> screenPosition, Vector2<float> texSize, Vector2<float> rotationCenter, float rotationRadians, Color _color) {
+    void DrawSurfaceShader::drawTexture(Image* img, Vector2<float> displayOnScreenSize, Vector2<float> screenPosition, Vector2<float> texSize, Vector2<float> rotationCenter, float rotationRadians, Color _color) {
         
         SurfaceVertexData v;
         static const Vector2<float> identityQuad[4] = { {0,0}, {0,1}, {1,0}, {1,1} };

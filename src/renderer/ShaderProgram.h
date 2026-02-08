@@ -54,6 +54,8 @@ namespace Arboria {
 			GLuint getUniformLocation(const char* name);
 			GLuint getProgramId() { return programId; }
 			const GLuint getProgramId() const { return programId; }
+
+			GLuint compileShader(const String& sourceFilename);
 			ShaderProgram& use();
 
 			void setFloat(const char* name, GLfloat value);
@@ -68,7 +70,7 @@ namespace Arboria {
 			void setVector4f(const char* name, Vector4<GLfloat>& value);
 			void setMatrix4(const char* name, glm::mat4& value);
 		protected:
-			GLuint compileShader(GLenum type, const char* sourceFilename);
+			void checkCompileErrors(unsigned int object, String type);
 			
 	};
 

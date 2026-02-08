@@ -5,7 +5,7 @@
 #include "../renderer/Texture.h"
 
 namespace Arboria {
-	ScrollbarWidget::ScrollbarWidget(Texture* scrollerImage, bool _isMenu, Orientation orientation) : Widget(), scrollValue(0), scrollStep(1), barOrientation(orientation), maximum(1), minimum(0), menuFlag(_isMenu), scrollbarImage(scrollerImage), color({ (uint8_t)255, (uint8_t)255, (uint8_t)255, (uint8_t)128 }) {
+	ScrollbarWidget::ScrollbarWidget(Image* scrollerImage, bool _isMenu, Orientation orientation) : Widget(), scrollValue(0), scrollStep(1), barOrientation(orientation), maximum(1), minimum(0), menuFlag(_isMenu), scrollbarImage(scrollerImage), color({ (uint8_t)255, (uint8_t)255, (uint8_t)255, (uint8_t)128 }) {
 		if (!scrollbarImage) {
 			scrollbarImage = resourceManager->loadTexture("gui/scroller.png");
 		}

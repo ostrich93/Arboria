@@ -83,7 +83,9 @@ namespace Arboria {
 			size_t size() const;
 			int length() const;
 			int allocated() const;
+			void empty();
 			bool isEmpty() const;
+			void clear();
 			void append(const char c);
 			void append(const char* s);
 			void append(const String& text);
@@ -148,6 +150,7 @@ namespace Arboria {
 			StringData* m_data;
 			void ensureAllocated(int amount, bool keepOld = true);
 			void ensureDataWritable();
+			static char emptyString[1];
 	};
 
 	inline void String::ensureAllocated(int amount, bool keepOld) {
@@ -467,8 +470,21 @@ namespace Arboria {
 		return 0;
 	}
 
+	inline void String::empty() {
+		if (m_data->data != emptyString) {
+			delete[] m_data->data;
+		}
+	}
+
 	inline bool String::isEmpty() const {
 		return String::compare(c_str(), "") == 0;
+	}
+
+	inline void String::clear() {
+		empty();
+		ensureAllocated(1);
+		m_data->data[0] = '\0';
+		m_data->len = 0;
 	}
 
 	inline void String::append(char c) {

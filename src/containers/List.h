@@ -18,6 +18,11 @@ namespace Arboria {
 		List(const std::initializer_list<T>& other);
 		~List();
 
+		T* begin();
+		const T* begin() const;
+		T* end();
+		const T* end() const;
+
 		int append(const T& elem);
 		int append(const List& other);
 		int insert(const T& elem, int index = 0);
@@ -43,6 +48,8 @@ namespace Arboria {
 		void setNum(int newNum);
 		T* getPtr();
 		const T* getPtr() const;
+		T& back();
+		const T& back() const;
 		T& allocateNewElement();
 
 		//operators
@@ -55,6 +62,26 @@ namespace Arboria {
 		int granularity;
 		T* list;
 	};
+
+	template<typename T>
+	inline T* List<T>::begin() {
+		return list;
+	}
+
+	template<typename T>
+	inline const T* List<T>::begin() const {
+		return list;
+	}
+
+	template<typename T>
+	inline T* List<T>::end() {
+		return list + num;
+	}
+
+	template<typename T>
+	inline const T* List<T>::end() const {
+		return list + num;
+	}
 
 	template<typename T>
 	inline List<T>::List<T>(int newGranularity) {
@@ -416,6 +443,16 @@ namespace Arboria {
 	template<typename T>
 	inline const T* List<T>::getPtr() const {
 		return list;
+	}
+
+	template<typename T>
+	inline T& List<T>::back() {
+		return list[num];
+	}
+
+	template<typename T>
+	inline const T& List<T>::back() const {
+		return list[num];
 	}
 
 	template<typename T>

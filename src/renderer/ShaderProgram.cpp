@@ -90,7 +90,7 @@ namespace Arboria {
 		}
 
 		const char* extension = type == GL_VERTEX_SHADER ? vertexShaderExtension : fragmentShaderExtension;
-		GLuint shader = compileShader(type, name + extension);
+		GLuint shader = compileShader(name + extension);
 		
 		if (shader == 0) {
 			Engine::printError("ShaderProgram::loadAndAttachShader: Failed to attach shader %s to program %s", extension, name.c_str());
@@ -108,7 +108,7 @@ namespace Arboria {
 			Engine::fatalError("ShaderProgram::loadAndAttachShader: Tried to attach a shader to an uninitialized program: %s", name.c_str());
 		}
 
-		GLuint shader = compileShader(type, sourceName);
+		GLuint shader = compileShader(sourceName);
 
 		if (shader == 0) {
 			Engine::printError("ShaderProgram::loadAndAttachShader: Failed to attach shader %s to program %s", sourceName, name.c_str());
@@ -174,6 +174,20 @@ namespace Arboria {
 		return glGetUniformLocation(programId, name);
 	}
 
+	GLuint ShaderProgram::compileShader(const String& sourceFilename)
+	{
+		vertexShader = new Shader(sourceFilename.c_str(), GL_VERTEX_SHADER);
+		fragmentShader = new Shader(sourceFilename.c_str(), GL_FRAGMENT_SHADER);
+		programId = glCreateProgram();
+		glAttachShader(programId, vertexShader->getShaderId());
+		glAttachShader(programId, fragmentShader->getShaderId());
+		glLinkProgram(programId);
+		checkCompileErrors(programId, "PROGRAM");
+		glDeleteShader(vertexShader->getShaderId());
+		glDeleteShader(fragmentShader->getShaderId());
+		return programId;
+	}
+
 	ShaderProgram& ShaderProgram::use() {
 		glUseProgram(programId);
 		return *this;
@@ -225,45 +239,28 @@ namespace Arboria {
 		glUniformMatrix4fv(glGetUniformLocation(programId, name), 1, false, glm::value_ptr(value));
 	}
 	
-	GLuint ShaderProgram::compileShader(GLenum type, const char* sourceFilename) {
-		if (!PHYSFS_exists(sourceFilename)) {
-			Engine::fatalError("ShaderProgram::compileShader: The shader you're attempting to attach does not exist: %s", sourceFilename);
-			//Mem_Free(&fullFilename);
-			//exit(0);
-		}
-		String shaderSource = readShaderFile(sourceFilename);
-		if (shaderSource.isEmpty()) {
-			return 0;
-		}
-
-		GLuint shader = glCreateShader(type);
-		GLint length = shaderSource.size();
-		const char* sourcePtr = shaderSource.c_str();
-		glShaderSource(shader, 1, &sourcePtr, &length);
-		glCompileShader(shader);
-
-		GLint compileResult;
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &compileResult);
-		if (!compileResult) {
-			GLint logLength;
-			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
-			if (!compileResult || logLength > 0) {
-				char* infoLog = new char[logLength];
-				glGetShaderInfoLog(shader, logLength, &logLength, infoLog);
-				infoLog[logLength] = 0;
-				if (logLength > 1) {
-					Engine::printLog("ShaderProgram::compileShader: Failed to compile shader %s: %s\n", sourceFilename, infoLog);
-				}
+	void ShaderProgram::checkCompileErrors(unsigned int object, String type)
+	{
+		int success;
+		char infoLog[1024];
+		if (type != "PROGRAM")
+		{
+			glGetShaderiv(object, GL_COMPILE_STATUS, &success);
+			if (!success)
+			{
+				glGetShaderInfoLog(object, 1024, NULL, infoLog);
+				Engine::printError("Error::ShaderProgram::compileShader:: Compile-time error: Type: %s\n%s\n -- --------------------------------------------------- --", type, infoLog);
 			}
 		}
-
-		if (!compileResult) {
-			glDeleteShader(shader);
-			return 0;
+		else
+		{
+			glGetProgramiv(object, GL_LINK_STATUS, &success);
+			if (!success)
+			{
+				glGetProgramInfoLog(object, 1024, NULL, infoLog);
+				Engine::printError("Error::ShaderProgram::compileShader:: Link-time error: Type: %s\n%s\n -- --------------------------------------------------- --", type, infoLog);
+			}
 		}
-
-		return shader;
-
 	}
 
 	String readShaderFile(const char* filename) {

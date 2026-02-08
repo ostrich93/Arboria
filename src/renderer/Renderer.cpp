@@ -47,7 +47,7 @@ namespace Arboria {
 		glBindVertexArray(0);
 	}
 
-	void SpriteRenderer::draw(Texture* texture, Vector2<int> position, Vector2<int> size, Vector4<float> tint, float rotate) {
+	void SpriteRenderer::draw(Image* texture, Vector2<int> position, Vector2<int> size, Vector4<float> tint, float rotate) {
 		spriteShader.use();
 
 		glm::mat4 model = glm::mat4(1.0f);
@@ -83,7 +83,7 @@ namespace Arboria {
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	}
 
-	void Renderer::draw(Texture* _texture, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale)
+	void Renderer::draw(Image* _texture, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale)
 	{
 		Vector2<GLfloat> texSize = { _texture->getWidth(), _texture->getHeight() };
 		surfaceShader->drawTexture(_texture, _screenPosition, texSize, texSize, { 0,0 }, 0, _color);

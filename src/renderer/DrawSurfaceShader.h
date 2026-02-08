@@ -6,7 +6,7 @@
 
 namespace Arboria {
 
-	class Texture;
+	class Image;
 
 	struct SurfaceVertexDescription {
 		Vector2<float> position;
@@ -53,7 +53,7 @@ namespace Arboria {
 		public:
 			DrawSurfaceShader(unsigned int bufferCount);
 			~DrawSurfaceShader() override;
-			void drawTexture(Texture* img, Vector2<float> screenPosition, Vector2<float> displayOnScreenSize, Vector2<float> texSize, Vector2<float> rotationCenter, float rotationRadians, Color _color);
+			void drawTexture(Image* img, Vector2<float> screenPosition, Vector2<float> displayOnScreenSize, Vector2<float> texSize, Vector2<float> rotationCenter, float rotationRadians, Color _color);
 
 	};
 }

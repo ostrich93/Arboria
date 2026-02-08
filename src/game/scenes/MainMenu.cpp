@@ -23,7 +23,7 @@ namespace Arboria {
 		canvas.setFlag(WidgetStateFlags::WIDGET_CONTAINER);
 		canvas.enabled = true;
 
-		Texture* bTexture = resourceManager->loadTexture("Button01.png");
+		Image* bTexture = resourceManager->loadTexture("Button01.png");
 		ListBoxWidget* optionsList = canvas.createChild<ListBoxWidget>(4, 1);
 		optionsList->name = "MAIN_MENU_SELECT";
 		optionsList->rect = { 320, 400, 200, 180 };

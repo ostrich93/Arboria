@@ -3,6 +3,8 @@
 
 #include "RenderDevice.h"
 
+extern unsigned int gCurrentDrawCount;
+
 namespace Arboria {
 	class ScreenManager;
 	class FontManager;

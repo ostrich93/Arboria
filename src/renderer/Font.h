@@ -1,10 +1,6 @@
 #ifndef FONT_H
 #define FONT_H
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#include <harfbuzz/hb.h>
-#include <harfbuzz/hb-ft.h>
 #include "../utils/Vector.h"
 #include "../framework/Engine.h"
 #include "../containers/HashTable.h"
@@ -12,98 +8,80 @@
 #include "../utils/combine_hash.h"
 
 namespace Arboria {
-	class Texture;
-	class TextureAtlas;
+	class PaletteImage;
+	class Palette;
+
+	bool TTFInitialize();
+	void TTFDispose();
+	struct TTFSurface;
+
+	struct TTFSurface {
+		const void* pixels;
+		int32_t w;
+		int32_t h;
+	};
 
 	struct Glyph {
-		Vector2<unsigned int> size;
-		int top; //distance in pixels from the baseline to the top of the glyph
-		int left; //distance in pixels from the origin to the left edge of the glyph
-		Vector2<int> bearing;
-		Vector2<int> advance;
-		Vector2<int> kerning;
+		uint16_t codepoint;
+		unsigned int index;
+		int minx;
+		int maxx;
+		int miny;
+		int maxy;
+		int yoffset;
+		int advance;
+		PaletteImage* img;
 	};
-
-	struct GlyphEntry {
-		Glyph glyph;
-		float u0;
-		float v0;
-		float u1;
-		float v1;
-	};
-
-	struct FontMetrics {
-		int ptSize;
-		int max_width;
-		int max_height;
-		Vector2<int> max_advance;
-	};
-
-	struct FontHandle {
-		String fontName;
-		String fontStyle;
-		unsigned char fontSize;
-		FontHandle() : fontName(""), fontStyle(""), fontSize(24) {}
-		FontHandle(const char* _fontName, const char* _fontStyle = "", unsigned char _fontSize = 24);
-		FontHandle(const char* _fontName, unsigned char _fontSize);
-		bool operator==(const FontHandle& other) const {
-			return (fontName == other.fontName) && (fontStyle == other.fontStyle) && (fontSize == other.fontSize);
-		}
-		static size_t getHash(const FontHandle& fontHandle);
-	};
-
-	inline size_t FontHandle::getHash(const FontHandle& fontHandle) {
-		size_t hash1 = String::getHash(fontHandle.fontName);
-		size_t hash2 = combineHash(hash1, String::getHash(fontHandle.fontStyle));
-		return combineHash(hash2, (static_cast<size_t>(fontHandle.fontSize) + 119));
-	}
 
 	class Font {
-		private:
-			friend class FontManager;
-			bool wasInitialized;
-			FontHandle fontHandle;
-			unsigned width; //texture width
-			unsigned height; //texture height
-			unsigned char fontSize;
-			unsigned int format;
-			TextureAtlas* glyphAtlas;
-			GlyphEntry glyphInfo[256];
-			FontMetrics size;
-			int length;
-		public:
-			Font(const char* name, unsigned int _format, unsigned char ptSz, unsigned _width = 1024, unsigned _height = 1024);
-			Font(const char* name, const char* family, unsigned int _format, unsigned char ptSz, unsigned _width = 1024, unsigned _height = 1024);
-			Font(FontHandle& fname, unsigned int _format, unsigned _width = 1024, unsigned _height = 1024);
-			~Font();
-			int initialize();
-			GlyphEntry* getGlyphEntry(unsigned int codePoint);
-			List<int> getGlyphs(const String& string);
-			List<int> getGlyphs(const char* string);
-			Glyph* getGlyph(unsigned int _codePoint);
-			inline FontHandle& getFontName() { return fontHandle; }
-			inline TextureAtlas* getGlyphAtlas() { return glyphAtlas; }
-			inline void setGlyphAtlas(TextureAtlas* _glyphAtlas) { glyphAtlas = _glyphAtlas; }
-			inline FontMetrics& getSize() { return size; }
+	public:
+		int height = 0;
+		int ascent = 0;
+		int descent = 0;
+		int lineskip = 0;
+
+		int face_style = 0;
+		int style = 0;
+		int outline = 0;
+
+		int kerning = 0;
+
+		int glyph_overhang = 0;
+		float glyph_italics = 0;
+
+		int underline_offset = 0;
+		int underline_height = 0;
+
+		int font_size_family = 0;
+		int hinting = 0;
+
+		HashTable<uint32_t, Glyph> glyphs;
+		Palette* palette = nullptr;
+
+		//Glyph* getGlyph(char32_t codepoint);
+		PaletteImage* getString(const String& text);
+		int getTextWidth(const String& text);
+		int getTextHeight() const;
+		int getTextHeight(const String& text);
+		int getMaxHeight(const String& text);
+		//int getTextHeight(const std::string& text, int maxWidth);
+		//std::string getName() const;
+		//Palette* getPalette() const;
+
+		//static Font* loadFont(const std::string& fontPath, int32_t ptSize, Palette* defaultPalette);
 	};
 
-	class FontManager {
-		public:
-			FontManager();
-			~FontManager();
-			FT_Library getFontLibrary() { return fontLibrary; }
-			const String getFontFilename(const char* family, const char* style);
-			int loadFont(const char* family, const char* style, unsigned int size);
-			int loadFont(FontHandle& fontHandle);
-			Font* getFont(const char* family, const char* style, unsigned int size);
-			Font* getFont(FontHandle& fontHandle);
-			inline FT_Face getCurrentFace() { return currentFace; }
-			inline void setCurrentFace(FT_Face& _face) { currentFace = _face; }
-		private:
-			FT_Library fontLibrary;
-			FT_Face currentFace;
-			HashTable<size_t, Font*> fontCache;
+	struct FontStringCacheEntry {
+		PaletteImage* image;
+		Font* font;
+		String text;
+		uint32_t lastUseTick;
 	};
+
+	//TTF_SDLPORT
+	int TTF_Init(void);
+	Font* TTF_OpenFont(const char* file, int ptSize);
+	void TTF_Quit(void);
 }
 
 #endif

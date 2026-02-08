@@ -10,13 +10,13 @@ namespace Arboria {
 		private:
 			int scrollValue;
 			float segmentSize;
-			Texture* scrollbarImage;
+			Image* scrollbarImage;
 		protected:
 			int minimum, maximum;
 			bool menuFlag;
 			Color color;
 		public:
-			ScrollbarWidget(Texture* scrollerImage = NULL, bool _isMenu = false, Orientation orientation = Orientation::VERTICAL);
+			ScrollbarWidget(Image* scrollerImage = NULL, bool _isMenu = false, Orientation orientation = Orientation::VERTICAL);
 			~ScrollbarWidget() override;
 			void setMinimum(int newValue = 0);
 			void setMaximum(int newValue = 0);

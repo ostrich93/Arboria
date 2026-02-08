@@ -10,13 +10,13 @@
 #include "../utils/Color.h"
 
 namespace Arboria {
-	class Texture;
+	class Image;
 	typedef void (*windowCallback)(Widget*);
 	
 	class Widget {
 	private:
 		typedef void (*preRenderCallback)(Widget*);
-		Texture* surface;
+		Image* surface;
 		void* data;
 		preRenderCallback preRenderFunction;
 	protected:
@@ -63,8 +63,8 @@ namespace Arboria {
 		bool isVisible() const { return flags & WidgetStateFlags::WIDGET_VISIBLE != 0; }
 		void setParent(Widget* _parent);
 		Widget* getParent() const { return parent; }
-		Texture* getSurface() const { return surface; }
-		void setSurface(Texture* _surface) { surface = _surface; }
+		Image* getSurface() const { return surface; }
+		void setSurface(Image* _surface) { surface = _surface; }
 		static int align(HorizontalAlignment _halign, int parentWidth, int childWidth);
 		static int align(VerticalAlignment _valign, int parentHeight, int childHeight);
 		void align(HorizontalAlignment _halign);

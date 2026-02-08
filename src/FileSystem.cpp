@@ -82,7 +82,7 @@ namespace Arboria {
 	void freeFileSystem() {
 		PHYSFS_deinit();
 	}
-	char* readBytesFromPhysFS(const char* filename, unsigned int* bytesRead)
+	unsigned char* readBytesFromPhysFS(const char* filename, unsigned int* bytesRead)
 	{
 		if (!PHYSFS_exists(filename)) {
 			*bytesRead = 0;
@@ -133,5 +133,10 @@ namespace Arboria {
 		buf[length] = 0;
 		PHYSFS_close(file);
 		return length;
+	}
+	const String getFontPath(const char* filename)
+	{
+		String fullfilename = PHYSFS_getRealDir(filename);
+		return fullfilename + filename;
 	}
 }

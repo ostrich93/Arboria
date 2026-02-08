@@ -36,7 +36,7 @@ endif()
 project ("Arboria")
 include(CheckCXXCompilerFlag)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -84,10 +84,12 @@ set (ARBORIA_SOURCE_FILES
 		./src/gui/ScrollbarWidget.cpp
 		./src/gui/SliderWidget.cpp
 		./src/gui/Widget.cpp
+		./src/renderer/Atlas.cpp
 		./src/renderer/DrawColoredPrimitiveShader.cpp
 		./src/renderer/DrawSurfaceShader.cpp
 		./src/renderer/DrawTextShader.cpp
 		./src/renderer/Font.cpp
+		./src/renderer/Palette.cpp
 		./src/renderer/Renderer.cpp
 		./src/renderer/ShaderProgram.cpp
 		./src/renderer/Texture.cpp
@@ -117,6 +119,7 @@ set (ARBORIA_HEADER_FILES
 		./src/framework/Lexer.h
 		./src/framework/RenderDevice.h
 		./src/framework/ResourceManager.h
+		./src/framework/ResourceObject.h
 		./src/framework/ScreenManager.h
 		./src/framework/Session.h
 		./src/framework/String.h
@@ -132,10 +135,14 @@ set (ARBORIA_HEADER_FILES
 		./src/gui/SliderWidget.h
 		./src/gui/Widget.h
 		./src/gui/WidgetEnums.h
+		./src/renderer/Atlas.h
+		./src/renderer/CodepointView.h
 		./src/renderer/DrawColoredPrimitiveShader.h
+		./src/renderer/DrawLock.h
 		./src/renderer/DrawSurfaceShader.h
 		./src/renderer/DrawTextShader.h
 		./src/renderer/Font.h
+		./src/renderer/Palette.h
 		./src/renderer/Renderer.h
 		./src/renderer/ShaderProgram.h
 		./src/renderer/stb_image.h
@@ -145,6 +152,7 @@ set (ARBORIA_HEADER_FILES
 		./src/utils/Color.h
 		./src/utils/combine_hash.h
 		./src/utils/math.h
+		./src/utils/Numerics.h
 		./src/utils/Rectangle.h
 		./src/utils/Vector.h
 )
