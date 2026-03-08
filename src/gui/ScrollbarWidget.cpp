@@ -7,7 +7,7 @@
 namespace Arboria {
 	ScrollbarWidget::ScrollbarWidget(Image* scrollerImage, bool _isMenu, Orientation orientation) : Widget(), scrollValue(0), scrollStep(1), barOrientation(orientation), maximum(1), minimum(0), menuFlag(_isMenu), scrollbarImage(scrollerImage), color({ (uint8_t)255, (uint8_t)255, (uint8_t)255, (uint8_t)128 }) {
 		if (!scrollbarImage) {
-			scrollbarImage = resourceManager->loadTexture("gui/scroller.png");
+			scrollbarImage = resourceManager->loadTexture(231);
 		}
 	}
 
@@ -78,15 +78,15 @@ namespace Arboria {
 		switch (barOrientation) {
 			case Orientation::VERTICAL:
 				newPos = { 0, position };
-				newSize = { rect.w, static_cast<int>(segmentSize * (maximum - minimum)) };
+				newSize = { size.x, static_cast<int>(segmentSize * (maximum - minimum)) };
 				break;
 			case Orientation::HORIZONTAL:
 			default:
 				newPos = { position, 0 };
-				newSize = { static_cast<int>(segmentSize * (maximum - minimum)), rect.h };
+				newSize = { static_cast<int>(segmentSize * (maximum - minimum)), size.y };
 				break;
 		}
-		renderer->draw(scrollbarImage, newPos, color, barOrientation == Orientation::VERTICAL ? newSize.y / segmentSize : newSize.x / segmentSize);
+		renderer->draw(scrollbarImage, newPos);
 		//spriteRenderer->draw(scrollbarImage, newPos, newSize, color);
 	}
 
@@ -94,7 +94,7 @@ namespace Arboria {
 		Widget::run();
 
 		int numSegments = (maximum - minimum) + 1;
-		int bsize = barOrientation == Orientation::VERTICAL ? rect.h : rect.w;
+		int bsize = barOrientation == Orientation::VERTICAL ? size.y : size.x;
 		segmentSize = bsize / static_cast<float>(numSegments);
 	}
 }

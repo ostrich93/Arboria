@@ -6,18 +6,21 @@
 #include "../framework/String.h"
 #include "WidgetEnums.h"
 #include "../utils/Vector.h"
-#include "../utils/Rectangle.h"
 #include "../utils/Color.h"
 
 namespace Arboria {
 	class Image;
+	class Surface;
+	class Palette;
 	typedef void (*windowCallback)(Widget*);
 	
 	class Widget {
 	private:
 		typedef void (*preRenderCallback)(Widget*);
-		Image* surface;
+		Surface* surface;
+		Palette* palette;
 		void* data;
+		HashTable<GUIEventType, List<eventCallback>> eventCallbacks;
 		preRenderCallback preRenderFunction;
 	protected:
 		Widget* parent;
@@ -27,16 +30,15 @@ namespace Arboria {
 		Color foregroundColor;
 		Color selectColor;
 		Color borderColor;
-		bool isContainer;
 		float borderSize;
 		Vector2<float> maxScale;
-		RenderDevice* deviceContext;
 		uint32_t flags;
 	public:
 		Widget();
 		bool enabled;
+		bool clickable;
 		String name;
-		Rectangle rect;
+		Vector2<int> position, size;
 		List<Widget*> children;
 
 		uint32_t getFlags() const { return flags; }
@@ -59,12 +61,11 @@ namespace Arboria {
 		float getMaxScaleY() const { return maxScale.y; }
 		void setMaxScaleY(float y) { maxScale.y = y; }
 		Vector2<float> getMaxScale() const { return maxScale; }
-		bool isDirty() const { return flags & WidgetStateFlags::WIDGET_DIRTY != 0; }
-		bool isVisible() const { return flags & WidgetStateFlags::WIDGET_VISIBLE != 0; }
+		bool isDirty() const { return (flags & WidgetStateFlags::WIDGET_DIRTY) != 0; }
+		bool isVisible() const { return (flags & WidgetStateFlags::WIDGET_VISIBLE) != 0; }
 		void setParent(Widget* _parent);
 		Widget* getParent() const { return parent; }
-		Image* getSurface() const { return surface; }
-		void setSurface(Image* _surface) { surface = _surface; }
+		Surface* getSurface() const { return surface; }
 		static int align(HorizontalAlignment _halign, int parentWidth, int childWidth);
 		static int align(VerticalAlignment _valign, int parentHeight, int childHeight);
 		void align(HorizontalAlignment _halign);
@@ -77,12 +78,18 @@ namespace Arboria {
 		void setDirty();
 		void resolveLocation();
 		void render();
+		Palette* getPalette() const { return palette; }
+		void setPalette(const Palette* p);
+
+		void submitGuiEvent(GUIEventType eventType, AEvent* parentEvent);
+		void addEventCallback(GUIEventType eventType, eventCallback callback);
+		void executeEventCallbacks(AEvent* e);
 
 		template<typename T, std::enable_if_t<std::is_base_of_v<Widget, T>, bool> = true>
-		T* findWidget(String& widgetId) {
+		T* findWidget(String widgetId) {
 			for (int j = 0; j < children.getLength(); j++) {
-				if (children[j].name == widgetId)
-					return static_cast<T*>(&children[j]);
+				if (children[j]->name == widgetId)
+					return static_cast<T*>(children[j]);
 			}
 
 			return NULL;
@@ -101,11 +108,38 @@ namespace Arboria {
 		virtual void onRender();
 		virtual void preRender();
 		virtual void postRender();
+		virtual void unloadResources();
 		void setPreRenderFunction(preRenderCallback cb) { preRenderFunction = cb; }
 		virtual ~Widget();
 
 		bool operator==(const Widget& other) const {
 			return name == other.name;
+		}
+	};
+
+	template<typename V>
+	class HashNode<GUIEventType, V> {
+	public:
+		GUIEventType key;
+		V value;
+		HashNode<GUIEventType, V>* next;
+
+		HashNode(const GUIEventType& _key, const V& _value) : key(_key), value(_value), next(NULL) {}
+		HashNode(const GUIEventType& _key, const V& _value, HashNode* _next) : key(_key), value(_value), next(_next) {}
+		HashNode(GUIEventType& _key, V& _value, HashNode* _next) : key(_key), value(_value), next(_next) {}
+
+		static int getHash(const GUIEventType& key, const int maskValue) {
+			return static_cast<int>(key) & maskValue;
+		}
+
+		static int compare(const GUIEventType& keyA, const GUIEventType& keyB) {
+			if (keyA < keyB)
+				return -1;
+
+			else if (keyA > keyB)
+				return 1;
+
+			return 0;
 		}
 	};
 };

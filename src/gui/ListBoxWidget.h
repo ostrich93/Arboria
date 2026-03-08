@@ -8,6 +8,8 @@ namespace Arboria {
 		private:
 			Widget* hovered;
 			Widget* selected;
+			Image* hoveredImage;
+			Image* selectedImage;
 			Color hoverColor;
 			Color selectColor;
 			Color regularColor;
@@ -22,6 +24,7 @@ namespace Arboria {
 			void postRender() override;
 			void run() override;
 
+			void clear();
 			void addItem(Widget* item);
 			//Widget* removeItem(Widget* item);
 			//Widget* removeItem(int index);
@@ -30,6 +33,10 @@ namespace Arboria {
 			void setSelected(Widget* widget);
 			Widget* getSelected() { return selected; }
 			Widget* getHovered() { return hovered; }
+			Image* getSelectedImage() const { return selectedImage; }
+			void setSelectedImage(Image* img) { selectedImage = img; }
+			Image* getHoveredImage() const { return hoveredImage; }
+			void setHoveredImage(Image* img) { hoveredImage = img; }
 			void setHoverColor(Color newColor) { hoverColor = newColor; }
 			Color getHoverColor() const { return hoverColor; }
 			Color setSelectColor(Color newColor) { selectColor = newColor; }

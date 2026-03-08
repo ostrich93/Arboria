@@ -40,7 +40,7 @@ namespace Arboria {
 		ScreenCommandType commandType;
 		UIContext* nextScene;
 		ScreenCommand() : commandType(ScreenCommandType::CONTINUE), nextScene(NULL){}
-		ScreenCommand(ScreenCommandType _commandType, UIContext* next);
+		ScreenCommand(ScreenCommandType _commandType, UIContext* next = nullptr);
 	};
 
 }

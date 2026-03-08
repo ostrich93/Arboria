@@ -78,22 +78,25 @@ set (ARBORIA_SOURCE_FILES
 		./src/framework/UIContext.cpp
 		./src/game/scenes/MainMenu.cpp
 		./src/game/scenes/OptionsMenu.cpp
+		./src/gui/Graphic.cpp
 		./src/gui/Label.cpp
 		./src/gui/ListBoxWidget.cpp
 		./src/gui/ScrollAreaWidget.cpp
 		./src/gui/ScrollbarWidget.cpp
-		./src/gui/SliderWidget.cpp
+		
+		./src/gui/TextButton.cpp
 		./src/gui/Widget.cpp
 		./src/renderer/Atlas.cpp
-		./src/renderer/DrawColoredPrimitiveShader.cpp
-		./src/renderer/DrawSurfaceShader.cpp
-		./src/renderer/DrawTextShader.cpp
+		./src/renderer/ColoredPrimitiveShader.cpp
 		./src/renderer/Font.cpp
 		./src/renderer/Palette.cpp
 		./src/renderer/Renderer.cpp
+		./src/renderer/RenderData.cpp
 		./src/renderer/ShaderProgram.cpp
+		./src/renderer/SpriteBuffer.cpp
+		./src/renderer/SpriteShader.cpp
 		./src/renderer/Texture.cpp
-		#./src/renderer/TextRenderer.cpp
+		./src/renderer/TexturedShader.cpp
 		./src/utils/Color.cpp
 		./src/utils/Rectangle.cpp
 		./src/main.cpp
@@ -128,26 +131,30 @@ set (ARBORIA_HEADER_FILES
 		./src/framework/UIContext.h
 		./src/game/scenes/MainMenu.h
 		./src/game/scenes/OptionsMenu.h
+		./src/gui/Graphic.h
 		./src/gui/Label.h
 		./src/gui/ListBoxWidget.h
 		./src/gui/ScrollAreaWidget.h
 		./src/gui/ScrollbarWidget.h	
-		./src/gui/SliderWidget.h
+		
+		./src/gui/TextButton.h
 		./src/gui/Widget.h
 		./src/gui/WidgetEnums.h
 		./src/renderer/Atlas.h
 		./src/renderer/CodepointView.h
-		./src/renderer/DrawColoredPrimitiveShader.h
+		./src/renderer/ColoredPrimitiveShader.h
 		./src/renderer/DrawLock.h
-		./src/renderer/DrawSurfaceShader.h
-		./src/renderer/DrawTextShader.h
+		./src/renderer/DrawSpriteCommand.h
 		./src/renderer/Font.h
 		./src/renderer/Palette.h
 		./src/renderer/Renderer.h
+		./src/renderer/RenderData.h
 		./src/renderer/ShaderProgram.h
+		./src/renderer/SpriteBuffer.h
+		./src/renderer/SpriteShader.h
 		./src/renderer/stb_image.h
 		./src/renderer/Texture.h
-		#./src/renderer/TextRenderer.h
+		./src/renderer/TexturedShader.h
 		./src/utils/check_static_cast.h
 		./src/utils/Color.h
 		./src/utils/combine_hash.h
@@ -175,6 +182,7 @@ set (ARBORIA_HEADER_FILES
 #add_subdirectory("assets")
 
 file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/config DESTINATION ${CMAKE_BINARY_DIR})
 
 add_executable (${CMAKE_PROJECT_NAME} ${ARBORIA_SOURCE_FILES} ${ARBORIA_HEADER_FILES})
 if(ASAN_ENABLED)

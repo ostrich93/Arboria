@@ -2,28 +2,35 @@
 #include "../framework/InputActionType.h"
 #include "../framework/ActionManager.h"
 #include "../renderer/Renderer.h"
+#include "../renderer/RenderData.h"
 
 namespace Arboria {
 	bool Widget::onEvent(AEvent* e)
 	{
-		if (flags & WidgetStateFlags::WIDGET_VISIBLE) {
-			if (flags & WidgetStateFlags::WIDGET_INTERACTIVE) {
-				for (int i = 0; i < children.getLength(); i++) {
-					children[i]->onEvent(e);
-					if (e->isHandled) {
-						setDirty();
-						return true;
-					}
+		for (auto ctrlIdx = children.begin(); ctrlIdx != children.end();) {
+			auto c = *ctrlIdx;
+			if ((c->flags & WidgetStateFlags::WIDGET_VISIBLE) && c->enabled) {
+				c->onEvent(e);
+				if (e->isHandled) {
+					return e->isHandled;
 				}
-				
-				int action = actionManager->getAction(*e);
-				if (action > 0 && callbacks[action - 1] != NULL) {
-					setDirty();
-					callbacks[action - 1](this);
-					return true;
-				}
+			}
+			else {
+				++ctrlIdx;
+			}
+		}
 
-				return false;
+		if (e->eventType == EventType::EVENT_KEY_DOWN || e->eventType == EventType::EVENT_BUTTON_UP) {
+			if (flags & WidgetStateFlags::WIDGET_FOCUSED) {
+				submitGuiEvent(e->eventType == EventType::EVENT_KEY_DOWN ? GUIEventType::KEY_DOWN : GUIEventType::KEY_UP, e);
+				e->isHandled = true;
+			}
+		}
+
+		if (e->eventType == EventType::EVENT_KEY_PRESS) {
+			if (flags & WidgetStateFlags::WIDGET_FOCUSED) {
+				submitGuiEvent(GUIEventType::KEY_PRESS, e);
+				e->isHandled = true;
 			}
 		}
 		return e->isHandled;
@@ -31,7 +38,12 @@ namespace Arboria {
 
 	void Widget::onRender() {}
 
-	Widget::Widget() : deviceContext(renderDevice), maxScale({ 1,1 }), name(""), parent(NULL), preRenderFunction(NULL), flags(0), borderSize(0), borderColor({ 0, 0, 0, 0 }), data(NULL) {
+	Widget::Widget() : maxScale({ 1,1 }), name(""), parent(NULL), preRenderFunction(NULL),
+		flags(WIDGET_ACTIVE | WIDGET_ENABLED | WIDGET_VISIBLE), borderSize(0), borderColor({ 0, 0, 0, 0 }), foregroundColor({ 0,0,0,0 }),
+		backgroundColor({ 0,0,0,0 }), data(NULL), enabled(true),
+		clickable(false), surface(NULL), palette(NULL), position({ 0,0 }), resolvedLocation({ 0,0 }),
+		size({0,0})
+	{
 	}
 
 	void Widget::setFlag(unsigned int f)
@@ -59,17 +71,17 @@ namespace Arboria {
 		auto parentControl = parent;
 
 		if (parentControl == NULL) {
-			resolvedLocation.x = rect.x;
-			resolvedLocation.y = rect.y;
+			resolvedLocation.x = position.x;
+			resolvedLocation.y = position.y;
 		}
 		else {
-			if (rect.x > parentControl->rect.w || rect.y > parentControl->rect.h) {
+			if (position.x > parentControl->size.x || position.y > parentControl->size.y) {
 				resolvedLocation.x = -99999;
 				resolvedLocation.y = -99999;
 			}
 			else {
-				resolvedLocation.x = rect.x + parentControl->resolvedLocation.x;
-				resolvedLocation.y = rect.y + parentControl->resolvedLocation.y;
+				resolvedLocation.x = position.x + parentControl->resolvedLocation.x;
+				resolvedLocation.y = position.y + parentControl->resolvedLocation.y;
 			}
 		}
 		for (int i = 0; i < children.getLength(); i++) {
@@ -83,20 +95,37 @@ namespace Arboria {
 
 	void Widget::render()
 	{
-		if (!(flags & WidgetStateFlags::WIDGET_VISIBLE) || rect.w == 0 || rect.h == 0) {
+		if (!(flags & WidgetStateFlags::WIDGET_VISIBLE) || size.x == 0 || size.y == 0) {
 			return;
 		}
 
+		if (surface == nullptr || surface->getSize() != Vector2<unsigned int>(size.x, size.y)) {
+			setDirty();
+			surface = new Surface(Vector2<unsigned int>(size.x, size.y));
+		}
+
 		if (flags & WidgetStateFlags::WIDGET_DIRTY) {
+			Palette* prevPalette;
+			if (palette) {
+				prevPalette = renderer->getPalette();
+				renderer->setPalette(palette);
+			}
+			RendererFrameBufferBinding b(surface);
 			onRender();
 			postRender();
+
+			if (palette) {
+				renderer->setPalette(prevPalette);
+			}
 		}
 
 		clearFlag(WidgetStateFlags::WIDGET_DIRTY);
-
-		renderer->draw(surface, { rect.x, rect.y }, { backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a });
-		//spriteRenderer->draw(surface, { rect.x, rect.y }, { rect.w, rect.h }, { backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a });
-		
+		if (enabled) {
+			renderer->draw(surface, Vector2<float>(position.x, position.y));
+		}
+		else {
+			renderer->drawTinted(surface, Vector2<float>(position.x, position.y), Color{ 255, 255,255,128 });
+		}
 	}
 
 	void Widget::preRender()
@@ -119,8 +148,11 @@ namespace Arboria {
 		}
 	}
 
+	void Widget::unloadResources(){}
+
 	Widget::~Widget()
 	{
+		unloadResources();
 	}
 
 	void Widget::setParent(Widget* _parent) {
@@ -129,6 +161,68 @@ namespace Arboria {
 			_parent->setDirty();
 		}
 		parent = _parent;
+	}
+
+	void Widget::submitGuiEvent(GUIEventType eventType, AEvent* parentEvent) {
+		AEvent* event = nullptr;
+
+		switch (eventType) {
+			case GUIEventType::KEY_DOWN:
+			case GUIEventType::KEY_PRESS:
+			case GUIEventType::KEY_UP:
+			{
+				event = new AEvent();
+				event->guiEvent.raisedBy = this;
+				event->guiEvent.eventType = eventType;
+				event->guiEvent.keyInfo = parentEvent->keyboardEvent;
+				inputManager->submitEvent(event);
+				setDirty();
+				break;
+			}
+			case GUIEventType::BUTTON_CLICK:
+			case GUIEventType::SCROLLBAR_CHANGE:
+			case GUIEventType::LISTBOX_CHANGE_HOVER:
+			case GUIEventType::LISTBOX_CHANGE_SELECTED:
+			{
+				event = new AEvent();
+				if (parentEvent->eventType == EventType::EVENT_UI_INTERACTION) {
+					event->guiEvent = parentEvent->guiEvent;
+				}
+				event->guiEvent.raisedBy = this;
+				event->guiEvent.eventType = eventType;
+				inputManager->submitEvent(event);
+				setDirty();
+				break;
+			}
+			default:
+				break;
+		}
+		executeEventCallbacks(event);
+	}
+
+	void Widget::addEventCallback(GUIEventType eventType, eventCallback callback)
+	{
+		List<eventCallback>* eCallbacks;
+		eventCallbacks.get(eventType, &eCallbacks);
+		if (eCallbacks) { //if there's a list of callbacks for that event type, add
+			eCallbacks->append(callback);
+		}
+		else { //if no list of callbacks found, create a new one, add it to the list, and set the hashtable
+			eCallbacks = new List<eventCallback>();
+			eCallbacks->append(callback);
+			eventCallbacks.set(eventType, *eCallbacks);
+		}
+	}
+
+	void Widget::executeEventCallbacks(AEvent* e)
+	{
+		List<eventCallback>* _callbacks;
+		eventCallbacks.get(e->guiEvent.eventType, &_callbacks);
+		if (_callbacks) {
+			for (auto& cb : *_callbacks) {
+				cb(e, this);
+			}
+		}
 	}
 
 	int Widget::align(HorizontalAlignment _halign, int parentWidth, int childWidth) {
@@ -164,11 +258,11 @@ namespace Arboria {
 	}
 
 	void Widget::align(HorizontalAlignment _halign) {
-		rect.x = this->align(_halign, parent->rect.w, rect.w);
+		position.x = this->align(_halign, parent->size.x, size.x);
 	}
 
 	void Widget::align(VerticalAlignment _valign) {
-		rect.y = this->align(_valign, parent->rect.h, rect.h);
+		position.y = this->align(_valign, parent->size.y, size.y);
 	}
 
 	void Widget::align(HorizontalAlignment _halign, VerticalAlignment _valign) {

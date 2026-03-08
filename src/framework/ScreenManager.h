@@ -5,8 +5,6 @@
 #include "Engine.h"
 
 namespace Arboria {
-	class UIContext;
-	struct ScreenCommand;
 	class ScreenManager {
 		private:
 			List<UIContext*> stack;
@@ -15,11 +13,13 @@ namespace Arboria {
 		public:
 			void clear();
 			UIContext* getCurrent();
+			UIContext* getPrevious();
 			UIContext* getPrevious(UIContext& from);
 			bool isEmpty();
 			UIContext* pop();
 			void push(UIContext& screen);
 			void push(UIContext* screen);
+			void pushScreenCommand(const ScreenCommand& cmd);
 			List<ScreenCommand>& getScreenCommands();
 			const List<ScreenCommand>& getScreenCommands() const;
 	};

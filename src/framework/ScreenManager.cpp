@@ -16,6 +16,7 @@ namespace Arboria {
         return stack[stack.getLength() - 1];
     }
 
+
     UIContext* ScreenManager::getPrevious(UIContext& from) {
         int idx = stack.findIndex(&from);
         if (idx <= 0) {
@@ -23,6 +24,11 @@ namespace Arboria {
         }
 
         return stack[idx-1];
+    }
+
+    UIContext* ScreenManager::getPrevious()
+    {
+        return getPrevious(*getCurrent());
     }
     
     bool ScreenManager::isEmpty()
@@ -62,6 +68,10 @@ namespace Arboria {
         
         stack.append(screen);
         screen->enter();
+    }
+
+    void ScreenManager::pushScreenCommand(const ScreenCommand& cmd) {
+        screenCommands.append(cmd);
     }
 
     List<ScreenCommand>& ScreenManager::getScreenCommands()

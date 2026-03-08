@@ -52,7 +52,7 @@ namespace Arboria {
 		int32_t _atlasHeight = 0;
 		int32_t _pageSize = 0;
 		int32_t _imageSize = 0; //the width and height of an image in the atlas;
-		List<AtlasPage> _pages;
+		List<AtlasPage*> _pages;
 		List<AtlasImageInfo> _spriteCache;
 		std::array<uint32_t, 0xFFF> _indexMap;
 

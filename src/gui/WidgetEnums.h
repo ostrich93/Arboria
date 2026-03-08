@@ -67,6 +67,11 @@ namespace Arboria {
 		VERTICAL,
 		HORIZONTAL
 	};
+
+	enum FillMethod {
+		FIT,
+		STRETCH
+	};
 }
 
 #endif

@@ -2,8 +2,6 @@
 #define RESOURCE_MANAGER_H
 
 #include "../containers/HashTable.h"
-#include "Engine.h"
-#include "ResourceObject.h"
 
 namespace Arboria {
 	class Font;

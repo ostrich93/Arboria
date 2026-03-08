@@ -1,7 +1,8 @@
 #include "Lexer.h"
+#include "Engine.h"
 
 namespace Arboria {
-	Lexer::Lexer() {
+	Lexer::Lexer() : buffer(nullptr), cursorPtr(nullptr), endPtr(nullptr), lastCursorPtr(nullptr), whitespaceStartPtr(nullptr), whitespaceEndPtr(nullptr) {
 		loaded = false;
 		allocated = false;
 		flags = 0;
@@ -43,6 +44,8 @@ namespace Arboria {
 		line = startLine;
 		lastLine = line;
 		loaded = true;
+
+		return true;
 	}
 
 	void Lexer::freeMemory() {
@@ -127,10 +130,87 @@ namespace Arboria {
 		return true;
 	}
 
+	bool Lexer::expectTokenString(const char* string)
+	{
+		Token token;
+		if (!readToken(&token)) {
+			handleError("couldn't find expected '%s'", string);
+			return false;
+		}
+		if (token != string) {
+			handleError("expected '%s', but found '%s'", string, token);
+			return false;
+		}
+		return true;
+	}
+
+	bool Lexer::expectTokenType(int tType, int tSubtype, Token* token)
+	{
+		String str;
+		if (!readToken(token)) {
+			handleError("Could not read expected token");
+			return false;
+		}
+
+		if (token->type != tType) {
+			switch (tType) {
+				case TOKENTYPE_STRING:
+					str = "string";
+					break;
+
+				case TOKENTYPE_LITERAL:
+					str = "literal";
+					break;
+				case TOKENTYPE_NUMBER:
+					str = "number";
+					break;
+				case TOKENTYPE_NAME:
+					str = "name";
+					break;
+				case TOKENTYPE_PUNCTUATION:
+					str = "punctuation";
+					break;
+				default:
+					str = "unknown type";
+					break;
+			}
+			handleError("Expected a %s but found '%s'", str.c_str(), token->c_str());
+			return false;
+		}
+
+		if (token->type == TOKENTYPE_NUMBER) {
+			if ((token->subtype & tSubtype) != tSubtype) {
+				str.clear();
+				if (tSubtype & TOKENSUBTYPE_INTEGER) str += "integer";
+				if (tSubtype & TOKENSUBTYPE_DECIMAL) str = "decimal";
+				if (tSubtype & TOKENSUBTYPE_HEX) str = "hex";
+				if (tSubtype & TOKENSUBTYPE_OCTAL) str = "octal";
+				if (tSubtype & TOKENSUBTYPE_BINARY) str = "binary";
+				if (tSubtype & TOKENSUBTYPE_LONG) str += "long";
+				if (tSubtype & TOKENSUBTYPE_UNSIGNED) str += "unsigned";
+				if (tSubtype & TOKENSUBTYPE_FLOAT) str += "float";
+
+				handleError("Expected %s but found '%s'", str.c_str(), token->c_str());
+				return false;
+			}
+		}
+		else if (token->type == TOKENTYPE_PUNCTUATION) {
+			if (tSubtype < 0) {
+				handleError("BUG: wrong punctuation subtype");
+				return false;
+			}
+			if (token->subtype != tSubtype) {
+				handleError("Expected %s but found '%s'", PUNCTUATIONSTR[tSubtype], token->c_str());
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	void Lexer::unreadToken(const Token* token) {
 		if (tokenAvailable) {
-			//fatal error;
-			return;
+			Engine::fatalError("Lexer::unreadToken, token was unread twice\n");
 		}
 		currentToken = *token;
 		tokenAvailable = true;
@@ -145,6 +225,22 @@ namespace Arboria {
 		line = 1;
 		lastLine = 1;
 		currentToken = "";
+	}
+
+	void Lexer::handleError(const char* str, ...) {
+		char text[1024];
+		va_list ap;
+
+		error = true;
+
+		if (flags & LEXER_NOERRORS)
+			return;
+
+		va_start(ap, str);
+		vsprintf(text, str, ap);
+		va_end(ap);
+
+		Engine::printError(text);
 	}
 
 	bool Lexer::readWhitespace() {
@@ -408,7 +504,7 @@ namespace Arboria {
 			}
 
 			if (dot == 1) {
-				token->subtype = TOKENSUBTYPE_DECIMAL || TOKENSUBTYPE_FLOAT;
+				token->subtype = TOKENSUBTYPE_DECIMAL | TOKENSUBTYPE_FLOAT;
 
 				if (c == 'e') {
 					token->appendDirty(c);

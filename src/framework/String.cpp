@@ -2,6 +2,9 @@
 #include "../utils/math.h"
 
 namespace Arboria {
+
+    const char String::emptyString[1] = {'\0'};
+
     void String::operator=(const char* text) {
         if (!text) {
             ensureAllocated(1, false);

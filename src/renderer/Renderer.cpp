@@ -1,169 +1,340 @@
 #include "Renderer.h"
 #include "Texture.h"
+#include "Palette.h"
+#include "RenderData.h"
+#include "CodepointView.h"
+#include "Font.h"
 #include "../framework/Camera.h"
 #include "../framework/ResourceManager.h"
+#include <optional>
+#include "../gui/Widget.h"
 
 namespace Arboria {
-	SpriteRenderer::SpriteRenderer() : spriteShader("baseSurfaceShader") {
-		initRenderData();
+	RendererFrameBufferBinding::RendererFrameBufferBinding(Surface* surface) :
+		prevBinding(renderer->getCurrentSurface())
+	{
+		renderer->setSurface(surface);
 	}
 
-	SpriteRenderer::~SpriteRenderer() {
-		glDeleteVertexArrays(1, &this->vao_id);
-		glDeleteBuffers(1, &this->vbo_id);
-		spriteShader.destroy();
+	RendererFrameBufferBinding::~RendererFrameBufferBinding() {
+		renderer->setSurface(prevBinding);
 	}
 
-	void SpriteRenderer::initRenderData() {
-		spriteShader.initialize();
-		spriteShader.attachVertexShader();
-		spriteShader.attachFragmentShader();
-		spriteShader.link();
-		spriteShader.use();
-		modelLocation = spriteShader.getUniformLocation("model");
-		spriteColorLocation = spriteShader.getUniformLocation("spriteColor");
-		//spriteShader.setMatrix4("model", renderDevice->getCamera()->getViewMatrix());
-		spriteShader.setMatrix4("projection", renderDevice->getCamera()->getViewProjection());
+	Renderer::Renderer() : state(RendererState::Idle)
+	{
+		spriteShader = new SpriteShader(spriteBufferSize, spriteBufferCount, spritesheetPageSize);
+		texturedShader = new TexturedShader(100);
+		coloredPrimitiveShader = new ColoredPrimitiveShader(100);
 
+		default_surface = new Surface(Vector2<int>{renderDevice->getWindowWidth(), renderDevice->getWindowHeight()});
+		default_surface->renderData = new Framebuffer(0, Vector2<int>(renderDevice->getWindowWidth(), renderDevice->getWindowHeight()));
+		current_surface = default_surface;
+		glEnable(GL_BLEND);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_DST_ALPHA);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		spriteShader->use().setVector2f("uViewportSize", glm::vec2{ renderDevice->getWindowWidth(), renderDevice->getWindowHeight() });
+		coloredPrimitiveShader->use().setVector2f("uViewportSize", glm::vec2{ renderDevice->getWindowWidth(), renderDevice->getWindowHeight() });
+		
+		GLint maxTextureSize;
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 
-		float vertices[] = {
-		0.0f, 1.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 0.0f,
-
-		0.0f, 1.0f, 0.0f, 1.0f,
-		1.0f, 1.0f, 1.0f, 1.0f,
-		1.0f, 0.0f, 1.0f, 0.0f
-		};
-
-		glGenVertexArrays(1, &vao_id);
-		glGenBuffers(1, &vbo_id);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-		glBindVertexArray(vao_id);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (const void*)0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
+		if (spritesheetPageSize > (unsigned int)maxTextureSize) {
+			spritesheetPageSize = std::min(spritesheetPageSize, (unsigned int)maxTextureSize);
+		}
 	}
-
-	void SpriteRenderer::draw(Image* texture, Vector2<int> position, Vector2<int> size, Vector4<float> tint, float rotate) {
-		spriteShader.use();
-
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(position, 0.0f)); //move to position
-		model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f)); //move origin of rotation to the center of the quad.
-		model = glm::rotate(model, glm::radians(rotate), glm::vec3(0.0f, 0.0f, 1.0f));
-		model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f));
-		model = glm::scale(model, glm::vec3(size, 1.0f));
-
-		spriteShader.setMatrix4("uModel", model);
-		spriteShader.setVector4f("spriteColor", tint);
-
-		glActiveTexture(GL_TEXTURE0 + texture->getTextureId());
-		glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
-
-		glBindVertexArray(vao_id);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-	}
-
 	Renderer::~Renderer()
 	{
+		delete texturedShader;
+		delete spriteShader;
+		delete coloredPrimitiveShader;
 	}
 
 	void Renderer::initialize()
 	{
-		surfaceShader = new DrawSurfaceShader(200);
-		textShader = new DrawTextShader();
-		coloredPrimitiveShader = new DrawColoredPrimitiveShader();
+		texturedShader = new TexturedShader(100);
+		spriteShader = new SpriteShader(spriteBufferSize, spriteBufferCount, spritesheetPageSize);
+		coloredPrimitiveShader = new ColoredPrimitiveShader(100);
 		glViewport(0, 0, renderDevice->getWindowWidth(), renderDevice->getWindowHeight());
 		glEnable(GL_BLEND);
 		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_DST_ALPHA);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	}
 
-	void Renderer::draw(Image* _texture, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale)
+	void Renderer::newFrame()
 	{
-		Vector2<GLfloat> texSize = { _texture->getWidth(), _texture->getHeight() };
-		surfaceShader->drawTexture(_texture, _screenPosition, texSize, texSize, { 0,0 }, 0, _color);
-		/*DrawSurfaceCommand& drawCmd = surfaceCommandBuffer.allocateNewElement();
-		drawCmd.screenSize = { renderDevice->getWindowWidth(), renderDevice->getWindowHeight() };
-		drawCmd.screenPosition = _screenPosition;
-		drawCmd.texturePosition = { 0, 0 };
-		drawCmd.textureSize = { _texture->getWidth(), _texture->getHeight() };
-		drawCmd.boundaries = { 0, 0, _texture->getWidth(), _texture->getHeight() };
-		drawCmd.color = { _color.r, _color.g, _color.b, _color.a };
-		drawCmd.scaleValue = _scale;*/
+		if (spriteShader->usedBuffers > maxSpriteBuffers) {
+			maxSpriteBuffers = spriteShader->usedBuffers;
+		}
+		if (texturedShader->usedBuffers > maxTextureBuffers) {
+			maxTextureBuffers = texturedShader->usedBuffers;
+		}
+		if (coloredPrimitiveShader->usedBuffers > maxColoredPrimitiveBuffers) {
+			maxColoredPrimitiveBuffers = coloredPrimitiveShader->usedBuffers;
+		}
+		spriteShader->usedBuffers = 0;
+		texturedShader->usedBuffers = 0;
+		coloredPrimitiveShader->usedBuffers = 0;
 	}
 
-	void Renderer::drawText(const char* text, Font* font, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale)
+	void Renderer::clear(Color c)
 	{
-		DrawTextBatchCommand& textBatchCmd = textCommandBuffers.allocateNewElement();
-		textBatchCmd.font = font;
-		textBatchCmd.color = _color;
-		textBatchCmd.renderBatches.append({ _screenPosition.x, _screenPosition.y, text, _scale });
-		
+		flush();
+		glClearColor(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 	}
 
-	void Renderer::drawLine(Vector2<GLfloat> _positions[2], Color _colors[2])
+	void Renderer::setPalette(Palette* pal)
 	{
-		DrawColoredPrimitiveCommand& lineCmd = lineCommandBuffers.allocateNewElement();
-		lineCmd.vertices[0] = { _positions[0], {_colors[0].r, _colors[0].g, _colors[0].b, _colors[0].a} };
-		lineCmd.vertices[1] = { _positions[1], {_colors[1].r, _colors[1].g, _colors[1].b, _colors[1].a} };
+		flush();
+		current_palette = pal;
+		if (pal == nullptr) {
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			return;
+		}
+
+		auto gPal = dynamic_cast<GLPalette*>(pal->renderData);
+		if (!gPal) {
+			gPal = new GLPalette(pal);
+			pal->renderData = gPal;
+		}
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, gPal->tex_id);
 	}
 
-	void Renderer::drawRectangle(Vector2<GLfloat> _positions[4], Color _colors[4]) {
-		DrawColoredPrimitiveCommand& rectCmd = rectCommandBuffers.allocateNewElement();
-		rectCmd.vertices[0] = { _positions[0], {_colors[0].r, _colors[0].g, _colors[0].b, _colors[0].a} };
-		rectCmd.vertices[1] = { _positions[1], {_colors[1].r, _colors[1].g, _colors[1].b, _colors[1].a} };
-		rectCmd.vertices[2] = { _positions[2], {_colors[2].r, _colors[2].g, _colors[2].b, _colors[2].a} };
-		rectCmd.vertices[3] = { _positions[3], {_colors[2].r, _colors[3].g, _colors[3].b, _colors[3].a} };
+	Palette* Renderer::getPalette()
+	{
+		return current_palette;
+	}
+
+	void Renderer::bind(Surface* s)
+	{
+		auto fbo = dynamic_cast<Framebuffer*>(s->renderData);
+		if (!fbo) {
+			fbo = new Framebuffer(s->getSize());
+			s->renderData = fbo;
+		}
+		fbo->bind();
+	}
+
+	void Renderer::setSurface(Surface* s)
+	{
+		flush();
+		current_surface = s;
+		auto fbo = dynamic_cast<Framebuffer*>(s->renderData);
+		if (!fbo) {
+			fbo = new Framebuffer(s->getSize());
+			s->renderData = fbo;
+		}
+
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo->fbo_id);
+		glViewport(0, 0, s->getWidth(), s->getHeight());
+	}
+
+	Surface* Renderer::getCurrentSurface()
+	{
+		return current_surface;
+	}
+
+	void Renderer::draw(Image* i, const Vector2<float>& position)
+	{
+		drawScaled(i, position, i->getSize(), false);
+	}
+
+	void Renderer::drawScaled(Image* i, const Vector2<float>& position, const Vector2<float>& renderSize, bool linearScale)
+	{
+		auto viewport_size = current_surface->getSize();
+		auto paletteImage = dynamic_cast<PaletteImage*>(i);
+		if (paletteImage) {
+			if (paletteImage->getWidth() <= maxSpritePackSize.x && paletteImage->getHeight() <= maxSpritePackSize.y) {
+				if (state != RendererState::BatchingSprites) {
+					flush();
+					state = RendererState::BatchingSprites;
+				}
+				spriteShader->draw(paletteImage, position, paletteImage->getSize(), viewport_size);
+			}
+			else {
+				flush();
+				texturedShader->draw(paletteImage, position, paletteImage->getSize(), viewport_size);
+			}
+			return;
+		}
+
+		auto rgbImage = dynamic_cast<RGBAImage*>(i);
+		if (rgbImage) {
+			if (rgbImage->getWidth() <= maxSpritePackSize.x && rgbImage->getHeight() <= maxSpritePackSize.y && !linearScale) {
+				if (state != RendererState::BatchingSprites) {
+					flush();
+					state = RendererState::BatchingSprites;
+				}
+				spriteShader->draw(rgbImage, position, rgbImage->getSize(), viewport_size);
+			}
+			else {
+				flush();
+				texturedShader->draw(rgbImage, position, rgbImage->getSize(), viewport_size, linearScale);
+			}
+			return;
+		}
+
+		auto surface = dynamic_cast<Surface*>(i);
+		if (surface) {
+			flush();
+			texturedShader->draw(surface, position, surface->getSize(), viewport_size, linearScale);
+			return;
+		}
+	}
+
+	void Renderer::drawTinted(Image* i, Vector2<float> position, Color tint)
+	{
+		auto viewport_size = current_surface->getSize();
+		auto paletteImage = dynamic_cast<PaletteImage*>(i);
+		if (paletteImage) {
+			if (paletteImage->getWidth() <= maxSpritePackSize.x && paletteImage->getHeight() <= maxSpritePackSize.y) {
+				if (state != RendererState::BatchingSprites) {
+					flush();
+					state = RendererState::BatchingSprites;
+				}
+				spriteShader->draw(paletteImage, position, i->getSize(), viewport_size, tint);
+			}
+			else {
+				flush();
+				texturedShader->draw(paletteImage, position, i->getSize(), viewport_size, tint);
+			}
+			return;
+		}
+
+		auto rgbaImage = dynamic_cast<RGBAImage*>(i);
+		if (rgbaImage) {
+			if (rgbaImage->getWidth() <= maxSpritePackSize.x && rgbaImage->getHeight() <= maxSpritePackSize.y) {
+				if (state != RendererState::BatchingSprites) {
+					flush();
+					state = RendererState::BatchingSprites;
+				}
+				spriteShader->draw(rgbaImage, position, i->getSize(), viewport_size, tint);
+			}
+			else {
+				flush();
+				texturedShader->draw(rgbaImage, position, i->getSize(), viewport_size, false, tint);
+			}
+			return;
+		}
+
+		auto surface = dynamic_cast<Surface*>(i);
+	}
+
+	void Renderer::drawText(Font* font, String& text, int32_t x, int32_t y)
+	{
+		CodepointView codepoints(text);
+		std::optional<size_t> ttfRunIndex{};
+
+		for (auto it = codepoints.begin(); it != codepoints.end(); it++) {
+			auto codepoint = *it;
+
+			if (!ttfRunIndex.has_value()) {
+				ttfRunIndex = it.getIndex();
+			}
+		}
+
+		if (ttfRunIndex.has_value()) {
+			auto len = text.size() - *ttfRunIndex;
+
+
+			auto baseId = static_cast<uint32_t>(0xFFF) - 1023;
+			auto imageId = baseId + _ttfGlId;
+
+			spriteShader->invalidateSprite(imageId);
+
+			if (font == nullptr) {
+				return;
+			}
+
+			PaletteImage* img = font->getString(text.substring(ttfRunIndex.value(), len));
+			img->resId = imageId;
+			auto viewport_size = current_surface->getSize();
+
+			if (img->getWidth() <= maxSpritePackSize.x && img->getHeight() <= maxSpritePackSize.y) {
+				if (state != RendererState::BatchingSprites) {
+					flush();
+					state = RendererState::BatchingSprites;
+				}
+
+				_ttfGlId++;
+				if (_ttfGlId >= 1023)
+					_ttfGlId = 0;
+
+				spriteShader->draw(img, { x, y }, img->getSize(), viewport_size);
+			}
+			else {
+				flush();
+
+				_ttfGlId++;
+				if (_ttfGlId >= 1023)
+					_ttfGlId = 0;
+
+				texturedShader->draw(img, { x, y }, img->getSize(), viewport_size);
+			}
+		}
+	}
+
+	void Renderer::drawLine(Vector2<float> _p1, Vector2<float> _p2, Color _color, float thickness)
+	{
+		flush();
+		Vector2<float> positions[2];
+		Color colors[2];
+
+		auto viewport_size = current_surface->getSize();
+		colors[0] = _color;
+		colors[1] = _color;
+		positions[0] = _p1;
+		positions[1] = _p2;
+
+		coloredPrimitiveShader->drawLine(positions, colors, viewport_size, thickness);
+	}
+
+	void Renderer::drawRectangle(Vector2<float> _position, Vector2<float> _size, Color c)
+	{
+		flush();
+		Vector2<float> positions[4];
+		Color colors[4];
+
+		auto viewport_size = current_surface->getSize();
+
+		for (int i = 0; i < 4; i++) {
+			positions[i] = _position + _size * identity_quad[i];
+			colors[i] = c;
+		}
+		coloredPrimitiveShader->drawQuad(positions, colors, viewport_size);
+	}
+
+	void Renderer::drawBorders(Vector2<float> _position, Vector2<float> _size, Color c, float thickness)
+	{
+		Vector2<float> p0 = _position;
+		Vector2<float> p1 = _position + _size;
+
+		Vector2<float> rectA = { p0 };
+		Vector2<float> sizeA = { _size.x - thickness, thickness };
+
+		Vector2<float> rectB = { p1.x - thickness, p0.y };
+		Vector2<float> sizeB = { thickness, _size.y - thickness };
+
+		Vector2<float> rectC = { p0.x + thickness, p1.y - thickness };
+		Vector2<float> sizeC = { _size.x - thickness, thickness };
+
+		Vector2<float> rectD = { p0.x, p0.y + thickness };
+		Vector2<float> sizeD = { thickness, _size.y - thickness };
+
+		drawRectangle(rectA, sizeA, c);
+		drawRectangle(rectB, sizeB, c);
+		drawRectangle(rectC, sizeC, c);
+		drawRectangle(rectD, sizeD, c);
 	}
 
 	void Renderer::flush() {
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LESS);
-
-		flushLines();
-		//flushRectangles();
-		flushSurfaceCommands();
-		flushText();
+		auto viewport_size = current_surface->getSize();
+		if (state == RendererState::BatchingSprites) {
+			spriteShader->flush(viewport_size);
+			state = RendererState::Idle;
+		}
 	}
-
-	void Renderer::flushSurfaceCommands() {
-		if (!surfaceCommandBuffer.getLength()) return;
-		
-		//renderDevice->setTexture(0, GL_TEXTURE_2D_ARRAY, resourceManager->)
-
-		surfaceShader->use();
-		//surfaceShader->drawInstances();
-
-		surfaceCommandBuffer.clearFree();
-	}
-
-	void Renderer::flushText() {
-		if (!textCommandBuffers.getLength()) return;
-
-		textShader->use();
-		textShader->drawInstances(textCommandBuffers);
-
-		textCommandBuffers.clearFree();
-	}
-
-	void Renderer::flushLines() {
-		if (!lineCommandBuffers.getLength()) return;
-
-		coloredPrimitiveShader->use();
-		coloredPrimitiveShader->drawLineInstances(lineCommandBuffers);
-		lineCommandBuffers.clearFree();
-	}
-
-	/*void Renderer::flushRectangles() {
-		if (!rectCommandBuffers.getLength()) return;
-
-		coloredPrimitiveShader->use();
-		coloredPrimitiveShader->drawRectInstances(rectCommandBuffers);
-		rectCommandBuffers.clearFree();
-	}*/
 }

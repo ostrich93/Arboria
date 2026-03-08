@@ -4,7 +4,6 @@
 #include <SDL.h>
 #include <GL/glew.h>
 #include <SDL_opengl.h>
-#include "../utils/Rectangle.h"
 
 namespace Arboria {
 	class Camera;
@@ -17,13 +16,8 @@ namespace Arboria {
 
 			int winWidth;
 			int winHeight;
-
-			Rectangle m_clip;
-			Rectangle m_dest;
-
-			uint16_t gamma_r[256];
-			uint16_t gamma_g[256];
-			uint16_t gamma_b[256];
+			int displayX; //size of the viewport
+			int displayY; //size of the viewport
 		public:
 			RenderDevice();
 			~RenderDevice();
@@ -33,16 +27,16 @@ namespace Arboria {
 			inline Camera* getCamera() const { return camera; }
 			inline int getWindowWidth() const { return winWidth; }
 			inline int getWindowHeight() const { return winHeight; }
+			inline int getDisplayX() const { return displayX; }
+			inline void setDisplayX(int x) { displayX = x; }
+			inline int getDisplayY() const { return displayY; }
+			inline void setDisplayY(int y) { displayY = y; }
+			void resize(size_t scaleValue);
 			//void setGamma(float g);
 			//void resetGamma();
-			void setTexture(GLuint index, GLenum type, GLuint texture);
-			void resetGLState();
 			static const unsigned char BITS_PER_PIXEL = 32;
 
 	};
-
-	extern GLuint currentShaderProgram;
-	extern GLuint activeTexture;
 }
 
 #endif

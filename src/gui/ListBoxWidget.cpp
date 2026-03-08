@@ -4,160 +4,124 @@
 
 namespace Arboria {
 
-	ListBoxWidget::ListBoxWidget() : ScrollAreaWidget(1, 1), cursor(0) {}
+	ListBoxWidget::ListBoxWidget() : ScrollAreaWidget(1, 1), cursor(0), itemSize(0), itemSpacing(0), hovered(nullptr), selected(nullptr), hoveredImage(nullptr), selectedImage(nullptr) {}
 
-	ListBoxWidget::ListBoxWidget(ScrollbarWidget* widget) : ScrollAreaWidget(widget), cursor(0) {}
+	ListBoxWidget::ListBoxWidget(ScrollbarWidget* widget) : ScrollAreaWidget(widget), cursor(0), itemSize(0), itemSpacing(0), hovered(nullptr), selected(nullptr), hoveredImage(nullptr), selectedImage(nullptr) {}
 
-	ListBoxWidget::ListBoxWidget(int rowNum, int colNum) : ScrollAreaWidget(colNum, rowNum), cursor(0) {}
+	ListBoxWidget::ListBoxWidget(int rowNum, int colNum) : ScrollAreaWidget(colNum, rowNum), cursor(0), itemSize(0), itemSpacing(0), hovered(nullptr), selected(nullptr), hoveredImage(nullptr), selectedImage(nullptr) {}
 
 	ListBoxWidget::~ListBoxWidget() = default;
 
-	/*void ListBoxWidget::eventOccured(SystemEvent* e) {
-
-		Widget::eventOccured(e);
-
-		if (e->type == EventType::EVENT_UI_INTERACTION) {
-			auto widgetEventData = static_cast<GuiEventData*>(e->data);
-			Widget* origin = widgetEventData->raisedBy;
-			Widget* descendant = origin != NULL ? origin->getPointOfAncestry(this) : NULL;
-			if (widgetEventData->guiEventType == WidgetEventType::KEY_DOWN || widgetEventData->guiEventType == WidgetEventType::KEY_UP) {
-				KeyboardEventData keyData = widgetEventData->keyboardData;
-				InputActionType actionType;
-				if (scrollbar && (descendant != NULL || origin == this)) {
-					actionType = inputManager->getActionTranslation(keyData);
-					if (actionType != InputActionType::INVALID && widgetEventData->guiEventType == WidgetEventType::KEY_DOWN) {
-						int newCursor;
-						switch (viewOrientation) {
-							case Orientation::HORIZONTAL:
-								if (actionType == InputActionType::RIGHT) {
-									newCursor = Math::iMin(cursor + 1, children.getLength() - 1);
-									if (newCursor != cursor && newCursor >= indexOffset.x + elementDisplayCount - 1) {
-										indexOffset.x++;
-									}
-									cursor = newCursor;
-								}
-								else if (actionType == InputActionType::LEFT) {
-									newCursor = Math::iMax(cursor - 1, 0);
-									if (newCursor != cursor && newCursor < indexOffset.y) {
-										indexOffset.x = Math::iMax(indexOffset.x - 1, 0);
-									}
-									cursor = newCursor;
-								}
-								if (hovered != &children[cursor]) {
-									hovered = &children[cursor];
-									submitGuiEvent(WidgetEventType::LIST_BOX_CHANGE_HOVER, e);
-								}
-								break;
-							case Orientation::VERTICAL:
-							default:
-								if (actionType == InputActionType::DOWN) {
-									newCursor = Math::iMin(cursor + 1, children.getLength() - 1);
-									if (newCursor != cursor && newCursor >= indexOffset.y + elementDisplayCount - 1) {
-										indexOffset.y++;
-									}
-									cursor = newCursor;
-								}
-								else if (actionType == InputActionType::UP) {
-									newCursor = Math::iMax(cursor - 1, 0);
-									if (newCursor != cursor && newCursor < indexOffset.y) {
-										indexOffset.y = Math::iMax(indexOffset.y - 1, 0);
-									}
-									cursor = newCursor;
-								}
-								if (hovered != &children[cursor]) {
-									hovered = &children[cursor];
-									submitGuiEvent(WidgetEventType::LIST_BOX_CHANGE_HOVER, e);
-								}
-								break;
-						}
-					}
-					else if (actionType != InputActionType::INVALID && widgetEventData->guiEventType == WidgetEventType::KEY_UP) {
-						switch (actionType) {
-							case InputActionType::CONFIRM:
-								selected = &children[cursor];
-								submitGuiEvent(WidgetEventType::LIST_BOX_CHANGE_SELECT, e);
-								break;
-							case InputActionType::CANCEL:
-								submitGuiEvent(WidgetEventType::LIST_BOX_CHANGE_CANCEL, e);
-								break;
-							default:
-								break;
-						}
-					}
-				}
-			}
-		}
-	}*/
-
 	bool ListBoxWidget::onEvent(AEvent* e)
 	{
-		if (children.getLength() > 0)
-			children[cursor]->onEvent(e);
+		Widget::onEvent(e);
 
-		if (!e->isHandled && flags & WidgetStateFlags::WIDGET_FOCUSED) {
-			int action = actionManager->getAction(*e);
-			int newCursor;
-			switch (action) {
-				case 6: //UP
-					if (elementDisplayCount == 1) //HORIZONTAL LIST
-						break;
-					newCursor = Math::iMax(cursor - columns, 0);
-					if (cursor != newCursor && newCursor < indexOffset.y) {
-						indexOffset.y = Math::iMax(indexOffset.y - 1, 0);
-					}
-					cursor = newCursor;
-					e->isHandled = true;
-					break;
-				case 7: //DOWN
-					if (elementDisplayCount == 1) //HORIZONTAL LIST
-						break;
-					newCursor = Math::iMin(cursor + columns, itemCount - 1);
-					if (cursor != newCursor && cursor <= (indexOffset.y + elementDisplayCount - 1)) {
-						indexOffset.y ++;
-					}
-					cursor = newCursor;
-					e->isHandled = true;
-					break;
-				case 8: //LEFT
-					newCursor = Math::iMax(cursor - 1, 0);
-					if (elementDisplayCount == 1) {
-						if (cursor != newCursor && cursor <= indexOffset.x) {
-							indexOffset.x = Math::iMax(indexOffset.x - 1, 0);
-						}
-					}
-					else {
-						int newRowNum = Math::floor(newCursor / itemCount);
-						int oldRowNum = Math::floor(cursor / itemCount);
-						if (newCursor != cursor && newRowNum != oldRowNum && newRowNum < indexOffset.y) {
+		if (e->eventType == EventType::EVENT_UI_INTERACTION) {
+			Widget* ctrl = e->guiEvent.raisedBy; //usually a button
+			Widget* interactionPoint = ctrl->getPointOfAncestry(this); //the entry in the list containing the button
+			if (e->guiEvent.eventType == GUIEventType::KEY_DOWN) {
+				int action = actionManager->getAction(*e);
+				int newCursor;
+				switch (action) {
+					case 6: //UP
+						if (elementDisplayCount == 1) //HORIZONTAL LIST
+							break;
+						newCursor = Math::iMax(cursor - columns, 0);
+						if (cursor != newCursor && newCursor < indexOffset.y) {
 							indexOffset.y = Math::iMax(indexOffset.y - 1, 0);
 						}
-					}
-					cursor = newCursor;
-					e->isHandled = true;
-					break;
-				case 9: //RIGHT
-					newCursor = Math::iMin(cursor + 1, itemCount - 1);
-					if (elementDisplayCount == 1) {
-						if (cursor != newCursor && cursor >= indexOffset.x + elementDisplayCount - 1) {
-							indexOffset.x++;
+						cursor = newCursor;
+						if (ctrl == this || ctrl == scrollbar) {
+							interactionPoint = nullptr;
 						}
-					}
-					else {
-						int newRowNum = Math::floor(newCursor / itemCount);
-						int oldRowNum = Math::floor(cursor / itemCount);
-						if (newCursor != cursor && oldRowNum != newRowNum && newRowNum >= indexOffset.y + elementDisplayCount - 1) {
+						if (hovered != interactionPoint) {
+							hovered = interactionPoint;
+							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_HOVER, e);
+						}
+						break;
+					case 7: //DOWN
+						if (elementDisplayCount == 1) //HORIZONTAL LIST
+							break;
+						newCursor = Math::iMin(cursor + columns, itemCount - 1);
+						if (cursor != newCursor && cursor <= (indexOffset.y + elementDisplayCount - 1)) {
 							indexOffset.y++;
 						}
-					}
-					cursor = newCursor;
-					e->isHandled = true;
-					break;
-				default:
-					if (action > 0 && callbacks[action - 1] != NULL) {
-						callbacks[action - 1](this);
-						e->isHandled = true;
-					}
-					break;
+						cursor = newCursor;
+						if (ctrl == this || ctrl == scrollbar) {
+							interactionPoint = nullptr;
+						}
+						if (hovered != interactionPoint) {
+							hovered = interactionPoint;
+							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_HOVER, e);
+						}
+						break;
+					case 8: //LEFT
+						newCursor = Math::iMax(cursor - 1, 0);
+						if (elementDisplayCount == 1) {
+							if (cursor != newCursor && cursor <= indexOffset.x) {
+								indexOffset.x = Math::iMax(indexOffset.x - 1, 0);
+							}
+						}
+						else {
+							int newRowNum = Math::floor(newCursor / itemCount);
+							int oldRowNum = Math::floor(cursor / itemCount);
+							if (newCursor != cursor && newRowNum != oldRowNum && newRowNum < indexOffset.y) {
+								indexOffset.y = Math::iMax(indexOffset.y - 1, 0);
+							}
+						}
+						cursor = newCursor;
+						if (ctrl == this || ctrl == scrollbar) {
+							interactionPoint = nullptr;
+						}
+						if (hovered != interactionPoint) {
+							hovered = interactionPoint;
+							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_HOVER, e);
+						}
+						break;
+					case 9: //RIGHT
+						newCursor = Math::iMin(cursor + 1, itemCount - 1);
+						if (elementDisplayCount == 1) {
+							if (cursor != newCursor && cursor >= indexOffset.x + elementDisplayCount - 1) {
+								indexOffset.x++;
+							}
+						}
+						else {
+							int newRowNum = Math::floor(newCursor / itemCount);
+							int oldRowNum = Math::floor(cursor / itemCount);
+							if (newCursor != cursor && oldRowNum != newRowNum && newRowNum >= indexOffset.y + elementDisplayCount - 1) {
+								indexOffset.y++;
+							}
+						}
+						cursor = newCursor;
+						if (ctrl == this || ctrl == scrollbar) {
+							interactionPoint = nullptr;
+						}
+						if (hovered != interactionPoint) {
+							hovered = interactionPoint;
+							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_HOVER, e);
+						}
+						break;
+					case 1: //CONFIRM
+						if (ctrl == this || ctrl == scrollbar || ctrl != interactionPoint) {
+							interactionPoint = nullptr;
+						}
+						if (selected != interactionPoint && interactionPoint != nullptr) {
+							selected = interactionPoint;
+							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_SELECTED, e);
+						}
+						break;
+					case 2: //CANCEL
+						if (ctrl == this || ctrl == scrollbar || ctrl != interactionPoint) {
+							interactionPoint = nullptr;
+						}
+						if (selected != interactionPoint && interactionPoint != nullptr) {
+							selected = nullptr;
+							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_CANCEL, e);
+						}
+						break;
+					default:
+						break;
+				}
 			}
 		}
 		return e->isHandled;
@@ -176,18 +140,18 @@ namespace Arboria {
 			if (child != scrollbar) {
 				if (i >= indOff) {
 					if (elementDisplayCount == 1 && i <= currCol + indOff + columns) {
-						child->rect.h = rect.h;
-						child->rect.w = itemSize;
-						child->rect.x = rect.x + controlOffset.x;
+						child->size.y = size.y;
+						child->size.x = itemSize;
+						child->position.x = position.x + controlOffset.x;
 						controlOffset.x += itemSize + itemSpacing;
 					}
 					else if (elementDisplayCount > 1 && i <= currRow + (indOff + elementDisplayCount - 1)) {
 						child->setFlag(WidgetStateFlags::WIDGET_VISIBLE);
-						child->rect.w = Math::ceil(rect.w/columns);
-						child->rect.h = itemSize;
-						child->rect.x = rect.x + controlOffset.x;
-						child->rect.y = rect.y + controlOffset.y;
-						controlOffset.x = currCol * (child->rect.w);
+						child->size.x = Math::ceil(size.x/columns);
+						child->size.y = itemSize;
+						child->position.x = position.x + controlOffset.x;
+						child->position.y = position.y + controlOffset.y;
+						controlOffset.x = currCol * (child->size.x);
 						controlOffset.y = currRow * (itemSize + itemSpacing);
 					}
 				}
@@ -206,16 +170,21 @@ namespace Arboria {
 			auto child = children[i];
 			if (child != scrollbar && child->isVisible()) {
 				if (child == selected) {
-					renderer->draw(child->getSurface(), { child->rect.x, child->rect.y }, { selectColor.r, selectColor.g, selectColor.b, selectColor.a });
-					//spriteRenderer->draw(child->getSurface(), { child->rect.x, child->rect.y }, { child->rect.w, child->rect.h }, { selectColor.r, selectColor.g, selectColor.b, selectColor.a});
+					if (selectedImage) {
+						renderer->draw(selectedImage, Vector2<float>{child->position.x, child->position.y});
+					}
+					else {
+						renderer->drawBorders(Vector2<float>{child->position.x, child->position.y}, Vector2<float>{child->size.x, child->size.y}, selectColor);
+					}
 				}
-				else if (child == hovered) {
-					renderer->draw(child->getSurface(), { child->rect.x, child->rect.y }, { hoverColor.r, hoverColor.g, hoverColor.b, hoverColor.a });
-					//spriteRenderer->draw(child->getSurface(), { child->rect.x, child->rect.y }, { child->rect.w, child->rect.h }, { hoverColor.r, hoverColor.g, hoverColor.b, hoverColor.a });
-				}
-				else {
-					renderer->draw(child->getSurface(), { child->rect.x, child->rect.y }, { regularColor.r, regularColor.g, regularColor.b, regularColor.a });
-					//spriteRenderer->draw(child->getSurface(), { child->rect.x, child->rect.y }, { child->rect.w, child->rect.h }, { regularColor.r, regularColor.g, regularColor.b, regularColor.a });
+				if (child == hovered) {
+					if (hoveredImage) {
+						renderer->draw(hoveredImage, Vector2<float>{child->position.x, child->position.y});
+					}
+					else {
+						renderer->drawBorders(Vector2<float>{child->position.x, child->position.y}, Vector2<float>{child->size.x, child->size.y}, hoverColor);
+					}
+					
 				}
 			}
 		}
@@ -243,6 +212,17 @@ namespace Arboria {
 				this->setDirty();
 			}
 		}
+	}
+
+	void ListBoxWidget::clear() {
+		for (auto& c : children) {
+			c->setParent(nullptr);
+		}
+		children.clear();
+		selected = nullptr;
+		hovered = nullptr;
+		resolveLocation();
+		setDirty();
 	}
 
 	void ListBoxWidget::addItem(Widget* item)

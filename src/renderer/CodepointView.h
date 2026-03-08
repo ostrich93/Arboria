@@ -6,7 +6,7 @@
 
 namespace Arboria {
 
-	constexpr size_t utf8GetCodepointSize(String& v) {
+	int utf8GetCodepointSize(String& v) {
 		if (v.size() >= 1 && !(v[0] & 0x80))
 			return 1;
 		if (v.size() >= 2 && ((v[0] & 0xE0) == 0xC0))
@@ -19,11 +19,11 @@ namespace Arboria {
 	}
 
 	String& utf8Truncate(String& v, size_t size) {
-		auto trunc = String{ v, 0, size };
+		auto trunc = v.substring(0, size);
 		for (size_t i = 0; i < trunc.length();) {
 			auto length = utf8GetCodepointSize(v);
 			if (!length)
-				return String{ trunc, 0, i };
+				return trunc.substring(0, i);
 
 			i += length;
 		}

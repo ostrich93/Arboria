@@ -48,7 +48,6 @@ namespace Arboria {
 		void ref();
 		bool deref();
 
-		virtual bool generateTexture();
 		RenderData* renderData; //can be GL, DX11, etc.
 		
 	protected:
@@ -135,31 +134,6 @@ namespace Arboria {
 		}
 
 		void* getData();
-	};
-
-	class TextureAtlas : public Image { //spritesheets/glyph atlases
-		public:
-			struct AtlasEntry { //stores texcoords.
-				float u0;
-				float v0;
-				float u1;
-				float v1;
-			};
-		public:
-			TextureAtlas(const char* _textureName, size_t _rowAlign = 16);
-			~TextureAtlas();
-			int addClip(const Rectangle& rect);
-			Rectangle& getClip(unsigned int index);
-			void freeAtlas();
-			void blitPixels(Rectangle& clip, uint8_t* pixels);
-			bool generateTexture() override;
-			bool addSubtexture(int x, int y, int pitch, int h, uint8_t* pixels, GLuint internalFormat = GL_RGBA, GLuint _format = GL_RGBA);
-			bool bindAtlas();
-			bool unbindAtlas();
-		protected:
-			bool isBound = false;
-			List<Rectangle> clips; //tex positions
-			List<AtlasEntry> entries;
 	};
 }
 

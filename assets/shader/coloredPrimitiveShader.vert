@@ -1,12 +1,16 @@
 #version 330 core
-in vec2 vPosition;
-in vec4 in_color;
-out vec4 vColor;
-uniform mat4 uModel;
-uniform mat4 uView;
-uniform mat4 uProjection;
+layout (location = 0) in vec2 vPosition;
+layout (location = 1) in vec4 vColor;
+
+uniform vec2 uViewportSize;
+
+out vec4 fColor;
 
 void main() {
-	gl_Position = uProjection * uView * uModel * vec4(vPosition.xy, 0.0, 1.0);
-	vColor = in_color;
+	fColor = vColor;
+	vec2 tmpPos = vPosition;
+	tmpPos /= uViewportSize;
+	tmpPos -= vec2(0.5,0.5);
+	tmpPos *= vec2(2,2);
+	gl_Position = vec4(tmpPos.x, tmpPos.y, 0, 1);
 }

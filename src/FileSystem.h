@@ -2,6 +2,7 @@
 #define FILESYSTEM_H
 
 #include "framework/String.h"
+#include <physfs.h>
 
 namespace Arboria {
 	int initializeFileSystem();

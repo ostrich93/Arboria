@@ -7,11 +7,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-//PFNGLGENVERTEXARRAYSPROC		glGenVertexArrays;
-//PFNGLBINDVERTEXARRAYPROC		glBindVertexArray;
-//PFNGLDELETEVERTEXARRAYSPROC		glDeleteVertexArrays;
-//PFNGLVERTEXATTRIBDIVISORPROC	glVertexAttribDivisor;
-
 namespace Arboria {
 	class Shader {
 		private:
@@ -40,8 +35,6 @@ namespace Arboria {
 			virtual ~ShaderProgram();
 
 			void initialize();
-			void activate();
-			void deactivate();
 			void destroy();
 			bool link();
 			void loadAndAttachShader(GLenum type);

@@ -18,7 +18,7 @@ namespace Arboria {
 		String shaderSource = readShaderFile(sourceFileName.c_str());
 
 		id = glCreateShader(type);
-		GLint length = shaderSource.size();
+		GLint length = shaderSource.length();
 		const char* sourcePtr = shaderSource.c_str();
 		glShaderSource(id, 1, &sourcePtr, &length);
 		glCompileShader(id);
@@ -141,20 +141,6 @@ namespace Arboria {
 		programId = glCreateProgram();
 	}
 
-	void ShaderProgram::activate() {
-		if (currentShaderProgram != programId) {
-			currentShaderProgram = programId;
-			glUseProgram(programId);
-		}
-	}
-
-	void ShaderProgram::deactivate() {
-		if (currentShaderProgram == programId) {
-			currentShaderProgram = UINT32_MAX;
-			glUseProgram(0);
-		}
-	}
-
 	void ShaderProgram::destroy() {
 		if (vertexShader != NULL) {
 			glDetachShader(programId, vertexShader->getShaderId());
@@ -162,7 +148,7 @@ namespace Arboria {
 		if (fragmentShader != NULL) {
 			glDetachShader(programId, fragmentShader->getShaderId());
 		}
-		deactivate();
+		glUseProgram(0);
 		glDeleteProgram(programId);
 	}
 

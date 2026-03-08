@@ -10,7 +10,10 @@
 #include "../FileSystem.h"
 #include <physfs.h>
 
+unsigned int gCurrentDrawCount = 0;
 namespace Arboria {
+
+	constexpr size_t scaleValues[5] = {2, 3, 4, 5, 6};
 
 	InputManager* inputManager = NULL;
 	ScreenManager* screenManager = NULL;
@@ -24,7 +27,7 @@ namespace Arboria {
 	bool _isQuit = false;
 
 	const short MAX_FPS = 60;
-	Engine::Engine()
+	Engine::Engine() : scaleSurface(nullptr)
 	{
 		if (initializeFileSystem() == 0) {
 			PHYSFS_ErrorCode errCd = PHYSFS_getLastErrorCode();
@@ -41,11 +44,9 @@ namespace Arboria {
 
 		freeFileSystem();
 		//SDL_Quit();
-		//delete textRenderer;
 		delete inputManager;
 		delete screenManager;
 		delete renderer;
-		//delete spriteRenderer;
 		delete resourceManager;
 		delete renderDevice;
 	}
@@ -53,14 +54,11 @@ namespace Arboria {
 	{
 		renderDevice = new RenderDevice();
 		renderDevice->initialize();
-		resourceManager = new ResourceManager();
+		resourceManager = ResourceManager::createResourceManager();
 		inputManager = new InputManager();
 		screenManager = new ScreenManager();
-		fontManager = new FontManager();
 		renderer = new Renderer();
-		renderer->initialize();
-		//spriteRenderer = new SpriteRenderer();
-		//textRenderer = new TextRenderer();
+		//renderer->initialize();
 		actionManager = new ActionManager();
 	}
 
@@ -148,10 +146,49 @@ namespace Arboria {
 		
 	}
 
+	UIContext* Engine::getCurrentScreen()
+	{
+		return screenManager->getCurrent();
+	}
+
+	UIContext* Engine::getPreviousScreen()
+	{
+		return screenManager->getPrevious();
+	}
+
+	UIContext* Engine::getPreviousScreen(UIContext* from)
+	{
+		return screenManager->getPrevious(*from);
+	}
+
+	void Engine::pushScreenCommand(const ScreenCommand& cmd)
+	{
+		screenManager->pushScreenCommand(cmd);
+	}
+
 	void Engine::shutdown()
 	{
 		screenManager->clear();
 		_isQuit = true;
+	}
+
+	void Engine::resize(int scaleIndex) {
+		int idx = Math::clampInt(0, 4, scaleIndex);
+
+		size_t scaleValue = scaleValues[idx];
+		renderDevice->resize(scaleValue);
+		if (renderDevice->getDisplayX() != renderDevice->getWindowWidth() || renderDevice->getDisplayY() != renderDevice->getWindowHeight()) {
+			if (scaleSurface) {
+				free(scaleSurface);
+			}
+			scaleSurface = new Surface(Vector2<unsigned int>{Math::iMax(640, renderDevice->getDisplayX()), Math::iMax(360, renderDevice->getDisplayY())});
+		}
+		else {
+			if (scaleSurface) {
+				free(scaleSurface);
+				scaleSurface = nullptr;
+			}
+		}
 	}
 
 	void Engine::printWarning(const char* warning, ...)

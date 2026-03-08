@@ -7,7 +7,7 @@
 namespace Arboria {
 	class MainMenuScreen : public UIContext {
 		private:
-			Widget canvas; //canvas has one child, which is a listbox.
+			Widget root; //canvas has one child, which is a listbox.
 		public:
 			MainMenuScreen();
 			~MainMenuScreen() override;
@@ -23,13 +23,13 @@ namespace Arboria {
 		protected:
 			bool compare(const UIContext& other) const override {
 				if (MainMenuScreen* ptr = dynamic_cast<MainMenuScreen*>(const_cast<UIContext*>(&other))) {
-					return (canvas == ptr->canvas);
+					return (root == ptr->root);
 				}
 			}
 	};
 
-	void pushOptionsMenu(Widget* w);
-	void setQuit(Widget* w);
+	void pushOptionsMenu(AEvent* e, void* context);
+	void setQuit(AEvent* e, void* context);
 }
 
 #endif

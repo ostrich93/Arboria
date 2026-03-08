@@ -26,9 +26,9 @@ namespace Arboria {
 
 	AtlasImageInfo Atlas::allocateSprite(RGBAImage* i)
 	{
-		for (AtlasPage& page : _pages) {
-			if (page.getFreeSlots() > 0 && page.isImageValid(i->getWidth(), i->getHeight())) {
-				auto pInfo = page.allocate(i);
+		for (auto& page : _pages) {
+			if (page->getFreeSlots() > 0 && page->isImageValid(i->getWidth(), i->getHeight())) {
+				auto pInfo = page->allocate(i);
 				upload(pInfo, i);
 				return pInfo;
 			}
@@ -37,12 +37,12 @@ namespace Arboria {
 		auto pageIdx = static_cast<int32_t>(_pages.size());
 		int32_t imageSize = powf(2, Atlas::calculateImageSizeOrder(i->getWidth(), i->getHeight()));
 
-		_pages.append(AtlasPage(pageIdx, imageSize));
-		_pages.end()->initialize();
+		_pages.append(new AtlasPage(pageIdx, imageSize));
+		(*_pages.end())->initialize();
 
 		enlargeAtlas(1);
 
-		auto info = _pages.end()->allocate(i);
+		auto info = (*_pages.end())->allocate(i);
 
 		//for auto& page : _pages, go through entries and call upload on each one?
 		upload(info, i);
@@ -52,9 +52,9 @@ namespace Arboria {
 
 	AtlasImageInfo Atlas::allocateSprite(PaletteImage* i)
 	{
-		for (AtlasPage& page : _pages) {
-			if (page.getFreeSlots() > 0 && page.isImageValid(i->getWidth(), i->getWidth())) {
-				auto pInfo = page.allocate(i);
+		for (auto& page : _pages) {
+			if (page->getFreeSlots() > 0 && page->isImageValid(i->getWidth(), i->getWidth())) {
+				auto pInfo = page->allocate(i);
 				upload(pInfo, i);
 				return pInfo;
 			}
@@ -63,12 +63,12 @@ namespace Arboria {
 		auto pageIdx = static_cast<int32_t>(_pages.size());
 		int32_t imageSize = powf(2, Atlas::calculateImageSizeOrder(i->getWidth(), i->getHeight()));
 
-		_pages.append(AtlasPage(pageIdx, imageSize));
-		_pages.end()->initialize();
+		_pages.append(new AtlasPage(pageIdx, imageSize));
+		(*_pages.end())->initialize();
 
 		enlargeAtlas(1);
 
-		auto info = _pages.end()->allocate(i);
+		auto info = (*_pages.end())->allocate(i);
 
 		//for auto& page : _pages, go through entries and call upload on each one?
 		upload(info, i);
@@ -284,7 +284,7 @@ namespace Arboria {
 		if (index == unusedIndex) return;
 
 		AtlasImageInfo& elem = _spriteCache[index];
-		_pages[elem.index].free(elem);
+		_pages[elem.index]->free(elem);
 		_indexMap[resourceId] = unusedIndex;
 
 		if (index == _spriteCache.size() - 1) { //if it's the last image in the cache

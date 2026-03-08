@@ -48,22 +48,20 @@ namespace Arboria {
 
 			size_t size() const;
 			size_t memoryAllocated() const;
-			size_t memoryUsed() const;
 
 			void clear();
 			void deleteContents();
 			bool contains(const K& key);
 			bool isEmpty() const;
-			V get(const K& key);
+			bool get(const K& key, V** _value_ = nullptr);
+			bool get(const K& key, const V** _value_ = nullptr) const;
 			bool remove(const K& key); //remove value at key
-			void set(const K& key, const V& value);
-
-			V& operator[](const K& key);
-			const V operator[](const K& key) const;
+			V& set(const K& key, const V& value);
 
 		protected:
 			void copy(const HashTable<K, V>& other);
 		private:
+
 			HashNode<K, V>** buckets;
 			int tableSize;
 			int numEntries;
@@ -96,9 +94,8 @@ namespace Arboria {
 			tableMask = tableSize - 1;
 		}
 		
-		auto n = other.begin();
-		while (n != other.end()) {
-			set(n->key, n->value);
+		for (const auto& n : other) {
+			set(n.key, n.value);
 		}
 	}
 
@@ -116,17 +113,12 @@ namespace Arboria {
 
 	template<typename K, typename V>
 	inline size_t HashTable<K, V>::size() const {
-		return sizeof(HashTable<K, V>) + memoryAllocated() + memoryUsed();
+		return sizeof(HashTable<K, V>) + memoryAllocated();
 	}
 
 	template<typename K, typename V>
 	inline size_t HashTable<K, V>::memoryAllocated() const {
-		return tableSize * sizeof(buckets);
-	}
-
-	template<typename K, typename V>
-	inline size_t HashTable<K, V>::memoryUsed() const {
-		return sizeof(HashNode<K,V>*) * numEntries;
+		return tableSize * sizeof(buckets) + sizeof(*buckets) * numEntries;
 	}
 
 	template<typename K, typename V>
@@ -177,16 +169,50 @@ namespace Arboria {
 	}
 
 	template<typename K, typename V>
-	inline V HashTable<K, V>::get(const K& key) {
+	inline bool HashTable<K, V>::get(const K& key, V** _value_) {
 		int hash = HashNode<K, V>::getHash(key, tableMask);
 		HashNode<K, V>* cursor = buckets[hash];
 		for (; cursor != NULL; cursor = cursor->next) {
-			if (cursor->key == key) {
-				return cursor->value;
+			int s = cursor->compare(cursor->key, key);
+			if (s == 0) {
+				if (_value_) {
+					*_value_ = &cursor->value;
+				}
+				return true;
+			}
+			if (s > 0) {
+				break;
 			}
 		}
+		if (_value_) {
+			*_value_ = NULL;
+		}
 
-		return NULL;
+		return false;
+	}
+
+	template<typename K, typename V>
+	inline bool HashTable<K, V>::get(const K& key, const V** _value_) const {
+		int hash = HashNode<K, V>::getHash(key, tableMask);
+		HashNode<K, V>* cursor = buckets[hash];
+		for (; cursor != NULL; cursor = cursor->next) {
+			int s = cursor->compare(cursor->key, key);
+			if (s == 0) {
+				if (_value_) {
+					*_value_ = &cursor->value;
+				}
+				return true;
+			}
+			if (s > 0) {
+				break;
+			}
+		}
+		if (_value_) {
+			*_value_ = NULL;
+		}
+
+		return false;
+
 	}
 
 	template<typename K, typename V>
@@ -220,19 +246,20 @@ namespace Arboria {
 	}
 
 	template<typename K, typename V>
-	inline void HashTable<K, V>::set(const K& key, const V& value) {
+	inline V& HashTable<K, V>::set(const K& key, const V& value) {
 		int hash = HashNode<K,V>::getHash(key, tableMask);
 		HashNode<K,V>** nextPtr = &(buckets[hash]);
 		HashNode<K,V>* cursor = *nextPtr;
 		for (; cursor != NULL; nextPtr = &(cursor->next), cursor = *nextPtr) {
 			if (cursor->key == key) {
 				cursor->value = value;
-				return;
+				return cursor->value;
 			}
 		}
 		numEntries++;
 		*(nextPtr) = new HashNode<K,V>(key, value, buckets[hash]);
 		(*nextPtr)->next = cursor;
+		return (*nextPtr)->value;
 	}
 
 	template<typename K, typename V>
@@ -261,18 +288,8 @@ namespace Arboria {
 		}
 	}
 
-	template<typename K, typename V>
-	inline V& HashTable<K, V>::operator[](const K& key) {
-		return *(get(key));
-	}
-
-	template<typename K, typename V>
-	inline const V HashTable<K, V>::operator[](const K& key) const {
-		return get(key);
-	}
-
 	template<typename V>
-	struct HashNode<String, V> {
+	class HashNode<String, V> {
 		public:
 			String key;
 			V value;
@@ -294,7 +311,7 @@ namespace Arboria {
 		};
 
 	template <typename V>
-	struct HashNode<const char*, V> {
+	class HashNode<const char*, V> {
 		public:
 			String key;
 			V value;
@@ -322,35 +339,42 @@ namespace Arboria {
 
 		size_t size() const;
 		size_t memoryAllocated() const;
-		size_t memoryUsed() const;
 
 		void clear();
 		void deleteContents();
 		bool contains(const char* key);
 		bool isEmpty() const;
-		V get(const char* key);
+		bool get(const char* key, V** _value_ = nullptr) const;
 		bool remove(const char* key); //remove value at key
 		void set(const char* key, V& value);
-
-		V& operator[](const String& key);
-		V& operator[](const char* key);
-		const V operator[](const char* key) const;
 
 	protected:
 		void copy(const HashTable<String, V>& other);
 	private:
-		HashNode<String, V>** buckets;
+		struct hashNode_string {
+			String key;
+			V value;
+			hashNode_string* next;
+
+			hashNode_string(const String& k, V v, hashNode_string* n) : key(k), value(v), next(n) {};
+			hashNode_string(const char* k, V v, hashNode_string* n) : key(k), value(v), next(n) {};
+		};
+		hashNode_string** buckets;
 		int tableSize;
 		int numEntries;
 		int tableMask;
+
+		int getHash(const char* key) const {
+			return (String::getHash(key) & tableMask);
+		}
 	};
 
 	template<typename V>
 	inline HashTable<String, V>::HashTable(int tableSize) {
 		assert(Math::isPowerOfTwo(tableSize));
 		this->tableSize = tableSize;
-		buckets = new HashNode<String, V>*[tableSize];
-		memset(buckets, 0, sizeof(HashNode<String, V>*) * tableSize);
+		buckets = new hashNode_string*[tableSize];
+		memset(buckets, 0, sizeof(buckets) * tableSize);
 		numEntries = 0;
 		tableMask = tableSize - 1;
 	}
@@ -374,23 +398,18 @@ namespace Arboria {
 
 	template<typename V>
 	inline size_t HashTable<String, V>::size() const {
-		return sizeof(HashTable<String, V>) + memoryAllocated() + memoryUsed();
+		return sizeof(HashTable<String, V>) + memoryAllocated();
 	}
 
 	template<typename V>
 	inline size_t HashTable<String, V>::memoryAllocated() const {
-		return tableSize * sizeof(buckets);
-	}
-
-	template<typename V>
-	inline size_t HashTable<String, V>::memoryUsed() const {
-		return sizeof(HashNode<String, V>*) * numEntries;
+		return (buckets) * tableSize + sizeof(buckets) * numEntries;
 	}
 
 	template<typename V>
 	inline void HashTable<String, V>::clear() {
-		HashNode<String, V>* cursor;
-		HashNode<String, V>* next;
+		hashNode_string* cursor;
+		hashNode_string* next;
 		for (int i = 0; i < tableSize; i++) {
 			next = buckets[i];
 			while (next != NULL) {
@@ -406,8 +425,8 @@ namespace Arboria {
 
 	template<typename V>
 	inline void HashTable<String, V>::deleteContents() {
-		HashNode<String, V>* cursor;
-		HashNode<String, V>* next;
+		hashNode_string* cursor;
+		hashNode_string* next;
 		for (int i = 0; i < tableSize; i++) {
 			next = buckets[i];
 			while (next != NULL) {
@@ -424,9 +443,9 @@ namespace Arboria {
 
 	template<typename V>
 	inline bool HashTable<String, V>::contains(const char* key) {
-		int hash = HashNode<String, V>::getHash(key, tableMask);
+		int hash = getHash(key);
 		int cmpValue;
-		HashNode<String, V>* cursor;
+		hashNode_string* cursor;
 		for (cursor = buckets[hash]; cursor != NULL; cursor = cursor->next) {
 			cmpValue = cursor->key.compare(key);
 			if (cmpValue == 0) {
@@ -437,18 +456,26 @@ namespace Arboria {
 	}
 
 	template<typename V>
-	inline V HashTable<String, V>::get(const char* key) {
-		int hash = HashNode<String, V>::getHash(key, tableMask);
+	inline bool HashTable<String, V>::get(const char* key, V** _value_) const {
+		int hash = getHash(key);
 		int cmpValue;
-		HashNode<String, V>* cursor = buckets[hash];
-		for (; cursor != NULL; cursor = cursor->next) {
+		hashNode_string* cursor;
+		for (cursor = buckets[hash]; cursor != NULL; cursor = cursor->next) {
 			cmpValue = cursor->key.compare(key);
 			if (cmpValue == 0) {
-				return cursor->value;
+				if (_value_)
+					*_value_ = &cursor->value;
+				return true;
 			}
+			if (cmpValue > 0)
+				break;
 		}
 
-		return NULL;
+		if (_value_) {
+			*_value_ = NULL;
+		}
+
+		return false;
 	}
 
 	template< typename V>
@@ -458,11 +485,11 @@ namespace Arboria {
 
 	template<typename V>
 	inline bool HashTable<String, V>::remove(const char* key) {
-		int hash = HashNode<String, V>::getHash(key, tableMask);
-		HashNode<String, V>** head = &buckets[hash];
+		int hash = getHash(key);
+		hashNode_string** head = &buckets[hash];
 		if (*head) {
-			HashNode<String, V>* prev;
-			HashNode<String, V>* node;
+			hashNode_string* prev;
+			hashNode_string* node;
 			for (prev = NULL, node = *head; node != NULL; prev = node, node = node->next) {
 				if (node->key == key) {
 					if (prev) { //if previous node isn't null, have its next node be set as the pointer of the current node's nextNode.
@@ -483,9 +510,9 @@ namespace Arboria {
 
 	template<typename V>
 	inline void HashTable<String, V>::set(const char* key, V& value) {
-		int hash = HashNode<String, V>::getHash(key, tableMask);
-		HashNode<String, V>** nextPtr;
-		HashNode<String, V>* cursor;
+		int hash = getHash(key);
+		hashNode_string** nextPtr;
+		hashNode_string* cursor;
 		int cmpValue;
 		for (nextPtr = &(buckets[hash]), cursor = *nextPtr; cursor != NULL; nextPtr = &(cursor->next), cursor = *nextPtr) {
 			cmpValue = cursor->key.compare(key);
@@ -498,7 +525,7 @@ namespace Arboria {
 			}
 		}
 		numEntries++;
-		*(nextPtr) = new HashNode<String, V>(key, value, buckets[hash]);
+		*(nextPtr) = new hashNode_string(key, value, buckets[hash]);
 		(*nextPtr)->next = cursor;
 	}
 
@@ -508,39 +535,27 @@ namespace Arboria {
 			return;
 		}
 
+		int i;
+		hashNode_string* node;
+		hashNode_string** prev;
+		assert(other.tableSize > 0);
+
 		tableSize = other.tableSize;
-		buckets = new HashNode<String, V>*[tableSize];
+		buckets = new hashNode_string *[tableSize];
 		numEntries = other.numEntries;
 		tableMask = other.tableMask;
 
-		for (int i = 0; i < tableSize; i++) {
+		for (i = 0; i < tableSize; i++) {
 			if (!other.buckets[i]) {
 				buckets[i] = NULL;
 				continue;
 			}
-			//lastHead holds the memory of the address of the head by pointing to the address of the pointer of the bucket. Then go through the linked list of the buckets
-			HashNode<String, V>** lastHead = &buckets[i];
-			for (HashNode<String, V>* node = other.buckets[i]; node != NULL; node = node->next) {
-				//dereference lastHead and have it refer to a pointer to a new HashNode with data copied from node, with the next node set to null. Then have lastHead point to the address of the new node's next node (NULL) and repeat the process
-				*lastHead = new HashNode<String, V>(node->key, node->value, NULL);
-				lastHead = &(*lastHead)->next;
+			prev = &buckets[i];
+			for (node = other.buckets[i]; node != NULL; node = node->next) {
+				*prev = new hashNode_string(node->key, node->value, NULL);
+				prev = &(*prev)->next;
 			}
 		}
-	}
-
-	template< typename V>
-	inline V& HashTable<String, V>::operator[](const char* key) {
-		return *(get(key));
-	}
-
-	template< typename V>
-	inline V& HashTable<String, V>::operator[](const String& key) {
-		return *(get(key));
-	}
-
-	template<typename V>
-	inline const V HashTable<String, V>::operator[](const char* key) const {
-		return get(key);
 	}
 }
 

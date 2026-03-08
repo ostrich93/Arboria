@@ -39,25 +39,44 @@ namespace Arboria {
 	};
 
 	enum class GUIEventType : uint32_t {
-		GUI_FOCUS_LEFT = 0,
-		GUI_FOCUS_OBTAINED,
-		GUI_MENU_SELECT_CHANGE,
-		GUI_MENU_CONFIRM,
-		GUI_MENU_CANCEL
+		OBTAINED_FOCUS,
+		LOST_FOCUS,
+		KEY_DOWN,
+		KEY_PRESS,
+		KEY_UP,
+		MOUSE_DOWN,
+		MOUSE_UP,
+		MOUSE_MOVE,
+		MOUSE_CLICK,
+
+		BUTTON_CLICK,
+		SCROLLBAR_CHANGE,
+		LISTBOX_CHANGE_HOVER,
+		LISTBOX_CHANGE_SELECTED,
+		LISTBOX_CHANGE_CANCEL,
 	};
 
 	class AEvent {
 		public:
-			struct GUIEvent {
-				Widget* raisedBy;
-				GUIEventType eventType;
+			struct DisplayEvent {
+				bool active;
+				int x;
+				int y;
+				int width;
+				int height;
 			};
-
+			
 			struct KeyInputEvent {
 				unsigned short scancode;
 				int32_t keyCode;
 				uint16_t mods;
 				bool keyState : 1;
+			};
+
+			struct GUIEvent {
+				Widget* raisedBy;
+				GUIEventType eventType;
+				KeyInputEvent keyInfo;
 			};
 
 			struct JoystickEvent {
@@ -90,9 +109,12 @@ namespace Arboria {
 				struct GUIEvent guiEvent;
 				struct KeyInputEvent keyboardEvent;
 				struct JoystickEvent controllerEvent;
+				struct DisplayEvent displayEvent;
 				struct UserEvent userEvent;
 			};
 	};
+
+	typedef void (*eventCallback)(AEvent*, void*);
 }
 
 #endif
