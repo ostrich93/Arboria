@@ -237,7 +237,7 @@ namespace Arboria {
 		}
 
 		if (ttfRunIndex.has_value()) {
-			auto len = text.size() - *ttfRunIndex;
+			auto len = text.length() - *ttfRunIndex;
 
 
 			auto baseId = static_cast<uint32_t>(0xFFF) - 1023;

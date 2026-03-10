@@ -412,7 +412,7 @@ namespace Arboria {
 			if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
 				continue;
 
-			if (glyphs.contains(c)) {
+			if (!glyphs.contains(c)) {
 				return -1;
 			}
 
@@ -462,7 +462,7 @@ namespace Arboria {
 			if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
 				continue;
 
-			if (glyphs.contains(c)) {
+			if (!glyphs.contains(c)) {
 				return -1;
 			}
 
@@ -511,7 +511,7 @@ namespace Arboria {
 			if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
 				continue;
 
-			if (glyphs.contains(c)) {
+			if (!glyphs.contains(c)) {
 				return nullptr;
 			}
 			Glyph* glyph;

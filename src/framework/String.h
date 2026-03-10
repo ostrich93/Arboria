@@ -725,6 +725,7 @@ namespace Arboria {
 			result.append(m_data->data[i]);
 		}
 
+		result.m_data->addReference();
 		return result;
 	}
 

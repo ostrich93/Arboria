@@ -18,7 +18,7 @@ namespace Arboria {
 	public:
 		SpriteBuffer(int buffer_size);
 		~SpriteBuffer();
-		bool isFull() const { return bufferCount == buffer.getLength(); }
+		bool isFull() const { return bufferCount >= buffer.getGranularity(); }
 		bool isEmpty() const { return buffer.getLength() == 0; }
 		void reset() { bufferCount = 0; }
 		void draw();

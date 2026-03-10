@@ -36,20 +36,20 @@ namespace Arboria {
 		Font* font = resourceManager->loadFont("logotypegothicregular.ttf", 24);
 
 		Label* titleLabel = canvas->createChild<Label>("ARBORIA ENGINE", font);
-		titleLabel->position = { 100 , 200 };
+		titleLabel->position = { 100 , 100 };
 		titleLabel->size = { 48, 48 };
 		titleLabel->enabled = true;
 		titleLabel->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE | WidgetStateFlags::WIDGET_MENU);
 		
 		Label* versionLabel = canvas->createChild<Label>("V.1.0", font);
-		versionLabel->position = { 100 , 270 };
+		versionLabel->position = { 100 , 310 };
 		versionLabel->size = { 48, 48 };
 		versionLabel->enabled = true;
 		versionLabel->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE | WidgetStateFlags::WIDGET_MENU);
 
 		ListBoxWidget* optionsList = root.createChild<ListBoxWidget>(4, 1);
 		optionsList->name = "MAIN_MENU_SELECT";
-		optionsList->position = { 320, 400 };
+		optionsList->position = { 320, 159 };
 		optionsList->size = { 200, 200 };
 		optionsList->itemSize = 40;
 		optionsList->itemSpacing = 5;

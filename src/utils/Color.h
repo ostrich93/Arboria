@@ -9,7 +9,7 @@ namespace Arboria {
 		public:
 			uint8_t r, g, b, a;
 			Color();
-			Color(uint8_t _r, uint8_t _b, uint8_t _g, uint8_t _a = 255);
+			Color(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255);
 			operator SDL_Color() const;
 			bool operator ==(const Color& other);
 			bool operator !=(const Color& other);

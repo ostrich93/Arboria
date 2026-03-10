@@ -139,11 +139,9 @@ namespace Arboria {
 	}
 
 	void Widget::postRender() {
-		Widget child;
-		for (int i = 0; i < children.getLength(); i++) {
-			child = *children[i];
-			if (child.isVisible()) {
-				child.render();
+		for (auto child : children) {
+			if (child->isVisible()) {
+				child->render();
 			}
 		}
 	}

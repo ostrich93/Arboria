@@ -69,7 +69,7 @@ namespace Arboria {
 
 		buffers[currentBuffer]->draw();
 		buffers[currentBuffer]->reset();
-		currentBuffer = (currentBuffer + 1) % buffers.size();
+		currentBuffer = (currentBuffer + 1) % buffers.getLength();
 		usedBuffers++;
 	}
 	void SpriteShader::draw(AtlasImageInfo* spriteInfo, glm::vec2 screenPos, GLuint atlasesTextureId, glm::uvec2 viewport_size, Color tint)

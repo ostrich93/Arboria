@@ -3,27 +3,28 @@
 
 #include "../framework/String.h"
 #include "../utils/math.h"
+#include <string.h>
 
 namespace Arboria {
 
-	int utf8GetCodepointSize(String& v) {
-		if (v.size() >= 1 && !(v[0] & 0x80))
+	int utf8GetCodepointSize(std::string_view v) {
+		if (v.length() >= 1 && !(v[0] & 0x80))
 			return 1;
-		if (v.size() >= 2 && ((v[0] & 0xE0) == 0xC0))
+		if (v.length() >= 2 && ((v[0] & 0xE0) == 0xC0))
 			return 2;
-		if (v.size() >= 3 && ((v[0] & 0xF0) == 0xE0))
+		if (v.length() >= 3 && ((v[0] & 0xF0) == 0xE0))
 			return 3;
-		if (v.size() >= 4 && ((v[0] & 0xF8) == 0xF0))
+		if (v.length() >= 4 && ((v[0] & 0xF8) == 0xF0))
 			return 4;
 		return 0;
 	}
 
-	String& utf8Truncate(String& v, size_t size) {
-		auto trunc = v.substring(0, size);
+	std::string_view utf8Truncate(std::string_view v, size_t size) {
+		auto trunc = v.substr(0, size);
 		for (size_t i = 0; i < trunc.length();) {
 			auto length = utf8GetCodepointSize(v);
 			if (!length)
-				return trunc.substring(0, i);
+				return trunc.substr(0, i);
 
 			i += length;
 		}
@@ -33,15 +34,16 @@ namespace Arboria {
 
 	class CodepointView {
 	private:
-		String& _str;
+		std::string_view _str;
 	public:
 		class iterator {
 		private:
-			String& _str;
+			std::string_view _str;
 			size_t _index;
 
 		public:
-			iterator(String str, size_t index) : _str(str), _index(index) {}
+			//iterator(String str, size_t index) : _str(str), _index(index) {}
+			iterator(std::string_view str, size_t index) : _str(str), _index(index) {}
 
 			bool operator==(const iterator& rhs) const {
 				return _index == rhs._index;
@@ -56,16 +58,16 @@ namespace Arboria {
 				if (_index < _str.length()) {
 					const char* nextchar;
 					getNextCodepoint(&_str[_index], &nextchar);
-					_index = Math::iMin(nextchar - _str, _str.length());
+					_index = Math::iMin(nextchar - _str.data(), _str.length());
 				}
 				return *this;
 			}
 			iterator operator++(int) {
 				auto result = *this;
-				if (_index < _str.size()) {
+				if (_index < _str.length()) {
 					const char* nextchar;
 					getNextCodepoint(&_str[_index], &nextchar);
-					_index = Math::iMin(nextchar - _str, _str.length());
+					_index = Math::iMin(nextchar - _str.data(), _str.length());
 				}
 				return result;
 			}
@@ -105,14 +107,15 @@ namespace Arboria {
 				return result;
 			}
 		};
-		CodepointView(String str) : _str(utf8Truncate(str, str.size())) {
-
+		CodepointView(String str) {
+			std::string_view temp(str.c_str());
+			_str = utf8Truncate(temp, temp.length());
 		}
 		iterator begin() const {
 			return iterator(_str, 0);
 		}
 		iterator end() const {
-			return iterator(_str, _str.size());
+			return iterator(_str, _str.length());
 		}
 	};
 }

@@ -2,12 +2,12 @@
 
 namespace Arboria {
 	Color::Color(): r(0), g(0), b(0), a(255){}
-	Color::Color(uint8_t _r, uint8_t _b, uint8_t _g, uint8_t _a) : r(_r), b(_b), g(_g), a(_a) {}
+	Color::Color(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a) : r(_r), g(_g), b(_b), a(_a) {}
 	Color::operator SDL_Color() const {
 		SDL_Color color;
 		color.r = r;
-		color.b = b;
 		color.g = g;
+		color.b = b;
 		color.a = a;
 		return color;
 	}

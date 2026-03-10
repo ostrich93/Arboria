@@ -89,7 +89,7 @@ namespace Arboria {
 		glUniform2f(uTexSize, (float)img->getWidth(), (float)img->getHeight());
 
 		auto& buf = buffers[currentBuffer];
-		currentBuffer = (currentBuffer + 1) % buffers.size();
+		currentBuffer = (currentBuffer + 1) % buffers.getLength();
 		usedBuffers++;
 
 		glBindBuffer(GL_ARRAY_BUFFER, buf.position_buffer);
@@ -144,7 +144,7 @@ namespace Arboria {
 		glUniform2f(uTexSize, (float)img->getWidth(), (float)img->getHeight());
 
 		auto& buf = buffers[currentBuffer];
-		currentBuffer = (currentBuffer + 1) % buffers.size();
+		currentBuffer = (currentBuffer + 1) % buffers.getLength();
 		usedBuffers++;
 
 		glBindBuffer(GL_ARRAY_BUFFER, buf.position_buffer);
