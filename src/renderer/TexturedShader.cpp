@@ -34,6 +34,9 @@ namespace Arboria {
             glEnableVertexAttribArray(vTexCoord);
             glVertexAttribPointer(vTexCoord, floatsPerUV, GL_FLOAT, GL_FALSE, sizeof(TextureVDStruct), (GLvoid*)offsetof(TextureVDStruct, texCoord));
 
+			glEnableVertexAttribArray(vTint);
+			glVertexAttribPointer(vTint, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(TextureVDStruct), (GLvoid*)offsetof(TextureVDStruct, tint));
+
             buffers.append(b);
         }
     }

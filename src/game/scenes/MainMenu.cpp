@@ -36,45 +36,44 @@ namespace Arboria {
 		Font* font = resourceManager->loadFont("logotypegothicregular.ttf", 24);
 
 		Label* titleLabel = canvas->createChild<Label>("ARBORIA ENGINE", font);
-		titleLabel->position = { 100 , 100 };
-		titleLabel->size = { 48, 48 };
+		titleLabel->position = { 216 , 96 };
+		titleLabel->size = { 208, 24 };
 		titleLabel->enabled = true;
 		titleLabel->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE | WidgetStateFlags::WIDGET_MENU);
 		
 		Label* versionLabel = canvas->createChild<Label>("V.1.0", font);
-		versionLabel->position = { 100 , 310 };
-		versionLabel->size = { 48, 48 };
+		versionLabel->position = { 500 , 336 };
+		versionLabel->size = { 50, 24 };
 		versionLabel->enabled = true;
 		versionLabel->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE | WidgetStateFlags::WIDGET_MENU);
 
 		ListBoxWidget* optionsList = root.createChild<ListBoxWidget>(4, 1);
 		optionsList->name = "MAIN_MENU_SELECT";
-		optionsList->position = { 320, 159 };
-		optionsList->size = { 200, 200 };
-		optionsList->itemSize = 40;
-		optionsList->itemSpacing = 5;
+		optionsList->position = { 224, 144 };
+		optionsList->size = { 192, 192 };
+		optionsList->itemSize = 48;
+		optionsList->itemSpacing = 0;
 		optionsList->enabled = true;
 		optionsList->setBackgroundColor(*new Color( 20, 45, 210, 192));
 		optionsList->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
 		optionsList->setFlag(WidgetStateFlags::WIDGET_MENU);
-		optionsList->setFlag(WidgetStateFlags::WIDGET_NOBORDER);
 		optionsList->setFlag(WidgetStateFlags::WIDGET_FOCUSED);
 		
 
 		TextButton* newGameButton = new TextButton("NEW GAME", font);
-		newGameButton->size = { 200, 48 };
+		newGameButton->size = { 192, 48 };
 		newGameButton->position = { 0, 0 };
 		newGameButton->name = "NEW_GAME_BUTTON";
 		newGameButton->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
 
 		TextButton* continueButton = new TextButton("CONTINUE", font);
-		continueButton->size = { 200, 48 };
+		continueButton->size = { 192, 48 };
 		continueButton->position = { 0, 0 };
 		continueButton->name = "CONTINUE_BUTTON";
 		continueButton->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
 		
 		TextButton* optionButton = new TextButton("OPTIONS", font);
-		optionButton->size = { 200, 48 };
+		optionButton->size = { 192, 48 };
 		optionButton->position = { 0, 0 };;
 		optionButton->name = "OPTION_BUTTON";
 		optionButton->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
@@ -82,7 +81,7 @@ namespace Arboria {
 		//optionButton->addCallback(1, &pushOptionsMenu);
 		
 		TextButton* quitButton = new TextButton("QUIT", font);
-		quitButton->size = { 200, 48 };
+		quitButton->size = { 192, 48 };
 		quitButton->position = { 0, 0 };
 		quitButton->name = "QUIT_BUTTON";
 		quitButton->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);

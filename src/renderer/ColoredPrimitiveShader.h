@@ -13,14 +13,14 @@ namespace Arboria {
 				Color color;
 			};
 
-			struct ColoredPrimitiveVDStruct {
+			struct ColoredPrimitiveVertexDescription {
 				ColoredPrimitiveVertex vertices[4];
 			};
 
 			struct ColoredPrimitiveBuffer {
 				GLuint vertex_buffer;
 				GLuint vao_id;
-				ColoredPrimitiveVDStruct data;
+				ColoredPrimitiveVertexDescription data;
 			};
 
 			List<ColoredPrimitiveBuffer> buffers;

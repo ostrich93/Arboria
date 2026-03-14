@@ -17,14 +17,13 @@ namespace Arboria {
 			glBindVertexArray(b.vao_id);
 			glGenBuffers(1, &b.vertex_buffer);
 			glBindBuffer(GL_ARRAY_BUFFER, b.vertex_buffer);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(ColoredPrimitiveVDStruct), NULL, GL_STREAM_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(ColoredPrimitiveVertexDescription), NULL, GL_STREAM_DRAW);
 
 			glEnableVertexAttribArray(vPosition);
 			glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ColoredPrimitiveVertex), reinterpret_cast<void*>(offsetof(ColoredPrimitiveVertex, position)));
-			glVertexAttribDivisor(vPosition, 1);
+
 			glEnableVertexAttribArray(vColor);
 			glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_TRUE, sizeof(ColoredPrimitiveVertex), reinterpret_cast<void*>(offsetof(ColoredPrimitiveVertex, color)));
-			glVertexAttribDivisor(vColor, 1);
 
 			buffers.append(b);
 		}
@@ -56,7 +55,7 @@ namespace Arboria {
 		glUniform2f(uViewportSize, viewportSize.x, viewportSize.y);
 
 		glBindBuffer(GL_ARRAY_BUFFER, buf.vertex_buffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ColoredPrimitiveVDStruct), &buf.data);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ColoredPrimitiveVertexDescription), &buf.data);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 		currentBuffer = (currentBuffer + 1) % buffers.getLength();	
@@ -78,7 +77,7 @@ namespace Arboria {
 		glLineWidth(thickness);
 
 		glBindBuffer(GL_ARRAY_BUFFER, buf.vertex_buffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ColoredPrimitiveVDStruct), &buf.data);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ColoredPrimitiveVertexDescription), &buf.data);
 		glDrawArrays(GL_LINE_STRIP, 0, 2);
 
 		currentBuffer = (currentBuffer + 1) % buffers.getLength();

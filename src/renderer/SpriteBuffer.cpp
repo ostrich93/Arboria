@@ -39,6 +39,10 @@ namespace Arboria {
 		glVertexAttribDivisor(6, 1);
 		glVertexAttribIPointer(6, 1, GL_INT, sizeof(DrawSpriteCommand), (GLvoid*)offsetof(DrawSpriteCommand, uses_palette));
 
+		glEnableVertexAttribArray(7);
+		glVertexAttribDivisor(7, 1);
+		glVertexAttribPointer(7, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(DrawSpriteCommand), (GLvoid*)offsetof(DrawSpriteCommand, tint));
+
 		//The base vertices for the quad are progressed per index FOR EACH INSTANCE
 		Vector2<float> position_values[4] = { {0,0}, {0,1}, {1,0}, {1,1} };
 		glGenBuffers(1, &vertex_buffer_id);
