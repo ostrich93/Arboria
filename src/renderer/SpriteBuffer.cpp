@@ -66,8 +66,9 @@ namespace Arboria {
 	void SpriteBuffer::pushSpriteData(AtlasImageInfo* spriteInfo, glm::vec2 position, Color tint) {
 		assert(!isFull());
 
-		auto& d = buffer.allocateNewElement();
+		auto& d = buffer[bufferCount];
 		bufferCount++;
+		buffer.setNum(bufferCount);
 
 		d.texPosition[0] = spriteInfo->bounds.x;
 		d.texPosition[1] = spriteInfo->bounds.y;
@@ -85,8 +86,9 @@ namespace Arboria {
 	{
 		assert(!isFull());
 
-		auto& d = buffer.allocateNewElement();
+		auto& d = buffer[bufferCount];
 		bufferCount++;
+		buffer.setNum(bufferCount);
 
 		d.texPosition[0] = e.bounds.x;
 		d.texPosition[1] = e.bounds.y;
@@ -105,8 +107,9 @@ namespace Arboria {
 	{
 		assert(!isFull());
 
-		auto& d = buffer.allocateNewElement();
+		auto& d = buffer[bufferCount];
 		bufferCount++;
+		buffer.setNum(bufferCount);
 
 		d.texPosition[0] = e.bounds.x;
 		d.texPosition[1] = e.bounds.y;

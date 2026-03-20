@@ -13,7 +13,8 @@ namespace Arboria {
 	template <typename T>
 	class List {
 	public:
-		List(int newGranularity = 16);
+		List();
+		List(int count);
 		List(const List& other);
 		List(const std::initializer_list<T>& other);
 		~List();
@@ -84,11 +85,16 @@ namespace Arboria {
 	}
 
 	template<typename T>
-	inline List<T>::List<T>(int newGranularity) {
+	inline List<T>::List<T>() {
 		num = 0;
 		capacity = 0;
-		granularity = newGranularity;
+		granularity = 16;
 		list = NULL;
+	}
+
+	template<typename T>
+	inline List<T>::List<T>(int count) : List() {
+		resize(count);
 	}
 
 	template<typename T>
