@@ -152,11 +152,11 @@ namespace Arboria {
 					flush();
 					state = RendererState::BatchingSprites;
 				}
-				spriteShader->draw(paletteImage, position, paletteImage->getSize(), viewport_size);
+				spriteShader->draw(paletteImage, position, renderSize, viewport_size);
 			}
 			else {
 				flush();
-				texturedShader->draw(paletteImage, position, paletteImage->getSize(), viewport_size);
+				texturedShader->draw(paletteImage, position, renderSize, viewport_size);
 			}
 			return;
 		}
@@ -168,11 +168,11 @@ namespace Arboria {
 					flush();
 					state = RendererState::BatchingSprites;
 				}
-				spriteShader->draw(rgbImage, position, rgbImage->getSize(), viewport_size);
+				spriteShader->draw(rgbImage, position, renderSize, viewport_size);
 			}
 			else {
 				flush();
-				texturedShader->draw(rgbImage, position, rgbImage->getSize(), viewport_size, linearScale);
+				texturedShader->draw(rgbImage, position, renderSize, viewport_size, linearScale);
 			}
 			return;
 		}
@@ -180,7 +180,7 @@ namespace Arboria {
 		auto surface = dynamic_cast<Surface*>(i);
 		if (surface) {
 			flush();
-			texturedShader->draw(surface, position, surface->getSize(), viewport_size, linearScale);
+			texturedShader->draw(surface, position, renderSize, viewport_size, linearScale);
 			return;
 		}
 	}

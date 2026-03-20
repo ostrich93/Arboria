@@ -34,16 +34,19 @@ namespace Arboria {
 		canvas->enabled = true;
 
 		Font* font = resourceManager->loadFont("logotypegothicregular.ttf", 24);
+		font->palette = resourceManager->loadPalette(0);
 
 		Label* titleLabel = canvas->createChild<Label>("ARBORIA ENGINE", font);
 		titleLabel->position = { 216 , 96 };
+		titleLabel->setPalette(font->palette);
 		titleLabel->size = { 208, 24 };
 		titleLabel->enabled = true;
 		titleLabel->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE | WidgetStateFlags::WIDGET_MENU);
 		
 		Label* versionLabel = canvas->createChild<Label>("V.1.0", font);
+		versionLabel->setPalette(font->palette);
 		versionLabel->position = { 500 , 336 };
-		versionLabel->size = { 50, 24 };
+		versionLabel->size = { 60, 24 };
 		versionLabel->enabled = true;
 		versionLabel->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE | WidgetStateFlags::WIDGET_MENU);
 

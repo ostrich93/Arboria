@@ -10,7 +10,7 @@ namespace Arboria {
 	constexpr unsigned int baseDisplayX = 320;
 	constexpr unsigned int baseDisplayY = 180;
 
-	RenderDevice::RenderDevice() : winWidth(0), winHeight(0), displayX(0), displayY(0)
+	RenderDevice::RenderDevice() : winWidth(0), winHeight(0), displayX(0), displayY(0), camera(NULL)
 	{
 		
 	}
@@ -22,7 +22,6 @@ namespace Arboria {
 	void RenderDevice::initialize()
 	{
 		systemConfig = new SystemConfig();
-		camera = new Camera(0.0f, 0.0f, 0.0f, 0.0f);
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS) < 0) {
 			Engine::printError("RenderDevice::Initialize: SDL could not intialize: %s\n", SDL_GetError());
 			_isQuit = true;
@@ -70,8 +69,8 @@ namespace Arboria {
 		}
 
 		SDL_ShowCursor(SDL_ENABLE);
-		int width, height;
 		SDL_GetWindowSize(window, &winWidth, &winHeight);
+		//camera = new Camera(0.0f, (float)winWidth, (float)winHeight, 0.0f);
 	}
 	void RenderDevice::shutdown()
 	{

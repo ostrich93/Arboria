@@ -12,6 +12,7 @@ namespace Arboria {
 		clickable = true;
 		label = new Label(txt, font);
 		label->setFlag(WidgetStateFlags::WIDGET_ACTIVE | WidgetStateFlags::WIDGET_ENABLED | WidgetStateFlags::WIDGET_VISIBLE);
+		label->setPalette(font->palette);
 	}
 
 	TextButton::~TextButton() = default;

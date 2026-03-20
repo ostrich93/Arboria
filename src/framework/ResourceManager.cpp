@@ -2,6 +2,7 @@
 #include "../FileSystem.h"
 #include "../renderer/Font.h"
 #include "../renderer/Texture.h"
+#include "../renderer/Palette.h"
 #include "ResourceObject.h"
 #include "../utils/Numerics.h"
 #include "../definitions.h"
@@ -105,7 +106,7 @@ namespace Arboria {
 		{231, "gui/scroller.png"},
 	};
 
-	const HashTable<uint32_t, String> indexToPaletteFilenames = {
+	HashTable<uint32_t, String> indexToPaletteFilenames = {
 		{0, "palettes/defaultgray.png"}
 	};
 
@@ -115,11 +116,14 @@ namespace Arboria {
 
 	class ResourceManagerImpl : public ResourceManager {
 	private:
-		HashTable<String, Image> textureCache;
+		HashTable<String, Image*> textureCache;
 		std::recursive_mutex textureCacheLock;
 
 		HashTable<String, Font> fontCache;
 		std::recursive_mutex fontCacheLock;
+
+		HashTable<String, Palette> paletteCache;
+		std::recursive_mutex paletteCacheLock;
 
 		FontStringCacheEntry _fontStringCache[fontStringCacheSize] = {};
 		int32_t _fontStringCacheCount = 0;
@@ -135,7 +139,7 @@ namespace Arboria {
 		~ResourceManagerImpl() override = default;
 		Image* loadTexture(const uint32_t resourceId, bool isPaletted) override;
 		Font* loadFont(const String& filename, const int ptSize) override;
-
+		Palette* loadPalette(const uint32_t resourceId) override;
 		PaletteImage* getFontStringCacheEntry(Font* font, const String& text) override;
 		void putFontStringCacheEntry(Font* font, const String& text, PaletteImage*& img) override;
 	};
@@ -185,10 +189,10 @@ namespace Arboria {
 			return nullptr;
 		}
 
-		Image* img;
+		Image** img;
 		textureCache.get(*imagePath, &img);
 		if (img) {
-			return img;
+			return *img;
 		}
 
 		unsigned int bytesRead;
@@ -213,8 +217,11 @@ namespace Arboria {
 			return nullptr;
 		}
 
+		Image* imTemp;
+
 		if (isPaletted) {
 			PaletteImage* palImage = new PaletteImage({ width, height });
+			imTemp = palImage;
 			PaletteImageLock pLock(palImage, ImageLockUse::Write);
 
 			for (int y = 0; y < height; y++) {
@@ -223,10 +230,11 @@ namespace Arboria {
 				}
 			}
 
-			img = palImage;
+			img = &imTemp;
 		}
 		else {
 			RGBAImage* rgbImage = new RGBAImage({ width, height });
+			imTemp = rgbImage;
 			RGBAImageLock rgbLock(rgbImage, ImageLockUse::Write);
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
@@ -237,31 +245,80 @@ namespace Arboria {
 				}
 			}
 
-			img = rgbImage;
+			img = &imTemp;
 		}
 		
-		img->resId = resourceId;
-		img->filePath = *imagePath;
+		(*img)->resId = resourceId;
+		(*img)->filePath = *imagePath;
 		switch (imgBPP) {
 		case 1:
-			img->setFormat(GL_R8UI);
-			img->setInternalFormat(GL_RED_INTEGER);
+			(*img)->setFormat(GL_R8UI);
+			(*img)->setInternalFormat(GL_RED_INTEGER);
 			break;
 		case 2:
-			img->setFormat(GL_RG8);
-			img->setInternalFormat(GL_RG);
+			(*img)->setFormat(GL_RG8);
+			(*img)->setInternalFormat(GL_RG);
 			break;
 		case 3:
-			img->setFormat(GL_RGB8);
-			img->setInternalFormat(GL_RGB);
+			(*img)->setFormat(GL_RGB8);
+			(*img)->setInternalFormat(GL_RGB);
 			break;
 		default:
-			img->setFormat(GL_RGBA8);
-			img->setInternalFormat(GL_RGBA);
+			(*img)->setFormat(GL_RGBA8);
+			(*img)->setInternalFormat(GL_RGBA);
 			break;
 		}
 		textureCache.set(imagePath->c_str(), *img);
-		return img;
+		return *img;
+	}
+
+	Palette* ResourceManagerImpl::loadPalette(const uint32_t resourceId) {
+		std::lock_guard<std::recursive_mutex> l(paletteCacheLock);
+		String* palettePath;
+		indexToPaletteFilenames.get(resourceId, &palettePath);
+
+		if (!palettePath || palettePath->isEmpty()) {
+			return nullptr;
+		}
+
+		Palette* plt;
+		paletteCache.get(*palettePath, &plt);
+		if (plt) {
+			return plt;
+		}
+
+		unsigned int bytesRead;
+		unsigned char* fileData = readBytesFromPhysFS(palettePath->c_str(), &bytesRead);
+		if (bytesRead == 0)
+			return nullptr;
+
+		int imgBPP = 0;
+		int width, height;
+
+		stbi_set_flip_vertically_on_load(1);
+		unsigned char* imgData = stbi_load_from_memory(fileData, bytesRead, &width, &height, &imgBPP, 0);
+
+		if (imgData == NULL) {
+			free(fileData);
+			return nullptr;
+		}
+
+		if (width == 0 || height == 0) {
+			stbi_image_free(imgData);
+			free(fileData);
+			return nullptr;
+		}
+
+		plt = new Palette(width * height);
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				plt->colors[y * width + x] = { imgData[4 * width * y + 4 * x], imgData[4 * width * y + 4 * x + 1],
+					imgData[4 * width * y + 4 * x + 2], imgData[4 * width * y + 4 * x + 3] };
+			}
+		}
+
+		paletteCache.set(palettePath->c_str(), *plt);
+		return plt;
 	}
 
 	Font* ResourceManagerImpl::loadFont(const String& filename, const int ptSize)

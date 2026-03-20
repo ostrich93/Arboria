@@ -68,6 +68,13 @@ namespace Arboria {
 
 		temp[0] = '\0';
 		strcpy(temp, output);
+		strcat(temp, "assets" DIR_SEPARATOR_STR "palettes" DIR_SEPARATOR_STR);
+		if (!PHYSFS_mount(temp, NULL, 1)) {
+			exit(PHYSFS_getLastErrorCode());
+		}
+
+		temp[0] = '\0';
+		strcpy(temp, output);
 		strcat(temp, "assets" DIR_SEPARATOR_STR "shader" DIR_SEPARATOR_STR);
 		if (!PHYSFS_mount(temp, NULL, 1)) {
 			exit(PHYSFS_getLastErrorCode());

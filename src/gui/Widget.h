@@ -79,7 +79,7 @@ namespace Arboria {
 		void resolveLocation();
 		void render();
 		Palette* getPalette() const { return palette; }
-		void setPalette(const Palette* p);
+		void setPalette(Palette* p) { palette = p; }
 
 		void submitGuiEvent(GUIEventType eventType, AEvent* parentEvent);
 		void addEventCallback(GUIEventType eventType, eventCallback callback);

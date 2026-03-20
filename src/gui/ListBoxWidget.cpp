@@ -128,31 +128,40 @@ namespace Arboria {
 	}
 
 	void ListBoxWidget::onRender() {
-		if (scrollbar == NULL) configureScrollbar(Orientation::VERTICAL);
-		if (horizontalScrollbar == NULL) configureScrollbar(Orientation::HORIZONTAL);
+		int start = 1;
+		if (scrollbar == NULL) {
+			configureScrollbar(Orientation::VERTICAL);
+		}
+		if (horizontalScrollbar == NULL) {
+			configureScrollbar(Orientation::HORIZONTAL);
+		}
 		
 		Vector2<int> controlOffset = { 0, 0 };
-		for (int i = 0; i < itemCount; i++) {
+		int currRow = 0;
+		int currCol = 0;
+		int itemIdx = 0;
+		for (int i = 0; i <= itemCount; i++) { //first element is ALWAYS the scrollbar
 			auto child = children[i];
-			int currRow = Math::ceil(i / columns);
-			int currCol = Math::ceil(i % columns);
 			int indOff = elementDisplayCount > 1 ? indexOffset.y : indexOffset.x;
-			if (child != scrollbar) {
+			if (child != scrollbar && child != horizontalScrollbar) {
+				itemIdx = i - start;
+				currRow = Math::ceil(itemIdx / columns);
+				currCol = Math::ceil(itemIdx % columns);
 				if (i >= indOff) {
-					if (elementDisplayCount == 1 && i <= currCol + indOff + columns) {
+					if (elementDisplayCount == 1 && itemIdx <= currCol + indOff + columns) {
 						child->size.y = size.y;
 						child->size.x = itemSize;
-						child->position.x = position.x + controlOffset.x;
+						child->position.x = controlOffset.x - itemSpacing;
 						controlOffset.x += itemSize + itemSpacing;
 					}
-					else if (elementDisplayCount > 1 && i <= currRow + (indOff + elementDisplayCount - 1)) {
+					else if (elementDisplayCount > 1 && itemIdx <= currRow + (indOff + elementDisplayCount - 1)) {
 						child->setFlag(WidgetStateFlags::WIDGET_VISIBLE);
 						child->size.x = Math::ceil(size.x/columns);
 						child->size.y = itemSize;
-						child->position.x = position.x + controlOffset.x;
-						child->position.y = position.y + controlOffset.y;
 						controlOffset.x = currCol * (child->size.x);
 						controlOffset.y = currRow * (itemSize + itemSpacing);
+						child->position.x = controlOffset.x - itemSpacing;
+						child->position.y = controlOffset.y - itemSpacing;
 					}
 				}
 				else {

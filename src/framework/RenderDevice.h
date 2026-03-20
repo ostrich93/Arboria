@@ -9,7 +9,7 @@ namespace Arboria {
 	class Camera;
 	class RenderDevice {
 		private:
-			SDL_DisplayMode displayMode;
+			//SDL_DisplayMode displayMode;
 			SDL_Window* window;
 			SDL_GLContext context;
 			Camera* camera;

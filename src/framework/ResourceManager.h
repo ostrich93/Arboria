@@ -16,7 +16,7 @@ namespace Arboria {
 
 			virtual Image* loadTexture(const uint32_t resourceId, bool isPaletted = false) = 0;
 			virtual Font* loadFont(const String& filename, const int ptSize) = 0;
-
+			virtual Palette* loadPalette(const uint32_t resourceId) = 0;
 			virtual PaletteImage* getFontStringCacheEntry(Font* font, const String& text) = 0;
 			virtual void putFontStringCacheEntry(Font* font, const String& text, PaletteImage*& img) = 0;
 	};

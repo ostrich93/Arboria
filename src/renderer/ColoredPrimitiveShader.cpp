@@ -23,7 +23,7 @@ namespace Arboria {
 			glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ColoredPrimitiveVertex), reinterpret_cast<void*>(offsetof(ColoredPrimitiveVertex, position)));
 
 			glEnableVertexAttribArray(vColor);
-			glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_TRUE, sizeof(ColoredPrimitiveVertex), reinterpret_cast<void*>(offsetof(ColoredPrimitiveVertex, color)));
+			glVertexAttribPointer(vColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ColoredPrimitiveVertex), reinterpret_cast<void*>(offsetof(ColoredPrimitiveVertex, color)));
 
 			buffers.append(b);
 		}
