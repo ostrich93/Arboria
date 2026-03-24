@@ -59,9 +59,9 @@ namespace Arboria {
 			void bind(Surface* s);
 			void setSurface(Surface* s);
 			Surface* getCurrentSurface();
-			void draw(Image* i, const Vector2<float>& position);
-			void drawScaled(Image* i, const Vector2<float>& position, const Vector2<float>& renderSize, bool linearScale = false);
-			void drawTinted(Image* i, Vector2<float> position, Color tint);
+			void draw(Image* i, const Vector2<float>& position, bool renderDefaultSurface = false);
+			void drawScaled(Image* i, const Vector2<float>& position, const Vector2<float>& renderSize, bool linearScale = false, bool renderDefaultSurface = false);
+			void drawTinted(Image* i, Vector2<float> position, Color tint, bool renderDefaultSurface = false);
 			void drawText(Font* font, String& text, int32_t x, int32_t y);
 			void drawLine(Vector2<float> _p1, Vector2<float> _p2, Color _color, float thickness);
 			void drawRectangle(Vector2<float> _position, Vector2<float> _size, Color c);

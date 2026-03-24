@@ -120,11 +120,17 @@ namespace Arboria {
 		}
 
 		clearFlag(WidgetStateFlags::WIDGET_DIRTY);
+
+		bool renderDefaultSurface = false;
+		if (renderer->getCurrentSurface() != NULL) {
+			Framebuffer* fbo = dynamic_cast<Framebuffer*>(renderer->getCurrentSurface()->renderData);
+			renderDefaultSurface = fbo->fbo_id == 0;
+		}
 		if (enabled) {
-			renderer->draw(surface, Vector2<float>(position.x, position.y));
+			renderer->draw(surface, Vector2<float>(position.x, position.y), renderDefaultSurface);
 		}
 		else {
-			renderer->drawTinted(surface, Vector2<float>(position.x, position.y), Color{ 255, 255,255,128 });
+			renderer->drawTinted(surface, Vector2<float>(position.x, position.y), Color{ 255, 255,255,128 }, renderDefaultSurface);
 		}
 	}
 

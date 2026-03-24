@@ -286,12 +286,12 @@ namespace Arboria {
 			PaletteImage* dst = new PaletteImage({ width, height });
 			PaletteImageLock l(dst, ImageLockUse::Write);
 
-			for (int y = 0; y <= _src->rows >> 1; y++) {
+			for (int y = 0; y < _src->rows; y++) {
 				int row0 = y * _src->pitch;
-				int row1 = (_src->rows - y - 1) * _src->pitch;
+				//int row1 = (_src->rows - y - 1) * _src->pitch;
 				for (int x = 0; x < _src->pitch; x++) {
-					l.set({ x, y }, _src->buffer[row1 + x]);
-					l.set({ x, (_src->rows - y - 1) }, _src->buffer[row0 + x]);
+					l.set({ x, y }, _src->buffer[row0 + x]);
+					//l.set({ x, (_src->rows - y - 1) }, _src->buffer[row0 + x]);
 				}
 			}
 			newGlyph.img = dst;

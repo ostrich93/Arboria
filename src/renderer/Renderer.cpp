@@ -137,12 +137,12 @@ namespace Arboria {
 		return current_surface;
 	}
 
-	void Renderer::draw(Image* i, const Vector2<float>& position)
+	void Renderer::draw(Image* i, const Vector2<float>& position, bool renderDefaultSurface)
 	{
-		drawScaled(i, position, i->getSize(), false);
+		drawScaled(i, position, i->getSize(), false, renderDefaultSurface);
 	}
 
-	void Renderer::drawScaled(Image* i, const Vector2<float>& position, const Vector2<float>& renderSize, bool linearScale)
+	void Renderer::drawScaled(Image* i, const Vector2<float>& position, const Vector2<float>& renderSize, bool linearScale, bool renderDefaultSurface)
 	{
 		auto viewport_size = current_surface->getSize();
 		auto paletteImage = dynamic_cast<PaletteImage*>(i);
@@ -180,12 +180,12 @@ namespace Arboria {
 		auto surface = dynamic_cast<Surface*>(i);
 		if (surface) {
 			flush();
-			texturedShader->draw(surface, position, renderSize, viewport_size, linearScale);
+			texturedShader->draw(surface, position, renderSize, viewport_size, linearScale, renderDefaultSurface);
 			return;
 		}
 	}
 
-	void Renderer::drawTinted(Image* i, Vector2<float> position, Color tint)
+	void Renderer::drawTinted(Image* i, Vector2<float> position, Color tint, bool renderDefaultSurface)
 	{
 		auto viewport_size = current_surface->getSize();
 		auto paletteImage = dynamic_cast<PaletteImage*>(i);

@@ -22,6 +22,7 @@ namespace Arboria {
 	};
 
 	static const glm::vec2 identity_quad[4] = { {0,0}, {0, 1}, {1, 0}, {1,1} };
+	static const glm::vec2 identity_tQuad[4] = { {0,1}, {0, 0}, {1, 1}, {1,0} };
 
 	class PaletteImage;
 	class RGBAImage;
@@ -42,6 +43,8 @@ namespace Arboria {
 		GLint uRgbTexture{ -1 };
 		GLint uPalette{ -1 };
 		GLint uIsPaletted{ -1 };
+		GLint uModel{ -1 };
+		GLint uProjection{ -1 };
 		//GLint uColor{ -1 };
 
 		//attribute locations
@@ -55,7 +58,7 @@ namespace Arboria {
 
 		void draw(PaletteImage* img, glm::vec2 position, glm::vec2 size, glm::uvec2 viewport_size, Color tint = { 255, 255, 255, 255 });
 		void draw(RGBAImage* img, glm::vec2 position, glm::vec2 size, glm::uvec2 viewport_size, bool isLinear = false, Color tint = { 255, 255, 255, 255 });
-		void draw(Surface* img, glm::vec2 position, glm::vec2 size, glm::uvec2 viewport_size, bool isLinear = false, Color tint = { 255, 255, 255, 255 });
+		void draw(Surface* img, glm::vec2 position, glm::vec2 size, glm::uvec2 viewport_size, bool isLinear = false, bool renderDefaultSurface = false, Color tint = { 255, 255, 255, 255 });
 		void setUniforms(GLuint textureId, glm::vec2 position, glm::vec2 size);
 
 		unsigned int usedBuffers;

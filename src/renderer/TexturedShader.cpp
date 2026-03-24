@@ -66,21 +66,20 @@ namespace Arboria {
 
 		TextureVertices v;
 
-		//glm::vec2 viewport_size = glm::vec2(800, 600);
-		//glm::vec4 posCoords[4] = { {position.x, position.y, 0, 1}, {position.x, position.y + size.y, 0, 1}, {position.x + size.x, position.y, 0, 1}, {position.x + size.x, position.y + size.y, 0, 1} };
+		glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(viewport_size.x), 0.0f, static_cast<float>(viewport_size.y));
+
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(position, 0.0f));
+
+		model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 1));
+		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); //rotation for now is always 0 but when it becomes time, we'll replace it with a parameter value
+		model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 1));
+		model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
 
 		for (unsigned int i = 0; i < 4; i++) {
 			auto p = identity_quad[i];
 
-			p *= size;
-			p += position;
-			//p -= Vector2<float>(0.5f, 0.5f);
-			//p *= Vector2<float>(2.0f, 2.0f);
-			p /= viewport_size;
-			p -= glm::vec2(0.5f, 0.5f);
-			p *= glm::vec2(2.0f, 2.0f);
-
-			v.vertices[i].position = p;
+			v.vertices[i].position = identity_quad[i];
 			v.vertices[i].texCoord = identity_quad[i];
 			v.vertices[i].tint = tint;
 		}
@@ -90,6 +89,8 @@ namespace Arboria {
 		glUniform1i(uFlipY, 0);
 		glUniform1i(uIsPaletted, 1);
 		glUniform2f(uTexSize, (float)img->getWidth(), (float)img->getHeight());
+		glUniformMatrix4fv(uModel, 1, false, glm::value_ptr(model));
+		glUniformMatrix4fv(uProjection, 1, false, glm::value_ptr(projection));
 
 		auto& buf = buffers[currentBuffer];
 		currentBuffer = (currentBuffer + 1) % buffers.getLength();
@@ -122,20 +123,20 @@ namespace Arboria {
 
 		TextureVertices v;
 
-		//glm::vec2 viewport_size = glm::vec2(800, 600);
-		//glm::vec4 posCoords[4] = { {position.x, position.y, 0, 1}, {position.x, position.y + size.y, 0, 1}, {position.x + size.x, position.y, 0, 1}, {position.x + size.x, position.y + size.y, 0, 1} };
+		glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(viewport_size.x), 0.0f, static_cast<float>(viewport_size.y));
+
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(position, 0.0f));
+
+		model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f));
+		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); //rotation for now is always 0 but when it becomes time, we'll replace it with a parameter value
+		model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f));
+		model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
 
 		for (unsigned int i = 0; i < 4; i++) {
 			auto p = identity_quad[i];
-			p *= size;
-			p += position;
-			//p.x = posCoords[i].x;
-			//p.y = posCoords[i].y;
-			p /= viewport_size;
-			p -= glm::vec2(0.5f, 0.5f);
-			p *= glm::vec2(2.0f, 2.0f);
 
-			v.vertices[i].position = p;
+			v.vertices[i].position = identity_quad[i];
 			v.vertices[i].texCoord = identity_quad[i];
 			v.vertices[i].tint = tint;
 		}
@@ -145,6 +146,8 @@ namespace Arboria {
 		glUniform1i(uFlipY, 0);
 		glUniform1i(uIsPaletted, 0);
 		glUniform2f(uTexSize, (float)img->getWidth(), (float)img->getHeight());
+		glUniformMatrix4fv(uModel, 1, false, glm::value_ptr(model));
+		glUniformMatrix4fv(uProjection, 1, false, glm::value_ptr(projection));
 
 		auto& buf = buffers[currentBuffer];
 		currentBuffer = (currentBuffer + 1) % buffers.getLength();
@@ -157,7 +160,7 @@ namespace Arboria {
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}
 
-	void TexturedShader::draw(Surface* img, glm::vec2 position, glm::vec2 size, glm::uvec2 viewport_size, bool isLinear, Color tint)
+	void TexturedShader::draw(Surface* img, glm::vec2 position, glm::vec2 size, glm::uvec2 viewport_size, bool isLinear, bool renderDefaultSurface, Color tint)
 	{
 		auto tex = dynamic_cast<Framebuffer*>(img->renderData);
 
@@ -177,21 +180,22 @@ namespace Arboria {
 		}
 
 		TextureVertices v;
+		glm::mat4 projection = renderDefaultSurface ?
+			glm::ortho(0.0f, static_cast<float>(viewport_size.x), static_cast<float>(viewport_size.y), 0.0f, -1.0f, 1.0f)
+			: glm::ortho(0.0f, static_cast<float>(viewport_size.x), 0.0f, static_cast<float>(viewport_size.y));
 
-		//glm::vec2 viewport_size = glm::vec2(800, 600);
-		//glm::vec4 posCoords[4] = { {position.x, position.y, 0, 1}, {position.x, position.y + size.y, 0, 1}, {position.x + size.x, position.y, 0, 1}, {position.x + size.x, position.y + size.y, 0, 1} };
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(position, 0.0f));
+
+		model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0));
+		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); //rotation for now is always 0 but when it becomes time, we'll replace it with a parameter value
+		model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0));
+		model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
 
 		for (unsigned int i = 0; i < 4; i++) {
 			auto p = identity_quad[i];
-			p *= size;
-			p += position;
-			//p.x = posCoords[i].x;
-			//p.y = posCoords[i].y;
-			p /= viewport_size;
-			p -= glm::vec2(0.5f, 0.5f);
-			p *= glm::vec2(2.0f, 2.0f);
 
-			v.vertices[i].position = p;
+			v.vertices[i].position = identity_quad[i];
 			v.vertices[i].texCoord = identity_quad[i];
 			v.vertices[i].tint = tint;
 		}
@@ -201,6 +205,8 @@ namespace Arboria {
 		glUniform1i(uFlipY, 0);
 		glUniform1i(uIsPaletted, 0);
 		glUniform2f(uTexSize, (float)img->getWidth(), (float)img->getHeight());
+		glUniformMatrix4fv(uModel, 1, false, glm::value_ptr(model));
+		glUniformMatrix4fv(uProjection, 1, false, glm::value_ptr(projection));
 
 		auto& buf = buffers[currentBuffer];
 		currentBuffer = (currentBuffer + 1) % buffers.getLength();
@@ -215,8 +221,8 @@ namespace Arboria {
 
 	void TexturedShader::getLocations()
 	{
-		//uTransform = getUniformLocation("uTransform");
-		//uViewportSize = getUniformLocation("uViewportSize");
+		uModel = getUniformLocation("uModel");
+		uProjection = getUniformLocation("uProjection");
 		uFlipY = getUniformLocation("uFlipY");
 		uTexSize = getUniformLocation("uTexSize");
 

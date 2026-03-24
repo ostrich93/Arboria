@@ -203,7 +203,7 @@ namespace Arboria {
 		int imgBPP = 0;
 		int width, height;
 
-		stbi_set_flip_vertically_on_load(1);
+		//stbi_set_flip_vertically_on_load(1);
 		unsigned char* imgData = stbi_load_from_memory(fileData, bytesRead, &width, &height, &imgBPP, 0);
 
 		if (imgData == NULL) {
