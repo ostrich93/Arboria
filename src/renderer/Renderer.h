@@ -1,21 +1,11 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "DrawSurfaceShader.h"
-#include "DrawTextShader.h"
-#include "DrawColoredPrimitiveShader.h"
+#include "TexturedShader.h"
+#include "SpriteShader.h"
+#include "ColoredPrimitiveShader.h"
 
 namespace Arboria {
-	struct VertexData {
-		int x0;
-		int y0;
-		int x1;
-		int y1;
-		float u0;
-		float v0;
-		float u1;
-		float v1;
-	};
 
 	class RGBAImage;
 	class PaletteImage;
@@ -24,15 +14,24 @@ namespace Arboria {
 	class Palette;
 	class Surface;
 
+	class RendererFrameBufferBinding {
+	private:
+		RendererFrameBufferBinding(const RendererFrameBufferBinding&) = delete;
+		Surface* prevBinding;
+	public:
+		RendererFrameBufferBinding(Surface* surface);
+		~RendererFrameBufferBinding();
+	};
+
 	class Renderer {
 		private:
 			unsigned int spriteBufferSize = 16384;
 			unsigned int spriteBufferCount = 40;
 			unsigned int spritesheetPageSize = 2048;
 			Vector2<int> maxSpritePackSize = { 256, 256 };
-			DrawSurfaceShader* surfaceShader;
-			DrawTextShader* textShader;
-			DrawColoredPrimitiveShader* coloredPrimitiveShader;
+			TexturedShader* texturedShader;
+			SpriteShader* spriteShader;
+			ColoredPrimitiveShader* coloredPrimitiveShader;
 			Palette* current_palette = nullptr;
 
 			enum RendererState {
@@ -48,41 +47,30 @@ namespace Arboria {
 			uint32_t _drawCount = 0;
 			uint32_t _ttfGlId = 0;
 
-			List<DrawSurfaceCommand> surfaceCommandBuffer;
-			List<DrawTextBatchCommand> textCommandBuffers;
-			List<DrawColoredPrimitiveCommand> lineCommandBuffers;
-			List<DrawColoredPrimitiveCommand> rectCommandBuffers;
 		public:
-			Renderer(): surfaceShader(NULL), textShader(NULL), coloredPrimitiveShader(NULL){}
+			Renderer();
 			~Renderer();
 			void initialize();
-			void draw(Image* _texture, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale = 1.0f);
-			//void draw(TextureAtlas* _textureAtlas, Vector2<GLfloat> _screenPosition, Color _color, GLint _clipIndex = 0, GLfloat _scale = 1.0f);
-			void drawText(const char* text, Font* font, Vector2<GLfloat> _screenPosition, Color _color, GLfloat _scale = 1.0f);
-			void drawLine(Vector2<GLfloat> _positions[2], Color _colors[2]);
-			void drawRectangle(Vector2<GLfloat> _positions[4], Color _colors[4]);
+			void newFrame();
+
+			void clear(Color c = { 0, 0, 0, 0 });
+			void setPalette(Palette* pal);
+			Palette* getPalette();
+			void bind(Surface* s);
+			void setSurface(Surface* s);
+			Surface* getCurrentSurface();
+			void draw(Image* i, const Vector2<float>& position, bool renderDefaultSurface = false);
+			void drawScaled(Image* i, const Vector2<float>& position, const Vector2<float>& renderSize, bool linearScale = false, bool renderDefaultSurface = false);
+			void drawTinted(Image* i, Vector2<float> position, Color tint, bool renderDefaultSurface = false);
+			void drawText(Font* font, String& text, int32_t x, int32_t y);
+			void drawLine(Vector2<float> _p1, Vector2<float> _p2, Color _color, float thickness);
+			void drawRectangle(Vector2<float> _position, Vector2<float> _size, Color c);
+			void drawBorders(Vector2<float> _position, Vector2<float> _size, Color c, float thickness = 1.0f);
 			void flush();
-			void flushSurfaceCommands();
-			void flushText();
-			void flushLines();
-			void flushRectangles();
-	};
 
-	class SpriteRenderer {
-	private:
-		unsigned int vao_id;
-		unsigned int vbo_id;
-		ShaderProgram spriteShader;
-		GLint modelLocation;
-		GLint spriteColorLocation;
-	protected:
-		void initRenderData();
-	public:
-		SpriteRenderer();
-
-		~SpriteRenderer();
-
-		void draw(Image* texture, Vector2<int> position, Vector2<int> size, Vector4<float> tint, float rotate = 0);
+			int maxSpriteBuffers = 0;
+			int maxTextureBuffers = 0;
+			int maxColoredPrimitiveBuffers = 0;
 	};
 }
 

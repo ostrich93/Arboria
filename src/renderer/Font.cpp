@@ -286,16 +286,16 @@ namespace Arboria {
 			PaletteImage* dst = new PaletteImage({ width, height });
 			PaletteImageLock l(dst, ImageLockUse::Write);
 
-			for (int y = 0; y <= _src->rows >> 1; y++) {
+			for (int y = 0; y < _src->rows; y++) {
 				int row0 = y * _src->pitch;
-				int row1 = (_src->rows - y - 1) * _src->pitch;
+				//int row1 = (_src->rows - y - 1) * _src->pitch;
 				for (int x = 0; x < _src->pitch; x++) {
-					l.set({ x, y }, _src->buffer[row1 + x]);
-					l.set({ x, (_src->rows - y - 1) }, _src->buffer[row0 + x]);
+					l.set({ x, y }, _src->buffer[row0 + x]);
+					//l.set({ x, (_src->rows - y - 1) }, _src->buffer[row0 + x]);
 				}
 			}
 			newGlyph.img = dst;
-			font->glyphs[g] = newGlyph;
+			font->glyphs.set(g, newGlyph);
 		}
 
 		FT_Done_Face(face);
@@ -412,23 +412,24 @@ namespace Arboria {
 			if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
 				continue;
 
-			if (glyphs.contains(c)) {
+			if (!glyphs.contains(c)) {
 				return -1;
 			}
 
-			Glyph glyph = glyphs[c];
+			Glyph* glyph;
+			glyphs.get(c, &glyph);
 
-			z = x + glyph.minx;
+			z = x + glyph->minx;
 			if (minx > z)
 				minx = z;
 			//if (TTF_HANDLE_STYLE_BOLD(font)) x+= font->glyph_overhang;
-			if (glyph.advance > glyph.maxx)
-				z = x + glyph.advance;
+			if (glyph->advance > glyph->maxx)
+				z = x + glyph->advance;
 			else
-				z += x + glyph.maxx;
+				z += x + glyph->maxx;
 			if (maxx < z)
 				maxx = z;
-			x += glyph.advance;
+			x += glyph->advance;
 			//prev_index = glyph->index;
 
 			w = maxx - minx;
@@ -461,16 +462,17 @@ namespace Arboria {
 			if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
 				continue;
 
-			if (glyphs.contains(c)) {
+			if (!glyphs.contains(c)) {
 				return -1;
 			}
 
-			Glyph glyph = glyphs[c];
+			Glyph* glyph;
+			glyphs.get(c, &glyph);
 
-			if (glyph.miny < minY)
-				minY = glyph.miny;
-			if (glyph.maxy > maxY)
-				maxY = glyph.maxy;
+			if (glyph->miny < minY)
+				minY = glyph->miny;
+			if (glyph->maxy > maxY)
+				maxY = glyph->maxy;
 
 			if (maxY - minY > h)
 				h = maxY - minY;
@@ -509,16 +511,18 @@ namespace Arboria {
 			if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
 				continue;
 
-			if (glyphs.contains(c)) {
+			if (!glyphs.contains(c)) {
 				return nullptr;
 			}
-
-			Glyph glyph = glyphs[c];
-			if (glyph.img->getWidth() != 0) {
-				PaletteImage::blit(glyph.img, img, { 0,0 }, { pos, 0 });
-				dX = glyph.img->getWidth();
+			Glyph* glyph;
+			glyphs.get(c, &glyph);
+			if (glyph) {
+				if (glyph->img->getWidth() != 0) {
+					PaletteImage::blit(glyph->img, img, { 0,0 }, { pos, 0 });
+					dX = glyph->img->getWidth();
+				}
+				pos += dX;
 			}
-			pos += dX;
 		}
 
 		resourceManager->putFontStringCacheEntry(this, text, img);

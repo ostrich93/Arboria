@@ -31,11 +31,14 @@ namespace Arboria {
 			void freeMemory();
 			bool isLoaded();
 			bool readToken(Token* token);
+			bool expectTokenString(const char* string);
+			bool expectTokenType(int tType, int tSubtype, Token* token);
 			void unreadToken(const Token* token);
 			void setFlags(int _flags);
 			int getFlags();
 			void reset();
 			const int getLineNumber();
+			void handleError(const char* str, ...);
 			bool hasError() const;
 			bool atEnd();
 		private:

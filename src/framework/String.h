@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <cassert>
+#include <stdexcept>
 #include "../containers/List.h"
 
 const int STRING_ALLOC_BASE = 32 - 8 - sizeof(char*);
@@ -105,6 +106,7 @@ namespace Arboria {
 			bool replace(const char* old, const char* nw);
 			bool replaceChar(const char old, const char nw);
 			void copyRange(const char* text, int start, int end);
+			String substring(size_t pos = 0, size_t count = -1) const;
 			//List<String> split(const char* delimiters, bool skipEmpty = false) const;
 			//List<String> split(const List<String>& delimiters, bool skipEmpty = false) const;
 			//List<String> splitLines() const;
@@ -146,11 +148,12 @@ namespace Arboria {
 
 			void reallocate(int amount, bool keepOld);
 			int dynamicMemoryUsed() const;
+
+			static const char emptyString[1];
 		protected:
 			StringData* m_data;
 			void ensureAllocated(int amount, bool keepOld = true);
 			void ensureDataWritable();
-			static char emptyString[1];
 	};
 
 	inline void String::ensureAllocated(int amount, bool keepOld) {
@@ -705,6 +708,25 @@ namespace Arboria {
 
 		m_data->data[l] = '\0';
 		m_data->len = l;
+	}
+
+	inline String String::substring(size_t pos, size_t count) const
+	{
+		String result;
+		if (count == -1) {
+			count = m_data->len;
+		}
+		if (pos > length()) {
+			throw (std::out_of_range("String::substring: start position is greater than the length of the string."));
+			return result;
+		}
+
+		for (int i = pos; i < pos + count; i++) {
+			result.append(m_data->data[i]);
+		}
+
+		result.m_data->addReference();
+		return result;
 	}
 
 	inline int String::dynamicMemoryUsed() const {

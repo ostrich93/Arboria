@@ -13,7 +13,8 @@ namespace Arboria {
 	template <typename T>
 	class List {
 	public:
-		List(int newGranularity = 16);
+		List();
+		List(int count);
 		List(const List& other);
 		List(const std::initializer_list<T>& other);
 		~List();
@@ -37,15 +38,15 @@ namespace Arboria {
 		void clearFree();
 		void deleteContents(bool clear);
 		int getLength() const;
-		int getCapacity();
-		int getGranularity();
+		int getCapacity() const;
+		int getGranularity() const;
 		void setGranularity(int newGranularity);
 		size_t size() const;
 		size_t memoryAllocated() const;
 		size_t memoryUsed() const;
 		void resize(int newSize);
 		void resize(int newSize, int newGranularity);
-		void setNum(int newNum);
+		void setNum(int newNum, bool shouldResize = false);
 		T* getPtr();
 		const T* getPtr() const;
 		T& back();
@@ -84,11 +85,16 @@ namespace Arboria {
 	}
 
 	template<typename T>
-	inline List<T>::List<T>(int newGranularity) {
+	inline List<T>::List<T>() {
 		num = 0;
 		capacity = 0;
-		granularity = newGranularity;
+		granularity = 16;
 		list = NULL;
+	}
+
+	template<typename T>
+	inline List<T>::List<T>(int count) : List() {
+		resize(count);
 	}
 
 	template<typename T>
@@ -241,10 +247,7 @@ namespace Arboria {
 			return false;
 		}
 
-		num--;
-		list[num] = list[num + 1];
-
-		return true;
+		return removeAt(num - 1);
 	}
 
 	template<typename T>
@@ -323,12 +326,12 @@ namespace Arboria {
 	}
 
 	template<typename T>
-	inline int List<T>::getCapacity() {
+	inline int List<T>::getCapacity() const {
 		return capacity;
 	}
 
 	template<typename T>
-	inline int List<T>::getGranularity() {
+	inline int List<T>::getGranularity() const {
 		return granularity;
 	}
 
@@ -428,8 +431,9 @@ namespace Arboria {
 	}
 
 	template<typename T>
-	inline void List<T>::setNum(int newNum) {
-		if (newNum >= 0) {
+	inline void List<T>::setNum(int newNum, bool shouldResize) {
+		assert(newNum > 0);
+		if (newNum > capacity || shouldResize) {
 			resize(newNum);
 		}
 		num = newNum;
@@ -447,12 +451,12 @@ namespace Arboria {
 
 	template<typename T>
 	inline T& List<T>::back() {
-		return list[num];
+		return list[num-1];
 	}
 
 	template<typename T>
 	inline const T& List<T>::back() const {
-		return list[num];
+		return list[num-1];
 	}
 
 	template<typename T>

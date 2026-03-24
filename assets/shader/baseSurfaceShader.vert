@@ -1,15 +1,19 @@
 #version 330 core
-layout(location = 0) in vec2 vScreenPosition;
-layout(location = 1) in vec2 in_texCoord;
-layout(location = 2) in vec4 in_color;
-uniform vec2 uTexSize;
+layout (location = 0) in vec2 vPosition;
+layout (location = 1) in vec2 vTexCoord;
+layout (location = 2) in vec4 vTint;
+
 uniform mat4 uModel;
 uniform mat4 uProjection;
-uniform mat4 uView;
-out vec2 vTexCoord;
-out vec4 vColor;
+uniform vec2 uTexSize;
+uniform bool uFlipY;
+
+out vec2 fTexCoord;
+out vec4 fTint;
+
 void main() {
-	vTexCoord = in_texCoord * uTexSize;
-	vColor = in_color;
-	gl_Position = uProjection * uView * uModel * vec4(vScreenPosition.xy, 0.0, 1.0);
+	fTexCoord = vTexCoord * uTexSize;
+	fTint = vTint;
+	if (uFlipY) gl_Position = uProjection * uModel * vec4(vPosition.x, -vPosition.y, 0.0, 1.0);
+	else gl_Position = uProjection * uModel * vec4(vPosition.x, vPosition.y, 0.0, 1.0);
 }

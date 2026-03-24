@@ -26,23 +26,23 @@ namespace Arboria {
 
 	AtlasImageInfo Atlas::allocateSprite(RGBAImage* i)
 	{
-		for (AtlasPage& page : _pages) {
-			if (page.getFreeSlots() > 0 && page.isImageValid(i->getWidth(), i->getHeight())) {
-				auto pInfo = page.allocate(i);
+		for (auto& page : _pages) {
+			if (page->getFreeSlots() > 0 && page->isImageValid(i->getWidth(), i->getHeight())) {
+				auto pInfo = page->allocate(i);
 				upload(pInfo, i);
 				return pInfo;
 			}
 		}
 
-		auto pageIdx = static_cast<int32_t>(_pages.size());
+		auto pageIdx = static_cast<int32_t>(_pages.getLength());
 		int32_t imageSize = powf(2, Atlas::calculateImageSizeOrder(i->getWidth(), i->getHeight()));
 
-		_pages.append(AtlasPage(pageIdx, imageSize));
-		_pages.end()->initialize();
+		_pages.append(new AtlasPage(pageIdx, imageSize));
+		_pages.back()->initialize();
 
 		enlargeAtlas(1);
 
-		auto info = _pages.end()->allocate(i);
+		auto info = _pages.back()->allocate(i);
 
 		//for auto& page : _pages, go through entries and call upload on each one?
 		upload(info, i);
@@ -52,23 +52,23 @@ namespace Arboria {
 
 	AtlasImageInfo Atlas::allocateSprite(PaletteImage* i)
 	{
-		for (AtlasPage& page : _pages) {
-			if (page.getFreeSlots() > 0 && page.isImageValid(i->getWidth(), i->getWidth())) {
-				auto pInfo = page.allocate(i);
+		for (auto& page : _pages) {
+			if (page->getFreeSlots() > 0 && page->isImageValid(i->getWidth(), i->getWidth())) {
+				auto pInfo = page->allocate(i);
 				upload(pInfo, i);
 				return pInfo;
 			}
 		}
 
-		auto pageIdx = static_cast<int32_t>(_pages.size());
+		auto pageIdx = static_cast<int32_t>(_pages.getLength());
 		int32_t imageSize = powf(2, Atlas::calculateImageSizeOrder(i->getWidth(), i->getHeight()));
 
-		_pages.append(AtlasPage(pageIdx, imageSize));
-		_pages.end()->initialize();
+		_pages.append(new AtlasPage(pageIdx, imageSize));
+		_pages.back()->initialize();
 
 		enlargeAtlas(1);
 
-		auto info = _pages.end()->allocate(i);
+		auto info = _pages.back()->allocate(i);
 
 		//for auto& page : _pages, go through entries and call upload on each one?
 		upload(info, i);
@@ -86,15 +86,15 @@ namespace Arboria {
 		_cols = std::max(1, _pageSize / _imageSize);
 		_rows = std::max(1, _pageSize / _imageSize);
 
-		_freeSlots.resize(_cols * _rows);
-		for (size_t i = 0; i < _freeSlots.size(); i++) {
+		_freeSlots.setNum(_cols * _rows);
+		for (size_t i = 0; i < _freeSlots.getLength(); i++) {
 			_freeSlots[i] = static_cast<GLuint>(i);
 		}
 	}
 
 	AtlasImageInfo AtlasPage::allocate(Image* i)
 	{
-		assert(!_freeSlots.size() == 0);
+		assert(_freeSlots.getLength() > 0);
 
 		GLuint slot = _freeSlots.back();
 		_freeSlots.removeLast();
@@ -126,7 +126,7 @@ namespace Arboria {
 
 	int32_t AtlasPage::getFreeSlots() const
 	{
-		return static_cast<int32_t>(_freeSlots.size());
+		return static_cast<int32_t>(_freeSlots.getLength());
 	}
 
 	int32_t Atlas::calculateImageSizeOrder(int32_t actualWidth, int32_t actualHeight)
@@ -243,7 +243,7 @@ namespace Arboria {
 			}
 		}
 
-		idx = uint32_t(_spriteCache.size());
+		idx = uint32_t(_spriteCache.getLength());
 
 		auto info = allocateSprite(i);
 		info.imageId = i->resId;
@@ -266,7 +266,7 @@ namespace Arboria {
 			}
 		}
 
-		idx = uint32_t(_spriteCache.size());
+		idx = uint32_t(_spriteCache.getLength());
 
 		auto info = allocateSprite(i);
 		info.imageId = i->resId;
@@ -284,10 +284,10 @@ namespace Arboria {
 		if (index == unusedIndex) return;
 
 		AtlasImageInfo& elem = _spriteCache[index];
-		_pages[elem.index].free(elem);
+		_pages[elem.index]->free(elem);
 		_indexMap[resourceId] = unusedIndex;
 
-		if (index == _spriteCache.size() - 1) { //if it's the last image in the cache
+		if (index == _spriteCache.getLength() - 1) { //if it's the last image in the cache
 			_spriteCache.removeLast();
 		}
 		else {

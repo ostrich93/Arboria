@@ -14,12 +14,12 @@ namespace Arboria {
 
 	void Label::onRender() {
 		Widget::onRender();
-		int xpos = align(halign, rect.w, font->getSize().max_width);
-		int ypos = align(valign, rect.h, font->getSize().max_height);
+		int xpos = align(halign, size.x, font->getTextWidth(text));
+		int ypos = align(valign, size.y, font->getMaxHeight(text));
 
 		//go through each character in the text. Each time, 
-		renderer->drawText(text, font, { rect.x, rect.y }, tint);
-		//textRenderer->draw(font, new Vector2<int>(rect.x, rect.y), tint, text);
+		renderer->drawText(font, text, xpos, ypos);
+		//textRenderer->draw(font, new Vector2<int>(position.x, position.y), tint, text);
 	}
 
 	void Label::run()

@@ -1,7 +1,6 @@
 #include "FileSystem.h"
 #include "Heap.h"
 #include "framework/Engine.h"
-#include <physfs.h>
 #include "definitions.h"
 #include "SDL2/SDL.h"
 
@@ -69,7 +68,21 @@ namespace Arboria {
 
 		temp[0] = '\0';
 		strcpy(temp, output);
+		strcat(temp, "assets" DIR_SEPARATOR_STR "palettes" DIR_SEPARATOR_STR);
+		if (!PHYSFS_mount(temp, NULL, 1)) {
+			exit(PHYSFS_getLastErrorCode());
+		}
+
+		temp[0] = '\0';
+		strcpy(temp, output);
 		strcat(temp, "assets" DIR_SEPARATOR_STR "shader" DIR_SEPARATOR_STR);
+		if (!PHYSFS_mount(temp, NULL, 1)) {
+			exit(PHYSFS_getLastErrorCode());
+		}
+
+		temp[0] = '\0';
+		strcpy(temp, output);
+		strcat(temp, "config" DIR_SEPARATOR_STR);
 		if (!PHYSFS_mount(temp, NULL, 1)) {
 			exit(PHYSFS_getLastErrorCode());
 		}
@@ -90,14 +103,14 @@ namespace Arboria {
 		}
 		PHYSFS_File* file = PHYSFS_openRead(filename);
 		int size = PHYSFS_fileLength(file);
-		char* buffer;
+		unsigned char* buffer;
 		if (bytesRead != NULL) {
 			*bytesRead = size;
-			buffer = (char*)Mem_ClearedAlloc(size+1);
+			buffer = (unsigned char*)Mem_ClearedAlloc(size+1);
 			buffer[size] = '\0';
 		}
 		else {
-			buffer = (char*)Mem_ClearedAlloc(size);
+			buffer = (unsigned char*)Mem_ClearedAlloc(size);
 		}
 
 		PHYSFS_readBytes(file, buffer, size);

@@ -1,27 +1,18 @@
 #include "Engine.h"
 #include "SystemCVars.h"
 #include "Camera.h"
+#include "RenderDevice.h"
 
 namespace Arboria {
-	GLuint currentShaderProgram = UINT32_MAX;
-	GLuint activeTexture = UINT32_MAX;
 
-	RenderDevice::RenderDevice() : winWidth(0), winHeight(0)
+	//for now, we're targeting only ONE aspect ratio - 16:9
+	//we want to target qHD/540p, HD/720p, HD+, and 1080p, which has a common denominator of 320 and 180.
+	constexpr unsigned int baseDisplayX = 320;
+	constexpr unsigned int baseDisplayY = 180;
+
+	RenderDevice::RenderDevice() : winWidth(0), winHeight(0), displayX(0), displayY(0), camera(NULL)
 	{
-		for (int i = 0; i < 256; i++) {
-			gamma_r[i] = 0;
-			gamma_g[i] = 0;
-			gamma_b[i] = 0;
-		}
-
-		m_clip.x = 0;
-		m_clip.y = 0;
-		m_clip.w = 0;
-		m_clip.h = 0;
-		m_dest.x = 0;
-		m_dest.y = 0;
-		m_dest.w = 0;
-		m_dest.h = 0;
+		
 	}
 
 	RenderDevice::~RenderDevice()
@@ -31,7 +22,6 @@ namespace Arboria {
 	void RenderDevice::initialize()
 	{
 		systemConfig = new SystemConfig();
-		camera = new Camera(0.0f, 0.0f, 0.0f, 0.0f);
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS) < 0) {
 			Engine::printError("RenderDevice::Initialize: SDL could not intialize: %s\n", SDL_GetError());
 			_isQuit = true;
@@ -51,13 +41,13 @@ namespace Arboria {
 		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-		window = SDL_CreateWindow("Arboria", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, systemConfig->windowViewportX->getInteger(), systemConfig->windowViewportY->getInteger(), SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+		window = SDL_CreateWindow("Arboria", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, baseDisplayX * systemConfig->windowScale->getInteger(), baseDisplayY * systemConfig->windowScale->getInteger(), SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 		if (!window) {
 			Engine::printError("RenderDevice::initialize: Failed to create the window: %s\n", SDL_GetError());
 			_isQuit = true;
 			return;
 		}
-		SDL_SetWindowMinimumSize(window, 640, 480);
+		SDL_SetWindowMinimumSize(window, 640, 360);
 		context = SDL_GL_CreateContext(window);
 		if (!context) {
 			Engine::printError("RenderDevice::initialize: Could not create an OpenGL context: %s\n", SDL_GetError());
@@ -79,8 +69,8 @@ namespace Arboria {
 		}
 
 		SDL_ShowCursor(SDL_ENABLE);
-		int width, height;
 		SDL_GetWindowSize(window, &winWidth, &winHeight);
+		//camera = new Camera(0.0f, (float)winWidth, (float)winHeight, 0.0f);
 	}
 	void RenderDevice::shutdown()
 	{
@@ -90,16 +80,13 @@ namespace Arboria {
 		}
 		SDL_Quit();
 	}
-	void RenderDevice::setTexture(GLuint index, GLenum type, GLuint texture)
+	void RenderDevice::resize(size_t scaleValue)
 	{
-		if (activeTexture != index) {
-			glActiveTexture(GL_TEXTURE0 + index);
-		}
-		glBindTexture(type, texture);
-	}
+		displayX = baseDisplayX * scaleValue;
+		displayY = baseDisplayY * scaleValue;
+		winWidth = displayX; //for now, this will change once we start enabling other aspect ratios
+		winHeight = displayY; //for now
 
-	void RenderDevice::resetGLState() {
-		activeTexture = UINT32_MAX;
-		currentShaderProgram = UINT32_MAX;
+		SDL_SetWindowSize(window, winWidth, winHeight);
 	}
 }
