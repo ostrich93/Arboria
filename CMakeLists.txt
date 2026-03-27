@@ -83,7 +83,6 @@ set (ARBORIA_SOURCE_FILES
 		./src/gui/ListBoxWidget.cpp
 		./src/gui/ScrollAreaWidget.cpp
 		./src/gui/ScrollbarWidget.cpp
-		
 		./src/gui/TextButton.cpp
 		./src/gui/Widget.cpp
 		./src/renderer/Atlas.cpp
@@ -106,9 +105,12 @@ set (ARBORIA_HEADER_FILES
 		./src/globals.h
 		./src/FileSystem.h
 		./src/Heap.h
+		./src/containers/Deque.h
 		./src/containers/HashIndex.h
 		./src/containers/HashTable.h
 		./src/containers/List.h
+		./src/containers/Queue.h
+		./src/containers/Stack.h
 		./src/events/Event.h
 		./src/framework/ActionManager.h
 		./src/framework/Camera.h
@@ -136,7 +138,6 @@ set (ARBORIA_HEADER_FILES
 		./src/gui/ListBoxWidget.h
 		./src/gui/ScrollAreaWidget.h
 		./src/gui/ScrollbarWidget.h	
-		
 		./src/gui/TextButton.h
 		./src/gui/Widget.h
 		./src/gui/WidgetEnums.h

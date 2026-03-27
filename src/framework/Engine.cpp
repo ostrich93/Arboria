@@ -1,5 +1,4 @@
 #include "../game/scenes/MainMenu.h"
-//#include "../renderer/TextRenderer.h"
 #include "ResourceManager.h"
 #include "ScreenManager.h"
 #include "../renderer/Font.h"
@@ -11,16 +10,18 @@
 #include <physfs.h>
 
 unsigned int gCurrentDrawCount = 0;
+
 namespace Arboria {
 
+	double gLastKeyboardPressTime = 0;
+	int64_t gCurrentTime = 0;
+	int64_t ticksPerSecond = 0;
 	constexpr size_t scaleValues[5] = {2, 3, 4, 5, 6};
 
 	InputManager* inputManager = NULL;
 	ScreenManager* screenManager = NULL;
 	FontManager* fontManager = NULL;
 	ResourceManager* resourceManager = NULL;
-	//SpriteRenderer* spriteRenderer = NULL;
-	//TextRenderer* textRenderer = NULL;
 	RenderDevice* renderDevice = NULL;
 	ActionManager* actionManager = NULL;
 	Renderer* renderer = NULL;
@@ -36,6 +37,17 @@ namespace Arboria {
 
 			return;
 		}
+		if (!QueryPerformanceFrequency((LARGE_INTEGER*)&ticksPerSecond)) {
+			printf("Failed to initialize Engine: Could not get ticks per second");
+			isQuit = false;
+			return;
+		}
+		if (!QueryPerformanceCounter((LARGE_INTEGER*)&gCurrentTime)) {
+			printf("Failed to initialize Engine: Could not get current time");
+			isQuit = false;
+			return;
+		}
+			
 		init();
 	}
 	Engine::~Engine()
@@ -113,6 +125,7 @@ namespace Arboria {
 			if (screenManager->getCurrent()) {
 				screenManager->getCurrent()->draw();
 				renderer->flush();
+				renderer->newFrame();
 				SDL_GL_SwapWindow(renderDevice->getWindow());
 			}
 			elapsedTimeNs = getNanoseconds() - currentTimeNs;
@@ -130,6 +143,10 @@ namespace Arboria {
 
 	void Engine::processEvents() {
 		inputManager->translateSdlEvents();
+		int64_t current_time = 0;
+		QueryPerformanceCounter((LARGE_INTEGER*)&current_time);
+		inputManager->setDeltaTime((float)(current_time - gCurrentTime) / ticksPerSecond);
+		gCurrentTime = current_time;
 		while (!inputManager->isQueueEmpty() && !screenManager->isEmpty()) {
 			AEvent* e;
 			e = &inputManager->getFront();
@@ -138,6 +155,13 @@ namespace Arboria {
 				shutdown();
 			}
 			else {
+				switch (e->inputDeviceType) {
+				case InputDeviceType::INPUT_DEVICE_KEYBOARD:
+					inputManager->updateKeyState(e->keyboardEvent.keyCode, e->eventType == EventType::EVENT_KEY_DOWN);
+					break;
+				default:
+					break;
+				}
 				screenManager->getCurrent()->onEvent(e);
 			}
 		}
@@ -242,55 +266,4 @@ namespace Arboria {
 		exit(0);
 	}
 	
-	/*
-	* void Engine::run() {
-	*     //render time stuff
-	*
-	*	  while (!quit) {
-	*		 frameTimeNow = getMicroseconds();
-	*
-	*		 frame++;
-	* 
-	*		 * Poll for SDL events, and translate into game events. Then send them to the global event Queue.
-	*		 * for each event in the queue: 
-	*			* update the cursor
-				* check the eventType, handle shutdown if it was a close window event. Otherwise, call the update function on the current scene.
-	*			* if the scene has gui objects currently active, call the onEventOccurred on the root, which does it on its children.
-	*		* if there is a scene change submitted, pop or push on the stack appropriately
-	*		* clear any excess events
-	*		* render the current frame
-	*		 processEvents();
-	* 
-	*		if (screenStack.isEmpty()) {
-	*			break;
-	*		}
-	* 
-	*		screenStack
-	*	  }
-	*	  
-	* }
-	* 
-	* void Engine::processEvents() {
-	*	 if (screenStack.isEmpty()) {
-	*		 quit = true;
-	*		 return;
-	*	 }
-	* 
-	*	 inputManager->handleSDLEvents(); //polls sdl events, translates them into game events, then puts them in the global event queue
-	*	 while (eventQueue->size() > 0 && !screenStack.isEmpty()) {
-	*		GameEvent* e = eventQueue.pop();
-	*		cursor->eventOccurred(e);
-	*		switch(e->getType()) {
-	*			case EVENT_WINDOW_CLOSE:
-	*				this->shutdown();
-	*				break;
-	*			default:
-	*				screenStack.peek()->onEventOccurred(e);
-	*				break;
-	*		}
-	*	 }
-	* }
-	* 
-	* void Engine::handle
-	*/
 }

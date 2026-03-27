@@ -15,9 +15,7 @@ namespace Arboria {
 					return e->isHandled;
 				}
 			}
-			else {
-				++ctrlIdx;
-			}
+			++ctrlIdx;
 		}
 
 		if (e->eventType == EventType::EVENT_KEY_DOWN || e->eventType == EventType::EVENT_BUTTON_UP) {
@@ -176,6 +174,7 @@ namespace Arboria {
 			case GUIEventType::KEY_UP:
 			{
 				event = new AEvent();
+				event->eventType = EventType::EVENT_UI_INTERACTION;
 				event->guiEvent.raisedBy = this;
 				event->guiEvent.eventType = eventType;
 				event->guiEvent.keyInfo = parentEvent->keyboardEvent;
@@ -189,6 +188,7 @@ namespace Arboria {
 			case GUIEventType::LISTBOX_CHANGE_SELECTED:
 			{
 				event = new AEvent();
+				event->eventType = EventType::EVENT_UI_INTERACTION;
 				if (parentEvent->eventType == EventType::EVENT_UI_INTERACTION) {
 					event->guiEvent = parentEvent->guiEvent;
 				}

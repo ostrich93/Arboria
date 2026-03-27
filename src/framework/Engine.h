@@ -46,6 +46,9 @@ namespace Arboria {
 	extern ActionManager* actionManager;
 	extern Renderer* renderer;
 	extern bool _isQuit;
+	extern int64_t gCurrentTime;
+	extern double gLastKeyboardPressTime;
+	extern int64_t ticksPerSecond;
 }
 
 #endif
