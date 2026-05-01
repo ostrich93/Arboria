@@ -39,10 +39,10 @@ namespace Arboria {
 		int count() const noexcept { return currentLength; }
 
 		//element access
-		reference front() { return top; }
-		const_reference front() const { return top; }
-		reference back() { return rear; }
-		const_reference back() const { return rear; }
+		reference front() { return top->value; }
+		const_reference front() const { return top->value; }
+		reference back() { return rear->value; }
+		const_reference back() const { return rear->value; }
 
 		void push_front(const T& v);
 		//void push_front(T&& v);
@@ -106,7 +106,7 @@ namespace Arboria {
 
 		if (rear)//if rear is only node in deque
 			rear->next = nullptr;
-		else front = nullptr;
+		else top = nullptr;
 
 		delete temp;
 
@@ -117,11 +117,11 @@ namespace Arboria {
 	inline void Deque<T>::push_front(const T& v)
 	{
 		if (isEmpty()) {
-			front = rear = new DequeNode(v);
+			top = rear = new DequeNode(v);
 		}
 		else {
-			DequeNode* temp = new DequeNode(v, front);
-			front = temp;
+			DequeNode* temp = new DequeNode(v, top);
+			top = temp;
 		}
 
 		currentLength++;
@@ -131,7 +131,7 @@ namespace Arboria {
 	inline void Deque<T>::push_back(const T& v)
 	{
 		if (isEmpty()) {
-			front = rear = new DequeNode(v);
+			top = rear = new DequeNode(v);
 		}
 		else {
 			DequeNode* temp = new DequeNode(v);

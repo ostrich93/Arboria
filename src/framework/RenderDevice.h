@@ -31,7 +31,7 @@ namespace Arboria {
 			inline void setDisplayX(int x) { displayX = x; }
 			inline int getDisplayY() const { return displayY; }
 			inline void setDisplayY(int y) { displayY = y; }
-			void resize(size_t scaleValue);
+			void resize();
 			//void setGamma(float g);
 			//void resetGamma();
 			static const unsigned char BITS_PER_PIXEL = 32;

@@ -2,9 +2,11 @@
 #include "../renderer/Font.h"
 #include "../renderer/Renderer.h"
 #include "WidgetEnums.h"
+#include "../framework/Lexer.h"
+#include "../framework/ResourceManager.h"
 
 namespace Arboria {
-	Label::Label(const String& textContent, Font* _font) : text(textContent), font(_font), valign(VerticalAlignment::VERT_BOTTOM), halign(HorizontalAlignment::HOR_LEFT), wordWrap(true){}
+	Label::Label(Window* gui, const String& textContent, Font* _font) : Widget(gui), text(textContent), font(_font), valign(VerticalAlignment::VERT_BOTTOM), halign(HorizontalAlignment::HOR_LEFT){}
 
 	Label::~Label() = default;
 
@@ -48,5 +50,59 @@ namespace Arboria {
 	void Label::setFont(Font* _font) {
 		font = _font;
 		setDirty();
+	}
+
+	bool Label::parseInternalValue(const char* _name, Lexer* src)
+	{
+		bool ret = Widget::parseInternalValue(_name, src);
+		if (!ret) {
+			if (String::iCompare(_name, "tint") == 0) {
+				parseColor(src, tint);
+				return true;
+			}
+			if (String::iCompare(_name, "text") == 0) {
+				parseString(src, text);
+				return true;
+			}
+			if (String::iCompare(_name, "textScale") == 0) {
+				textScale = src->parseFloat();
+				return true;
+			}
+			if (String::iCompare(_name, "alignment") == 0) {
+				parseAlignment(src, valign, halign);
+				return true;
+			}
+			if (String::iCompare(_name, "font") == 0) {
+				parseFont(src, font);
+				return true;
+			}
+			if (String::iCompare(_name, "wordWrap") == 0) {
+				bool wordWrap = src->parseBool();
+				if (!wordWrap)
+					setFlag(WIDGET_NOWRAP);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void Label::parseFont(Lexer* src, Font* out)
+	{
+		Token tok;
+		int fontSize = 0;
+		Token tok2;
+		if (!src->expectTokenType(TOKENTYPE_STRING, 0, &tok)) {
+			Engine::printError("Could not read the expected font id value");
+			return;
+		}
+		tok2 = tok;
+		src->expectAnyToken(&tok);
+		if (String::iCompare(tok, "fontSize")) {
+			src->readToken(&tok);
+			fontSize = atoi(tok);
+		}
+
+		out = resourceManager->loadFont(tok2, fontSize);
+		return;
 	}
 }

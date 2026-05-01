@@ -1,128 +1,51 @@
 #include "MainMenu.h"
-#include "OptionsMenu.h"
-#include "../../framework/ScreenManager.h"
-#include "../../renderer/Texture.h"
+#include "../../framework/CommandSystem.h"
 #include "../../framework/InputManager.h"
-#include "../../framework/ResourceManager.h"
-#include "../../renderer/Font.h"
-#include "../../gui/Graphic.h"
 #include "../../gui/ListBoxWidget.h"
-#include "../../gui/Label.h"
 #include "../../gui/TextButton.h"
 
 namespace Arboria {
-	MainMenuScreen::MainMenuScreen() : UIContext()
+	MainMenu::MainMenu() : Window()
 	{
-		/*
-			1. build ListBox MAIN_MENU_SELECT, 4 options, set labels as "NEW_GAME", "LOAD_GAME", "OPTIONS", and "QUIT"
-			2. set the canvas as listbox's parent.
-		*/
 		
-		root.position = { 0, 0 };
-		root.size = { 640, 360 };
-		root.name = "ROOT";
-		root.setFlag(WidgetStateFlags::WIDGET_VISIBLE | WidgetStateFlags::WIDGET_MENU);
-		root.setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
-		root.setFlag(WidgetStateFlags::WIDGET_CONTAINER);
-		root.enabled = true;
-
-		Graphic* canvas = root.createChild<Graphic>(resourceManager->loadTexture(0));
-		canvas->enabled = true;
-		canvas->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE | WidgetStateFlags::WIDGET_MENU
-			| WidgetStateFlags::WIDGET_CONTAINER);
-		canvas->size = { 640, 360 };
-		canvas->enabled = true;
-
-		Font* font = resourceManager->loadFont("logotypegothicregular.ttf", 24);
-		font->palette = resourceManager->loadPalette(0);
-
-		Label* titleLabel = canvas->createChild<Label>("ARBORIA ENGINE", font);
-		titleLabel->position = { 216 , 96 };
-		titleLabel->setPalette(font->palette);
-		titleLabel->size = { 208, 24 };
-		titleLabel->enabled = true;
-		titleLabel->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE | WidgetStateFlags::WIDGET_MENU);
-		
-		Label* versionLabel = canvas->createChild<Label>("V.1.0", font);
-		versionLabel->setPalette(font->palette);
-		versionLabel->position = { 500 , 336 };
-		versionLabel->size = { 60, 24 };
-		versionLabel->enabled = true;
-		versionLabel->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE | WidgetStateFlags::WIDGET_MENU);
-
-		ListBoxWidget* optionsList = root.createChild<ListBoxWidget>(4, 1);
-		optionsList->name = "MAIN_MENU_SELECT";
-		optionsList->position = { 224, 144 };
-		optionsList->size = { 192, 192 };
-		optionsList->itemSize = 48;
-		optionsList->itemSpacing = 0;
-		optionsList->enabled = true;
-		optionsList->setBackgroundColor(*new Color( 20, 45, 210, 192));
-		optionsList->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
-		optionsList->setFlag(WidgetStateFlags::WIDGET_MENU);
-		optionsList->setFlag(WidgetStateFlags::WIDGET_FOCUSED);
-		
-
-		TextButton* newGameButton = new TextButton("NEW GAME", font);
-		newGameButton->size = { 192, 48 };
-		newGameButton->position = { 0, 0 };
-		newGameButton->name = "NEW_GAME_BUTTON";
-		newGameButton->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
-
-		TextButton* continueButton = new TextButton("CONTINUE", font);
-		continueButton->size = { 192, 48 };
-		continueButton->position = { 0, 0 };
-		continueButton->name = "CONTINUE_BUTTON";
-		continueButton->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
-		
-		TextButton* optionButton = new TextButton("OPTIONS", font);
-		optionButton->size = { 192, 48 };
-		optionButton->position = { 0, 0 };;
-		optionButton->name = "OPTION_BUTTON";
-		optionButton->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
-		optionButton->addEventCallback(GUIEventType::BUTTON_CLICK, pushOptionsMenu);
-		//optionButton->addCallback(1, &pushOptionsMenu);
-		
-		TextButton* quitButton = new TextButton("QUIT", font);
-		quitButton->size = { 192, 48 };
-		quitButton->position = { 0, 0 };
-		quitButton->name = "QUIT_BUTTON";
-		quitButton->setFlag(WidgetStateFlags::WIDGET_INTERACTIVE);
-		quitButton->addEventCallback(GUIEventType::BUTTON_CLICK, setQuit);
-		//quitButton->addCallback(1, &setQuit);
-
-		optionsList->addItem(newGameButton);
-		optionsList->addItem(continueButton);
-		optionsList->addItem(optionButton);
-		optionsList->addItem(quitButton);
 	}
 
-	MainMenuScreen::~MainMenuScreen() = default;
+	MainMenu::~MainMenu() = default;
 
-	void MainMenuScreen::enter() {}
-
-	void MainMenuScreen::pause() {}
-
-	void MainMenuScreen::resume() {}
-
-	void MainMenuScreen::leave() {}
-
-	bool MainMenuScreen::onEvent(AEvent* ev)
+	void MainMenu::onEvent(AEvent* ev)
 	{
-		return root.onEvent(ev);
+		root->onEvent(ev);
 	}
 
-	void MainMenuScreen::run() { root.run(); }
+	bool MainMenu::postParse()
+	{
+		ListBoxWidget* mainMenuSelect = root->findWidget<ListBoxWidget>("mainMenuSelect");
+		if (!mainMenuSelect)
+			return false;
+		TextButton* optionsButton = root->findWidget<TextButton>("optionsButton");
+		if (!optionsButton)
+			return false;
+		TextButton* quitButton = root->findWidget<TextButton>("quitButton");
+		if (!quitButton)
+			return false;
+		root->setFocus(mainMenuSelect);
+		optionsButton->addCallback(ACTION_CONFIRM, pushOptionsMenu);
+		quitButton->addCallback(ACTION_CONFIRM, setQuit);
 
-	void MainMenuScreen::draw() { root.render(); }
-
-	bool MainMenuScreen::isTransitioning() const { return false; }
-
-	void pushOptionsMenu(AEvent* e, void* context) {
-		screenManager->push(new OptionsMenu());
+		return true;
 	}
 
-	void setQuit(AEvent* e, void* context) {
-		_isQuit = true;
+
+	void MainMenu::render() { root->render(); }
+
+
+	bool pushOptionsMenu(Widget* w, AEvent* e) {
+		commandSystem->pushCommand("options");
+		return true;
+	}
+
+	bool setQuit(Widget* w, AEvent* e) {
+		commandSystem->pushCommand("quit");
+		return true;
 	}
 }

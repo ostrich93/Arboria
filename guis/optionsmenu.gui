@@ -1,0 +1,277 @@
+widget root {
+	position	0, 0
+	size		600, 340
+	alignment	1, 1
+	listbox tabbedList {
+		position		0, 48
+		size			192, 48
+		borderSize		1
+		itemSize		48
+		itemSpacing		0
+		displayCount	2
+		viewOrientation	1
+		textButton displayTab {
+			size		96, 48
+			textHAlign	1
+			textVAlign	1
+			palette		0
+			font		"logotypegothicregular.ttf"
+			fontSize	24
+			text		"Display"
+		}
+		textButton	bindingTab {
+			size		96, 48
+			textHAlign	1
+			textVAlign	1
+			palette		0
+			font		"logotypegothicregular.ttf"
+			fontSize	24
+			text		"Input"
+		}
+	}
+	widget	displayScreen {
+		position	0, 52
+		size		600, 288
+		listbox		displayOptions {
+			size			600, 288
+			itemCount		4
+			itemSize		72
+			itemSpacing		0
+			displayCount	4
+			borderSize		1
+			viewOrientation	0
+			widget		resolutionRow {
+				size		600, 72
+				textbutton	resolutionLabel {
+					size		300, 72
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"Resolution"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				spinner			resolutionOptions {
+					position	300, 0
+					size		300, 72
+					options		"640x480;800x600;1024x768;1280x960"
+				}
+			}
+			widget		vsyncRow {
+				size		600, 72
+				textButton	vsyncLabel {
+					size		300, 72
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"VSync"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				spinner		vsyncSpinner {
+					position	300, 0
+					size		300, 72
+					options		"On;Off"
+				}
+			}
+			widget		applyRow {
+				size		600, 72
+				textButton	applyLabel {
+					size		300, 72
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		""
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				textbutton	applyButton {
+					position	300, 0
+					size		300, 72
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"Apply"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+			}
+			widget		restoreDisplayRow {
+				size		600, 72
+				textButton	defaultDisplayLabel {
+					size		300, 72
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		""
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				textbutton	defaultDisplayButton {
+					position	300, 0
+					size		300, 72
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"Restore Default"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+			}
+		}
+	}
+	widget  inputScreen {
+		visible		false
+		position	0, 52
+		size		600, 288
+		listbox		bindingOptions {
+			size			300, 288
+			itemCount		7
+			displayCount	6
+			itemSpacing		0
+			itemSize		48
+			widget		confirmRow {
+				size		300, 48
+				textButton	confirmLabel {
+					size		300, 48
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"Confirm"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				graphicButton	confirmOption {
+					position	300, 48
+					size		300, 48
+				}
+			}
+			widget		cancelRow {
+				size		300, 48
+				textButton	cancelLabel {
+					size		300, 48
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"Cancel"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				graphicButton	cancelOption {
+					position	300, 48
+					size		300, 48
+				}
+			}
+			widget		unitMenuRow {
+				size		300, 48
+				textButton	unitMenuLabel {
+					size		300, 48
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"Unit Menu"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				graphicButton	unitMenuOption {
+					position	300, 48
+					size		300, 48
+				}
+			}
+			widget		helpRow {
+				size		300, 48
+				textButton	helpLabel {
+					size		300, 48
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"Help"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				graphicButton	helpOption {
+					position	300, 48
+					size		300, 48
+				}
+			}
+			widget		leftShiftRow {
+				size		300, 48
+				textButton	leftShiftLabel {
+					size		300, 48
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"Left Shift"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				graphicButton	leftShiftOption {
+					position	300, 48
+					size		300, 48
+				}
+			}
+			widget		rightShiftRow {
+				size		300, 48
+				textButton	rightShiftLabel {
+					size		300, 48
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"Right Shift"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				graphicButton	rightShiftOption {
+					position	300, 48
+					size		300, 48
+				}
+			}
+			widget		restoreDefaultBindingsRow {
+				size		300, 48
+				textButton	restoreDefaultBindingsLabel {
+					size		300, 48
+					clickable	false
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		""
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+				textButton	restoreDefaultBindingsButton {
+					size		300, 48
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					text		"Restore Defaults"
+					palette		0
+					textHAlign	1
+					textVAlign	1
+					borderSize	1
+				}
+			}
+		}
+	}
+}

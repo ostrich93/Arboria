@@ -1,14 +1,14 @@
 #include "ListBoxWidget.h"
-#include "../framework/ActionManager.h"
 #include "../renderer/Renderer.h"
+#include "../framework/InputManager.h"
+#include "../framework/Lexer.h"
 
-namespace Arboria {
+namespace Arboria
+{
 
-	ListBoxWidget::ListBoxWidget() : ScrollAreaWidget(1, 1), cursor(0), itemSize(0), itemSpacing(0), hovered(nullptr), selected(nullptr), hoveredImage(nullptr), selectedImage(nullptr) {}
-
-	ListBoxWidget::ListBoxWidget(ScrollbarWidget* widget) : ScrollAreaWidget(widget), cursor(0), itemSize(0), itemSpacing(0), hovered(nullptr), selected(nullptr), hoveredImage(nullptr), selectedImage(nullptr) {}
-
-	ListBoxWidget::ListBoxWidget(int rowNum, int colNum) : ScrollAreaWidget(colNum, rowNum), cursor(0), itemSize(0), itemSpacing(0), hovered(nullptr), selected(nullptr), hoveredImage(nullptr), selectedImage(nullptr) {}
+	ListBoxWidget::ListBoxWidget(Window* _gui, Orientation _orientation, uint32_t elemCount) : Widget(_gui), hovered(nullptr), selected(nullptr), displayCount(elemCount), cursor(0), itemSize(0), itemSpacing(0), viewOrientation(_orientation), viewPolicy(ScrollbarViewPolicy::AsNeeded), scrollbar(nullptr)
+	{
+	}
 
 	ListBoxWidget::~ListBoxWidget() = default;
 
@@ -16,113 +16,73 @@ namespace Arboria {
 	{
 		Widget::onEvent(e);
 
-		if (e->eventType == EventType::EVENT_UI_INTERACTION) {
-			Widget* ctrl = e->guiEvent.raisedBy; //usually a button
-			Widget* interactionPoint = ctrl->getPointOfAncestry(this); //the entry in the list containing the button
-			if (e->guiEvent.eventType == GUIEventType::KEY_DOWN) {
-				int action = actionManager->getAction(*e);
-				int newCursor;
-				switch (action) {
-					case 6: //UP
-						if (elementDisplayCount == 1) //HORIZONTAL LIST
-							break;
-						newCursor = Math::iMax(cursor - columns, 0);
-						if (cursor != newCursor && newCursor < indexOffset.y) {
-							indexOffset.y = Math::iMax(indexOffset.y - 1, 0);
-						}
-						cursor = newCursor;
-						if (ctrl == this || ctrl == scrollbar) {
-							interactionPoint = nullptr;
-						}
-						if (hovered != interactionPoint) {
-							hovered = interactionPoint;
-							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_HOVER, e);
-						}
+		if (e->eventType >= EventType::EVENT_KEY && e->eventType <= EventType::EVENT_CONTROLLER_BUTTON) {
+			int action = inputManager->getBinding(e->eventValue);
+			int newCursor;
+			switch (action) {
+				case 6: //UP
+					if (viewOrientation == Orientation::HORIZONTAL) //HORIZONTAL LIST
 						break;
-					case 7: //DOWN
-						if (elementDisplayCount == 1) //HORIZONTAL LIST
-							break;
-						newCursor = Math::iMin(cursor + columns, itemCount - 1);
-						if (cursor != newCursor && cursor <= (indexOffset.y + elementDisplayCount - 1)) {
-							indexOffset.y++;
-						}
-						cursor = newCursor;
-						if (ctrl == this || ctrl == scrollbar) {
-							interactionPoint = nullptr;
-						}
-						if (hovered != interactionPoint) {
-							hovered = interactionPoint;
-							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_HOVER, e);
-						}
+					newCursor = Math::iMax(cursor - 1, 0);
+					if (cursor != newCursor && newCursor < indexOffset) {
+						children[(displayCount - 1) + indexOffset]->setVisibility(false);
+						scrollbar->scrollPrev();
+						indexOffset = Math::iMax(indexOffset - 1, 0);
+						children[indexOffset]->setVisibility(true);
+					}
+					cursor = newCursor;
+					hovered = children[cursor];
+					break;
+				case 7: //DOWN
+					if (viewOrientation == Orientation::HORIZONTAL) //HORIZONTAL LIST
 						break;
-					case 8: //LEFT
-						newCursor = Math::iMax(cursor - 1, 0);
-						if (elementDisplayCount == 1) {
-							if (cursor != newCursor && cursor <= indexOffset.x) {
-								indexOffset.x = Math::iMax(indexOffset.x - 1, 0);
-							}
-						}
-						else {
-							int newRowNum = Math::floor(newCursor / itemCount);
-							int oldRowNum = Math::floor(cursor / itemCount);
-							if (newCursor != cursor && newRowNum != oldRowNum && newRowNum < indexOffset.y) {
-								indexOffset.y = Math::iMax(indexOffset.y - 1, 0);
-							}
-						}
-						cursor = newCursor;
-						if (ctrl == this || ctrl == scrollbar) {
-							interactionPoint = nullptr;
-						}
-						if (hovered != interactionPoint) {
-							hovered = interactionPoint;
-							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_HOVER, e);
-						}
+					newCursor = Math::iMin(cursor + 1, itemCount - 1);
+					if (cursor != newCursor && newCursor > (displayCount - 1) + indexOffset) {
+						children[indexOffset]->setVisibility(false);
+						scrollbar->scrollNext();
+						indexOffset = Math::iMin(indexOffset + 1, itemCount - displayCount);
+						children[(displayCount - 1) + indexOffset]->setVisibility(true);
+					}
+					cursor = newCursor;
+					hovered = children[cursor];
+					break;
+				case 8: //LEFT
+					if (viewOrientation == Orientation::VERTICAL)
 						break;
-					case 9: //RIGHT
-						newCursor = Math::iMin(cursor + 1, itemCount - 1);
-						if (elementDisplayCount == 1) {
-							if (cursor != newCursor && cursor >= indexOffset.x + elementDisplayCount - 1) {
-								indexOffset.x++;
-							}
-						}
-						else {
-							int newRowNum = Math::floor(newCursor / itemCount);
-							int oldRowNum = Math::floor(cursor / itemCount);
-							if (newCursor != cursor && oldRowNum != newRowNum && newRowNum >= indexOffset.y + elementDisplayCount - 1) {
-								indexOffset.y++;
-							}
-						}
-						cursor = newCursor;
-						if (ctrl == this || ctrl == scrollbar) {
-							interactionPoint = nullptr;
-						}
-						if (hovered != interactionPoint) {
-							hovered = interactionPoint;
-							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_HOVER, e);
-						}
+					newCursor = Math::iMax(cursor - 1, 0);
+					if (cursor != newCursor && cursor <= indexOffset) {
+						children[(displayCount - 1) + indexOffset]->setVisibility(false);
+						scrollbar->scrollPrev();
+						indexOffset = Math::iMax(indexOffset - 1, 0);
+						children[indexOffset]->setVisibility(true);
+					}
+					
+					cursor = newCursor;
+					hovered = children[cursor];
+					break;
+				case 9: //RIGHT
+					if (viewOrientation == Orientation::HORIZONTAL)
 						break;
-					case 1: //CONFIRM
-						if (ctrl == this || ctrl == scrollbar || ctrl != interactionPoint) {
-							interactionPoint = nullptr;
-						}
-						if (selected != interactionPoint && interactionPoint != nullptr) {
-							selected = interactionPoint;
-							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_SELECTED, e);
-						}
-						break;
-					case 2: //CANCEL
-						if (ctrl == this || ctrl == scrollbar || ctrl != interactionPoint) {
-							interactionPoint = nullptr;
-						}
-						if (selected != interactionPoint && interactionPoint != nullptr) {
-							selected = nullptr;
-							submitGuiEvent(GUIEventType::LISTBOX_CHANGE_CANCEL, e);
-						}
-						break;
-					default:
-						break;
-				}
+					newCursor = Math::iMin(cursor + 1, itemCount - 1);
+					if (cursor != newCursor && cursor > (displayCount - 1) + indexOffset) {
+						children[indexOffset]->setVisibility(false);
+						scrollbar->scrollNext();
+						indexOffset = Math::iMin(indexOffset + 1, itemCount - displayCount);
+						children[(displayCount - 1) + indexOffset]->setVisibility(true);
+					}
+					cursor = newCursor;
+					hovered = children[cursor];
+					break;
+				case 1: //CONFIRM
+					selected = hovered != nullptr ? hovered : children[cursor];
+					break;
+				case 2: //CANCEL
+					selected = nullptr;
+					break;
+				default:
+					break;
 			}
+
 		}
 		return e->isHandled;
 	}
@@ -130,46 +90,50 @@ namespace Arboria {
 	void ListBoxWidget::onRender() {
 		int start = 1;
 		if (scrollbar == NULL) {
-			configureScrollbar(Orientation::VERTICAL);
-		}
-		if (horizontalScrollbar == NULL) {
-			configureScrollbar(Orientation::HORIZONTAL);
+			configureScrollbar(viewOrientation);
 		}
 		
-		Vector2<int> controlOffset = { 0, 0 };
+		int controlOffset = 0;
 		int currRow = 0;
 		int currCol = 0;
 		int itemIdx = 0;
-		for (int i = 0; i <= itemCount; i++) { //first element is ALWAYS the scrollbar
-			auto child = children[i];
-			int indOff = elementDisplayCount > 1 ? indexOffset.y : indexOffset.x;
-			if (child != scrollbar && child != horizontalScrollbar) {
-				itemIdx = i - start;
-				currRow = Math::ceil(itemIdx / columns);
-				currCol = Math::ceil(itemIdx % columns);
-				if (i >= indOff) {
-					if (elementDisplayCount == 1 && itemIdx <= currCol + indOff + columns) {
+		for (auto c = children.begin(); c != children.end(); c++) { //first element is ALWAYS the scrollbar
+			auto child = *c;
+			if (child != scrollbar && child->isVisible()) {
+				if (itemSize != 0) {
+					switch (viewOrientation) {
+					case Orientation::VERTICAL:
+						child->size.x = size.x;
+						break;
+					case Orientation::HORIZONTAL:
 						child->size.y = size.y;
-						child->size.x = itemSize;
-						child->position.x = controlOffset.x - itemSpacing;
-						controlOffset.x += itemSize + itemSpacing;
-					}
-					else if (elementDisplayCount > 1 && itemIdx <= currRow + (indOff + elementDisplayCount - 1)) {
-						child->setFlag(WidgetStateFlags::WIDGET_VISIBLE);
-						child->size.x = Math::ceil(size.x/columns);
-						child->size.y = itemSize;
-						controlOffset.x = currCol * (child->size.x);
-						controlOffset.y = currRow * (itemSize + itemSpacing);
-						child->position.x = controlOffset.x - itemSpacing;
-						child->position.y = controlOffset.y - itemSpacing;
+						break;
 					}
 				}
-				else {
-					child->clearFlag(WidgetStateFlags::WIDGET_VISIBLE);
+
+				switch (viewOrientation) {
+				case Orientation::VERTICAL:
+					child->position.y = child->size.y - scrollOffset;
+					controlOffset += child->size.y + itemSpacing;
+					break;
+				case Orientation::HORIZONTAL:
+					controlOffset += child->size.x - scrollOffset;
+					controlOffset += child->size.x + itemSpacing;
+					break;
+				default:
+					break;
 				}
 			}
+
 		}
-		scrollbar->setScrollValue(cursor);
+		switch (viewOrientation) {
+		case Orientation::VERTICAL:
+			scrollbar->setMaximum(Math::iMax(controlOffset - size.y, scrollbar->getMinimum()));
+			break;
+		case Orientation::HORIZONTAL:
+			scrollbar->setMaximum(Math::iMax(controlOffset - size.x, scrollbar->getMinimum()));
+			break;
+		}
 	}
 
 	void ListBoxWidget::postRender() {
@@ -179,21 +143,10 @@ namespace Arboria {
 			auto child = children[i];
 			if (child != scrollbar && child->isVisible()) {
 				if (child == selected) {
-					if (selectedImage) {
-						renderer->draw(selectedImage, Vector2<float>{child->position.x, child->position.y});
-					}
-					else {
-						renderer->drawBorders(Vector2<float>{child->position.x, child->position.y}, Vector2<float>{child->size.x, child->size.y}, selectColor);
-					}
+					renderer->drawBorders(Vector2<float>{child->position.x, child->position.y}, Vector2<float>{child->size.x, child->size.y}, selectColor);	
 				}
 				if (child == hovered) {
-					if (hoveredImage) {
-						renderer->draw(hoveredImage, Vector2<float>{child->position.x, child->position.y});
-					}
-					else {
-						renderer->drawBorders(Vector2<float>{child->position.x, child->position.y}, Vector2<float>{child->size.x, child->size.y}, hoverColor);
-					}
-					
+					renderer->drawBorders(Vector2<float>{child->position.x, child->position.y}, Vector2<float>{child->size.x, child->size.y}, hoverColor);
 				}
 			}
 		}
@@ -203,22 +156,41 @@ namespace Arboria {
 		Widget::run();
 
 		if (scrollbar == NULL) {
-			configureScrollbar(Orientation::VERTICAL);
-			configureScrollbar(Orientation::HORIZONTAL);
+			configureScrollbar(viewOrientation);
 		}
 		if (scrollbar) {
-			int oldMin = scrollbar->getMinimum();
-			int oldMax = scrollbar->getMaximum();
-			int off = viewOrientation == Orientation::VERTICAL ? indexOffset.y : indexOffset.x;
-			scrollbar->setMinimum(Math::iMin(indexOffset.y, cursor));
-			scrollbar->setMaximum(Math::iMax(indexOffset.y + elementDisplayCount - 1, Math::ceil(cursor/columns)));
+			int scrollbarLength = itemCount == 0 ? 0 : itemSpacing * itemCount;
+
+			switch (viewOrientation) {
+			case Orientation::VERTICAL:
+				if (itemSize == 0) {
+					for (const auto& c : children) {
+						scrollbarLength += c->size.y;
+					}
+				}
+				else {
+					scrollbarLength += itemCount * itemSize;
+				}
+				scrollbarLength = scrollbarLength > size.y ? scrollbarLength - size.y : 0;
+				break;
+			case Orientation::HORIZONTAL:
+				if (itemSize == 0) {
+					for (const auto& c : children) {
+						scrollbarLength += c->size.x;
+					}
+				}
+				else {
+					scrollbarLength += itemCount * itemSize;
+				}
+				scrollbarLength = scrollbarLength > size.x ? scrollbarLength - size.x : 0;
+				break;
+			}
+			scrollbar->setMaximum(scrollbarLength);
 			scrollbar->run();
-			int oldHorMin = horizontalScrollbar->getMinimum();
-			int oldHorMax = horizontalScrollbar->getMaximum();
-			horizontalScrollbar->setMinimum(Math::iMin(indexOffset.x, columns));
-			horizontalScrollbar->setMaximum(Math::iMax(indexOffset.x + columns - 1, Math::ceil(cursor % columns)));
-			if (scrollbar->getMinimum() != oldMin || scrollbar->getMaximum() != oldMax || horizontalScrollbar->getMinimum() != oldHorMin || horizontalScrollbar->getMaximum() != oldHorMax) {
-				this->setDirty();
+			
+			if (scrollbar->getScrollValue() != scrollOffset) {
+				scrollOffset = scrollbar->getScrollValue();
+				setDirty();
 			}
 		}
 	}
@@ -230,15 +202,17 @@ namespace Arboria {
 		children.clear();
 		selected = nullptr;
 		hovered = nullptr;
-		resolveLocation();
 		setDirty();
 	}
 
 	void ListBoxWidget::addItem(Widget* item)
 	{
-		item->setParent(this);
+		if (scrollbar)
+			item->setParent(this, children.findIndex(scrollbar));
+		else
+			item->setParent(this);
+		
 		itemCount++;
-		resolveLocation();
 		setDirty();
 	}
 
@@ -256,5 +230,83 @@ namespace Arboria {
 		}
 		selected = widget;
 		setDirty();
+	}
+
+	bool ListBoxWidget::parseInternalValue(const char* _name, Lexer* src)
+	{
+		if (String::iCompare(_name, "itemSize") == 0) {
+			itemSize = src->parseInt();
+			return true;
+		}
+		if (String::iCompare(_name, "itemSpacing") == 0) {
+			itemSpacing = src->parseInt();
+			return true;
+		}
+		if (String::iCompare(_name, "displayCount") == 0) {
+			displayCount = src->parseInt();
+			return true;
+		}
+		if (String::iCompare(_name, "viewOrientation") == 0) {
+			viewOrientation = (Orientation)src->parseInt();
+			if (scrollbar != NULL) {
+				scrollbar->barOrientation = viewOrientation;
+			}
+			return true;
+		}
+		if (String::iCompare(_name, "hoverColor") == 0) {
+			parseColor(src, hoverColor);
+			return true;
+		}
+		if (String::iCompare(_name, "selectColor") == 0) {
+			parseColor(src, selectColor);
+			return true;
+		}
+		if (String::iCompare(_name, "regularColor") == 0) {
+			parseColor(src, regularColor);
+			return true;
+		}
+		if (String::iCompare(_name, "viewPolicy") == 0) {
+			viewPolicy = (ScrollbarViewPolicy)src->parseInt();
+			return true;
+		}
+		return Widget::parseInternalValue(_name, src);
+	}
+
+	void ListBoxWidget::updateScrollbarInfo()
+	{
+		if (!scrollbar)
+			configureScrollbar(viewOrientation);
+
+		if (itemCount > 0) {
+			if (viewOrientation == Orientation::VERTICAL) {
+				scrollbar->scrollStep = static_cast<int>(scrollbar->size.y / itemCount);
+				scrollbar->setSegmentSize((displayCount / itemCount) * scrollbar->size.y);
+			}
+			else {
+				scrollbar->scrollStep = static_cast<int>(scrollbar->size.x / itemCount);
+				scrollbar->setSegmentSize((displayCount / itemCount) * scrollbar->size.x);
+			}
+		}
+	}
+
+	void ListBoxWidget::configureScrollbar(Orientation orientation) {
+		if (orientation == Orientation::VERTICAL) {
+			scrollbar = createChild<ScrollbarWidget>(gui);
+			scrollbar->barOrientation = orientation;
+			scrollbar->size.x = 16;
+			scrollbar->position.x = size.x - scrollbar->size.x;
+			scrollbar->position.y = 0;
+			scrollbar->size.y = size.y;
+		}
+		else {
+			scrollbar = createChild<ScrollbarWidget>(gui);
+			scrollbar->barOrientation = orientation;
+			scrollbar->size.y = 16;
+			scrollbar->position.y = size.y - scrollbar->size.y;
+			scrollbar->position.x = 0;
+			scrollbar->size.x = size.x;
+		}
+		
+		updateScrollbarInfo();
 	}
 }

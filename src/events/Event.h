@@ -6,112 +6,52 @@
 namespace Arboria {
 	enum WidgetEventType;
 
-	enum class InputDeviceType : uint8_t {
-		INPUT_DEVICE_NONE = 0,
-		INPUT_DEVICE_KEYBOARD,
-		INPUT_DEVICE_CONTROLLER_BUTTON,
-		INPUT_DEVICE_CONTROLLER_AXIS,
-		INPUT_DEVICE_MOUSE
-	};
-
 	class Widget;
 	enum class EventType : uint32_t {
 		EVENT_UNDEFINED,
+		EVENT_KEY, //evValue = scancode, evValue2 = down flag, include gamepad BUTTONS?
+		EVENT_CONTROLLER_BUTTON, //evValue = scancode, evValue2 = down flag, include gamepad BUTTONS?
+		EVENT_CONTROLLER_AXIS, //evValue = axis number, evValue2 = current status (-127 to 127), control stick/R2/L2 buttons fsr
+		EVENT_MOUSE_DOWN, //evValue and evValue2 = relative signed x/y coords
+		EVENT_MOUSE_UP,
+		EVENT_MOUSE_MOVE, //evValue/2 = relative signed x/y coords
+		EVENT_MOUSE_MOVE_ABS, //evValue/2 = absolute x/y coords
 		EVENT_WINDOW_ACTIVATE,
 		EVENT_WINDOW_DEACTIVATE,
 		EVENT_WINDOW_RESIZE,
 		EVENT_WINDOW_CLOSE,
-		EVENT_KEY_DOWN,
-		EVENT_KEY_PRESS,
-		EVENT_KEY_UP,
-		EVENT_MOUSE_DOWN,
-		EVENT_MOUSE_MOVE,
-		EVENT_MOUSE_UP,
-		EVENT_CONTROLLER_AXIS,
-		EVENT_CONTROLLER_HAT,
-		EVENT_BUTTON_DOWN,
-		EVENT_BUTTON_UP,
-		EVENT_BUTTON_PRESS,
-		EVENT_UI_INTERACTION,
+		EVENT_UI_INTERACTION, //evPtr = guiEventInfo
 		EVENT_TEXT_INPUT,
 		EVENT_TIMER,
 		EVENT_MAX_VALUE = 0x7fffffff
 	};
 
-	enum class GUIEventType : uint32_t {
-		OBTAINED_FOCUS,
-		LOST_FOCUS,
-		KEY_DOWN,
-		KEY_PRESS,
-		KEY_UP,
-		MOUSE_DOWN,
-		MOUSE_UP,
-		MOUSE_MOVE,
-		MOUSE_CLICK,
-
-		BUTTON_CLICK,
-		SCROLLBAR_CHANGE,
-		LISTBOX_CHANGE_HOVER,
-		LISTBOX_CHANGE_SELECTED,
-		LISTBOX_CHANGE_CANCEL,
-	};
-
 	class AEvent {
 		public:
+
 			struct DisplayEvent {
-				bool active;
-				int x;
-				int y;
-				int width;
-				int height;
-			};
-			
-			struct KeyInputEvent {
-				unsigned short scancode;
-				int32_t keyCode;
-				uint16_t mods;
-				bool keyState : 1;
+				int width = 0;
+				int height = 0;
+				bool active = false;
 			};
 
-			struct GUIEvent {
-				Widget* raisedBy;
-				GUIEventType eventType;
-				KeyInputEvent keyInfo;
+			typedef enum JoystickAxis {
+				AXIS_LEFT_X = 0,
+				AXIS_LEFT_Y,
+				AXIS_RIGHT_X,
+				AXIS_RIGHT_Y,
+				AXIS_LEFT_TRIG,
+				AXIS_RIGHT_TRIG,
+				AXIS_COUNT
 			};
 
-			struct JoystickEvent {
-				enum JoystickAxis {
-					AXIS_X = 0,
-					AXIS_Y,
-					AXIS_Z,
-					AXIS_R,
-					AXIS_U,
-					AXIS_V,
-					AXIS_COUNT
-				};
-
-				signed short axisValues[JoystickAxis::AXIS_COUNT];
-				uint8_t joystickId;
-				uint8_t button;
-				bool buttonState : 1;
-			};
-
-			struct UserEvent {
-				void* userData1;
-				void* userData2;
-			};
-
-			InputDeviceType inputDeviceType;
 			EventType eventType;
+			int eventValue; //key inputs
+			int eventValue2;
+			void* eventPtr;
 			bool isHandled;
 
-			union {
-				struct GUIEvent guiEvent;
-				struct KeyInputEvent keyboardEvent;
-				struct JoystickEvent controllerEvent;
-				struct DisplayEvent displayEvent;
-				struct UserEvent userEvent;
-			};
+			~AEvent();
 	};
 
 	typedef void (*eventCallback)(AEvent*, void*);

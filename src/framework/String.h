@@ -116,6 +116,8 @@ namespace Arboria {
 			String& stripFileExtension();
 			String& setFileExtension(const char* extension);
 
+			void stripTrailingWhitespace();
+
 			static int getHash(const char* string);
 			static int getHash(const char* string, int length);
 			static int getCaseInsensitiveHash(const char* string);

@@ -13,11 +13,11 @@ namespace Arboria {
 		public:
 			VerticalAlignment valign;
 			HorizontalAlignment halign;
-			bool wordWrap;
 			Color tint{ 255, 255, 255, 255 };
+			float textScale = 1.0f;
 			//font stuff
 
-			Label(const String& textContent = "", Font* _font = NULL);
+			Label(Window* gui, const String& textContent = "", Font* _font = NULL);
 			~Label() override;
 			bool onEvent(AEvent* e) override;
 			void onRender() override;
@@ -29,6 +29,9 @@ namespace Arboria {
 
 			Font* getFont() const;
 			void setFont(Font* _font);
+
+			bool parseInternalValue(const char* _name, Lexer* src) override;
+			void parseFont(Lexer* src, Font* out);
 	};
 }
 

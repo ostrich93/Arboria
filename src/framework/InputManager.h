@@ -3,10 +3,20 @@
 
 #include "Engine.h"
 #include "../events/Event.h"
+#include "./CVariableSystem.h"
+#include "String.h"
 
 const int MAX_EVENT_COUNT = 64;
 
 namespace Arboria {
+
+#if SDL_VERSION_ATLEAST(3,0,0)
+#define IS_SDL_BUTTON_DOWN(EV) EV.down
+#else
+#define IS_SDL_BUTTON_DOWN(EV) EV.state == SDL_PRESSED;
+#endif
+
+	class Lexer;
 
 	enum ArboriaKey : int {
 		ArboriaKey_Unknown = 0,
@@ -140,12 +150,12 @@ namespace Arboria {
 		ArboriaKey_GamepadDpadRight,
 		ArboriaKey_GamepadDpadUp,
 		ArboriaKey_GamepadDpadDown,
-		ArboriaKey_GamepadDpadL1,
-		ArboriaKey_GamepadDpadR1,
-		ArboriaKey_GamepadDpadL2,
-		ArboriaKey_GamepadDpadR2,
-		ArboriaKey_GamepadDpadL3,
-		ArboriaKey_GamepadDpadR3,
+		ArboriaKey_GamepadLeftTrigger_1,
+		ArboriaKey_GamepadRightTrigger_1,
+		ArboriaKey_GamepadLeftTrigger_2,
+		ArboriaKey_GamepadRightTrigger_2,
+		ArboriaKey_GamepadLeftTrigger_3,
+		ArboriaKey_GamepadRightTrigger_3,
 		ArboriaKey_GamepadLStickLeft,
 		ArboriaKey_GamepadLStickRight,
 		ArboriaKey_GamepadLStickUp,
@@ -180,6 +190,16 @@ namespace Arboria {
 		ArboriaMod_Mask = 0xF800
 	};
 
+	enum ArboriaJoystickAxis {
+		AXIS_LEFT_X,
+		AXIS_LEFT_Y,
+		AXIS_RIGHT_X,
+		AXIS_RIGHT_Y,
+		AXIS_LEFT_TRIGGER,
+		AXIS_RIGHT_TRIGGER,
+		MAX_TRIGGER_AXIS,
+	};
+
 	enum InputConfigFlags {
 		InputConfigFlags_None = 0,
 		InputConfigFlags_EnableKeyboard = 1,
@@ -187,13 +207,49 @@ namespace Arboria {
 		InputConfigFlags_EnableMouse = 1 << 2,
 	};
 
+	enum ActionType : int {
+		ACTION_NONE = -1,
+		ACTION_CONFIRM = 0,
+		ACTION_CANCEL = 1,
+		ACTION_TOGGLE_DISPLAY = 2,
+		ACTION_HELP = 3,
+		ACTION_LEFTARROW = 4,
+		ACTION_RIGHTARROW = 5,
+		ACTION_UPARROW = 6,
+		ACTION_DOWNARROW = 7,
+		ACTION_L_TRIGGER_1 = 8,
+		ACTION_R_TRIGGER_1 = 9,
+		ACTION_L_TRIGGER_2 = 10,
+		ACTION_R_TRIGGER_2 = 11,
+		ACTION_L_TRIGGER_3 = 12,
+		ACTION_R_TRIGGER_3 = 13,
+		ACTION_ENTER = 14,
+		ACTION_SELECT = 15,
+	};
+
 	struct KeyState {
 		bool down; //whether key/button is pressed down
+		int binding; //the action enum that this key is bound to, default value is -1
 		float downDuration; //duration the key/button has been pressed down (if < 0.0: not pressed, if == 0.0: just pressed, if > 0.0f: held)
 		float lastDownDuration; //the duration the last time the button was pressed down.
 		float analog; //range from 0.0f to 1.0f for analog sticks/gamepad values.
 
-		KeyState() : down(false), downDuration(-1.0f), lastDownDuration(-1.0f), analog(0.0f) {}
+		KeyState() : down(false), binding(ACTION_NONE), downDuration(-1.0f), lastDownDuration(-1.0f), analog(0.0f) {}
+		KeyState(int _binding) : KeyState() { binding = _binding; }
+	};
+
+	enum InputDeviceType : int {
+		KEYBOARD,
+		CONTROLLER,
+		MOUSE
+	};
+
+	extern CVariableFloat joyAxis_deadzone;
+	static float joyAxis[MAX_TRIGGER_AXIS];
+
+	struct ActBinding {
+		int key;
+		int button;
 	};
 
 	class InputManager {
@@ -207,6 +263,8 @@ namespace Arboria {
 			KeyState keyStates[ArboriaKey_Count];
 			float deltaTime;
 			int translateKeyCode(SDL_Scancode keycode); //use with keyboard only?
+			int translateGamepadCode(SDL_GameControllerButton button);
+			int translateGamepadAxis(SDL_GameControllerAxis axis); //includes L2/R2 for some reason
 		public:
 			explicit InputManager();
 			~InputManager();
@@ -221,9 +279,26 @@ namespace Arboria {
 			int getRepeatCount(int key, float repeat_delay, float repeat_rate);
 			KeyState* getKeyState(int key) { return &keyStates[key]; }
 			void updateKeyState(int keyCode, bool isDown);
+			int getBinding(int key) const { return keyStates[key].binding; }
+			void unbindKeyAction(int keyNum, int action);
+			void unbindKeyAction(int action);
+			void unbindGamepadAction(int buttonNum, int action);
+			void unbindGamepadAction(int action);
+			void bindAction(int keynum, int action);
+			int getKeyFromAction(int action);
+			int getGamepadButtonFromAction(int action);
+			KeyState* getKeyInputFromAction(int action);
+			KeyState* getButtonInputFromAction(int action);
+			void pushAxisButton(int key, bool value); //translate L2/R2 and controller axis into controller input
 
 			float getDeltaTime() { return deltaTime; }
 			void setDeltaTime(float v) { deltaTime = v; }
+
+			void restoreDefaults();
+			void saveUserBindings();
+			bool loadUserBindings();
+			bool parseActionBindings(Lexer& src, int& act, int& key, int& button);
+			String& convertToString(const int& act, const int& key, const int& button);
 			//void updateKeyInputState(AEvent* _keyEv);
 	};
 }

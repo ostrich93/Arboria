@@ -80,10 +80,10 @@ namespace Arboria {
 		}
 		SDL_Quit();
 	}
-	void RenderDevice::resize(size_t scaleValue)
+	void RenderDevice::resize()
 	{
-		displayX = baseDisplayX * scaleValue;
-		displayY = baseDisplayY * scaleValue;
+		//displayX = baseDisplayX * scaleValue;
+		//displayY = baseDisplayY * scaleValue;
 		winWidth = displayX; //for now, this will change once we start enabling other aspect ratios
 		winHeight = displayY; //for now
 

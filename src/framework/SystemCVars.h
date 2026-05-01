@@ -9,29 +9,29 @@ namespace Arboria {
 		CVariable* defaultWindowViewportY;
 		CVariable* defaultFullscreenWindowViewportX;
 		CVariable* defaultFullscreenWindowViewportY;
-		CVariable* defaultWindowColoredBits;
-		CVariable* defaultFullscreenColorBits;
 		CVariable* defaultGamma;
 		CVariable* defaultBrightness;
 		CVariable* defaultWindowScale;
 		CVariable* defaultMusicVolume;
 		CVariable* defaultSoundVolume;
 		CVariable* defaultLatency;
+		CVariable* defaultVSync;
 
 		CVariable* windowViewportX;
 		CVariable* windowViewportY;
 		CVariable* fullscreenWindowViewportX;
 		CVariable* fullscreenWindowViewportY;
-		CVariable* windowColoredBits;
-		CVariable* fullscreenColorBits;
 		CVariable* gamma;
 		CVariable* brightness;
 		CVariable* windowScale;
 		CVariable* musicVolume;
 		CVariable* soundVolume;
 		CVariable* latency;
+		CVariable* vSync;
 
 		SystemConfig();
+		bool initialize();
+		bool updateConfigFile();
 	};
 
 	extern SystemConfig* systemConfig;

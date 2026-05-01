@@ -1,0 +1,81 @@
+widget root {
+	position	0, 0
+	size		640, 480
+	alignment	1, 1
+	graphicDef canvas {
+		size	640, 480
+		imageId	0
+	}
+	label titleLabel {
+		position	216, 96
+		size		208, 24
+		font		"logotypegothicregular.ttf"
+		fontSize	24
+		text		"ARBORIA ENGINE"
+		textScale	1.0
+		palette		0
+	}
+	label versionLabel {
+		position	580, 336
+		size		50, 24
+		font		"logotypegothicregular.ttf"
+		fontSize	24
+		text		"V.1.0"
+		textScale	1.0
+		palette		0
+	}
+	listbox mainMenuSelect {
+		position		224, 144
+		size			192, 192
+		itemSize		48
+		itemSpacing		0
+		itemCount		4
+		displayCount	4
+		viewOrientation	0
+		backgroundColor	20, 45, 210, 192
+		textbutton newGameButton {
+			position	0, 0
+			size		192, 48
+			textHAlign	1
+			textVAlign	1
+			palette		0
+			clickable	false
+			font		"logotypegothicregular.ttf"
+			fontSize	24
+			text	"New Game"
+		}
+		textbutton continueButton {
+			position	0, 48
+			size		192, 48
+			textHAlign	1
+			textVAlign	1
+			palette		0
+			clickable	false
+			font		"logotypegothicregular.ttf"
+			fontSize	24
+			text		"Continue"
+		}
+		textbutton optionsButton {
+			position	0, 96
+			size		192, 48
+			textHAlign	1
+			textVAlign	1
+			palette		0
+			clickable	true
+			font		"logotypegothicregular.ttf"
+			fontSize	24
+			text		"Options"
+		}
+		textbutton quitButton {
+			position	0, 144
+			size		192, 48
+			textHAlign	1
+			textVAlign	1
+			palette		0
+			clickable	true
+			font		"logogothictyperegular.ttf"
+			fontSize	24
+			text		"Quit"
+		}
+	}
+}

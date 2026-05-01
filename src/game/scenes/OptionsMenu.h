@@ -1,11 +1,12 @@
 #ifndef OPTIONS_MENU_H
 #define OPTIONS_MENU_H
 
-#include "../../framework/UIContext.h"
-#include "../../gui/Widget.h"
+#include "../../gui/Window.h"
 
 namespace Arboria {
 	class ListBoxWidget;
+	class Spinner;
+	class GraphicButton;
 
 	enum class OptionsMenuState {
 		TabSelect,
@@ -17,53 +18,73 @@ namespace Arboria {
 
 	struct ResolutionOptions {
 		String description;
-		int32_t xScale;
-		int32_t yScale;
+		int32_t x;
+		int32_t y;
 	};
 
-	class OptionsMenu : public UIContext {
+	struct VsyncOption {
+		String description;
+		bool isOn;
+	};
+
+	struct BindingData {
+		int key;
+		int gamepad;
+		int action;
+	};
+
+	class OptionsMenu : public Window {
 		private:
-			Widget container;
 			ListBoxWidget* tabbedList;
-			ListBoxWidget* tabbedWindows[2];
-			ListBoxWidget* currentWindow;
+			Widget* tabbedWindows[2];
+			Widget* currentWindow;
 			Widget* bindWindow;
 			bool inBindWindow;
 			bool waitingBind; //when changing the key/button bindings
 			uint8_t selectTab;
 			OptionsMenuState menuState = OptionsMenuState::TabSelect;
 			uint8_t selectResolutionIndex = 0;
-			ResolutionOptions selectedResolutionOption;
-			void buildDisplayWidow();
-			void buildInputWindow();
-			void buildInputRow(ListBoxWidget* configWindow, String actionName, int actionValue);
-			void buildTabList();
+			ResolutionOptions* selectedResolutionOption;
+			bool displayPending = false; //true if display changes are made but not applied/saved
+			void setKeyImageFromAction(int action, GraphicButton* bindBtn);
+			void setButtonImageFromAction(int action, GraphicButton* bindBtn);
 		public:
 			OptionsMenu();
 			~OptionsMenu() override;
-			void draw() override;
-			void enter() override;
-			bool onEvent(AEvent* ev) override;
-			void leave() override;
-			void pause() override;
-			void resume() override;
-			void run() override;
-			bool isTransitioning() const override;
-			void sendSelectOption(Widget* w);
+			void render() override;
+			void onEvent(AEvent* ev) override;
+			bool postParse() override;
+			bool parseBindings();
+			void resetOptions();
+			void restoreDefaultSettings();
+			void restoreDefaultBindings();
+			bool isDisplayChangePending() const { return displayPending; }
+			void setDisplayChangePending(bool _dis) { displayPending = _dis; }
 
 			ListBoxWidget* getTabbedList() { return tabbedList; }
-			Widget& getContainer() { return container; }
 
 			uint8_t getSelectedResolutionIndex() { return selectResolutionIndex; }
 			void setSelectedResolutionIndex(int8_t v) { selectResolutionIndex = v; }
+
+			template<typename T>
+			void parseSpinnerOptions(Spinner* spinner, List<T> optionData);
+		protected:
+			bool compare(const Window& other) const override {
+				if (OptionsMenu* ptr = dynamic_cast<OptionsMenu*>(const_cast<Window*>(&other))) {
+					return root == ptr->root;
+				}
+			}
 	};
 
-	void handleOptionsHoverTabChange(AEvent* e, void* context);
-	void handleOptionsSelectTabChange(AEvent* e, void* context);
-	void handleTabbedWindowCancelChange(AEvent* e, void* context);
-	void handleDisplayWindowOptionSelectChange(AEvent* e, void* context);
-	void handleApplyResolutionChanges(AEvent* e, void* context);
-	void handleOptionsRestoreDefaultBindings(AEvent* e, void* context);
+	bool handleApplyDisplayChanges(Widget* w, AEvent* ev);
+	bool handleRestoreDefaultDisplaySettings(Widget* w, AEvent* ev);
+	bool handleBindingSelect(Widget* w, AEvent* ev);
+	bool returnToTabList(Widget* w, AEvent* ev);
+	bool exitOptionsMenu(Widget* w, AEvent* ev);
+	bool handleSelectedTabChange(Widget* w, AEvent* ev);
+	bool handleReturnToTabList(Widget* w, AEvent* ev);
+	bool returnToDisplayList(Widget* w, AEvent* ev);
+	bool handleRestoreDefaultBindings(Widget* w, AEvent* ev);
 }
 
 #endif

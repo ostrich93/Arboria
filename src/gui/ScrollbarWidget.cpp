@@ -1,14 +1,13 @@
 #include "ScrollbarWidget.h"
-#include "../framework/ActionManager.h"
 #include "../framework/ResourceManager.h"
+#include "../framework/InputManager.h"
 #include "../renderer/Renderer.h"
 #include "../renderer/Texture.h"
+#include "Window.h"
 
 namespace Arboria {
-	ScrollbarWidget::ScrollbarWidget(Image* scrollerImage, bool _isMenu, Orientation orientation) : Widget(), scrollValue(0), scrollStep(1), barOrientation(orientation), maximum(1), minimum(0), menuFlag(_isMenu), scrollbarImage(scrollerImage), color({ (uint8_t)255, (uint8_t)255, (uint8_t)255, (uint8_t)128 }) {
-		if (!scrollbarImage) {
-			scrollbarImage = resourceManager->loadTexture(231);
-		}
+	ScrollbarWidget::ScrollbarWidget(Window* gui, Orientation orientation, Color _gripperColor) : Widget(gui), scrollValue(0), scrollStep(1), barOrientation(orientation), maximum(1), minimum(0), color({ (uint8_t)255, (uint8_t)255, (uint8_t)255, (uint8_t)128 }), gripperColor(_gripperColor) {
+		
 	}
 
 	ScrollbarWidget::~ScrollbarWidget() = default;
@@ -22,6 +21,16 @@ namespace Arboria {
 
 		scrollValue = value;
 		setDirty();
+	}
+
+	void ScrollbarWidget::scrollNext()
+	{
+		setScrollValue(scrollValue + scrollStep);
+	}
+
+	void ScrollbarWidget::scrollPrev()
+	{
+		setScrollValue(scrollValue - scrollStep);
 	}
 
 	void ScrollbarWidget::setMinimum(int newValue) {
@@ -43,28 +52,65 @@ namespace Arboria {
 	bool ScrollbarWidget::onEvent(AEvent* e) {
 		Widget::onEvent(e);
 
-		int action = actionManager->getAction(*e);
-		int newCursor;
-		switch (action) {
-		case 6: //UP
-			if (barOrientation == Orientation::VERTICAL)
-				setScrollValue(scrollValue - 1);
-			break;
-		case 7: //DOWN
-			if (barOrientation == Orientation::VERTICAL)
-				setScrollValue(scrollValue + 1);
-			break;
-		case 8: //LEFT
-			if (barOrientation == Orientation::HORIZONTAL)
-				setScrollValue(scrollValue - 1);
-			break;
-		case 9: //RIGHT
-			if (barOrientation == Orientation::HORIZONTAL)
-				setScrollValue(scrollValue + 1);
-			break;
-		default:
-			break;
+		if (e->eventType == EventType::EVENT_KEY) {
+			if (e->eventValue == ArboriaKey_MouseLeft) {
+				Vector2<int> realPos = getActualPosition();
+				int cursorX = getGui()->getCursorX();
+				int cursorY = getGui()->getCursorY();
+				switch (barOrientation) {
+				case Orientation::VERTICAL:
+					if (realPos.x >= cursorX && cursorX <= realPos.x + size.x
+						&& realPos.y + scrollValue >= cursorY 
+						&& cursorY <= realPos.y + scrollValue + maximum) {
+						setFlag(WIDGET_CAPTURED);
+						setDirty();
+					}
+					else if (realPos.x >= cursorX && cursorX <= realPos.x + size.x
+						&& cursorY > realPos.y + scrollValue + maximum) {
+						scrollNext();
+					}
+					else if (realPos.x >= cursorX && cursorX <= realPos.x + size.x
+						&& cursorY < realPos.y + scrollValue) {
+						scrollPrev();
+					}
+					break;
+				case Orientation::HORIZONTAL:
+					if (realPos.x + scrollValue >= cursorX
+						&& cursorX <= realPos.x + scrollValue + maximum
+						&& realPos.y >= cursorY && cursorY <= realPos.y + size.y) {
+						setFlag(WIDGET_CAPTURED);
+						setDirty();
+					}
+					else if (realPos.y >= cursorY && cursorY <= realPos.y + size.y
+						&& cursorX > realPos.x + scrollValue + maximum) {
+						scrollNext();
+					}
+					else if (realPos.y >= cursorY && cursorY <= realPos.y + size.y
+						&& cursorX < realPos.x + scrollValue) {
+						scrollPrev();
+					}
+					break;
+				default:
+					break;
+				}
+			}
 		}
+		else if (e->eventType == EventType::EVENT_KEY && !e->eventValue2) {
+			if (e->eventValue == ArboriaKey_MouseLeft) {
+				if (flags & WIDGET_CAPTURED) {
+					clearFlag(WIDGET_CAPTURED);
+					setDirty();
+				}
+			}
+		}
+		else if (e->eventType == EventType::EVENT_MOUSE_MOVE && flags & WIDGET_CAPTURED) {
+			if (barOrientation == Orientation::VERTICAL) {
+				setScrollValue(static_cast<int>(e->eventValue2 / (size.y - maximum)) + minimum);
+			}
+			else
+				setScrollValue(static_cast<int>(e->eventValue / (size.x - maximum)) + minimum);
+		}
+
 		return e->isHandled;
 	}
 
@@ -86,15 +132,15 @@ namespace Arboria {
 				newSize = { static_cast<int>(segmentSize * (maximum - minimum)), size.y };
 				break;
 		}
-		renderer->draw(scrollbarImage, newPos);
-		//spriteRenderer->draw(scrollbarImage, newPos, newSize, color);
+		renderer->drawRectangle(this->position, size, color);
+		renderer->drawRectangle(newPos, newSize, gripperColor);
 	}
 
 	void ScrollbarWidget::run() {
-		Widget::run();
+	}
 
-		int numSegments = (maximum - minimum) + 1;
-		int bsize = barOrientation == Orientation::VERTICAL ? size.y : size.x;
-		segmentSize = bsize / static_cast<float>(numSegments);
+	bool ScrollbarWidget::parseInternalValue(const char* _name, Lexer* src)
+	{
+		return false;
 	}
 }

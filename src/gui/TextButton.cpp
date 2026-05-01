@@ -5,13 +5,13 @@
 #include "../renderer/RenderData.h"
 #include "../renderer/Renderer.h"
 #include "../framework/ResourceManager.h"
+#include "../framework/Lexer.h"
 
 namespace Arboria {
-	TextButton::TextButton(const String& txt, Font* font) : Widget(), buttonBackground(resourceManager->loadTexture(1)),
+	TextButton::TextButton(Window* gui, const String& txt, Font* font) : Widget(gui), buttonBackground(resourceManager->loadTexture(1)),
 	textHAlign(HorizontalAlignment::HOR_CENTER), textVAlign(VerticalAlignment::VERT_CENTER), cachedSurface(nullptr) {
 		clickable = true;
-		label = new Label(txt, font);
-		label->setFlag(WidgetStateFlags::WIDGET_ACTIVE | WidgetStateFlags::WIDGET_ENABLED | WidgetStateFlags::WIDGET_VISIBLE);
+		label = new Label(gui, txt, font);
 		label->setPalette(font->palette);
 	}
 
@@ -21,10 +21,6 @@ namespace Arboria {
 	{
 		Widget::onEvent(e);
 
-		if (e->eventType == EventType::EVENT_UI_INTERACTION && e->guiEvent.raisedBy == this
-			&& e->guiEvent.eventType == GUIEventType::KEY_DOWN) {
-			submitGuiEvent(GUIEventType::BUTTON_CLICK, e);
-		}
 
 		return e->isHandled;
 	}
@@ -79,6 +75,30 @@ namespace Arboria {
 
 	void TextButton::setFont(Font* font) {
 		label->setFont(font);
+	}
+
+	bool TextButton::parseInternalValue(const char* _name, Lexer* src)
+	{
+
+		if (String::iCompare(_name, "font") == 0 || String::iCompare(_name, "fontSize") == 0
+		|| String::iCompare(_name, "text") == 0){
+			if (label == NULL)
+				label = new Label(gui);
+			label->parseInternalValue(_name, src);
+			return true;
+		}
+		if (String::iCompare(_name, "textHAlign") == 0) {
+			int hv = src->parseInt();
+			textHAlign = (HorizontalAlignment)hv;
+			return true;
+		}
+		if (String::iCompare(_name, "textVAlign") == 0) {
+			int vv = src->parseInt();
+			textVAlign = (VerticalAlignment)vv;
+			return true;
+		}
+
+		return Widget::parseInternalValue(_name, src);
 	}
 
 

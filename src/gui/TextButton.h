@@ -18,7 +18,7 @@ namespace Arboria {
 		HorizontalAlignment textHAlign;
 		VerticalAlignment textVAlign;
 
-		TextButton(const String& txt = "", Font* font = nullptr);
+		TextButton(Window* gui, const String& txt = "", Font* font = nullptr);
 		~TextButton() override;
 
 		bool onEvent(AEvent* e) override;
@@ -31,6 +31,8 @@ namespace Arboria {
 
 		Font* getFont() const;
 		void setFont(Font* font);
+
+		bool parseInternalValue(const char* _name, Lexer* src) override;
 	};
 }
 

@@ -191,6 +191,18 @@ namespace Arboria {
         return *this;
     }
 
+    void String::stripTrailingWhitespace()
+    {
+        int i;
+
+        for (i = length() - 1; i >= 0; i--) {
+            if (m_data->data[i] <= ' ') {
+                m_data->data[i] = '\0';
+                m_data->len--;
+            }
+        }
+    }
+
     int String::findChar(const char* str, char c, int start, int end) {
         int i;
 

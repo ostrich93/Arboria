@@ -1,7 +1,30 @@
 #include "InputManager.h"
 #include "../Heap.h"
+#include "../FileSystem.h"
+#include "Lexer.h"
 
 namespace Arboria {
+
+	static const ActBinding defaultBindings[] =
+	{
+		{ArboriaKey_S, ArboriaKey_GamepadFaceDown},
+		{ArboriaKey_X, ArboriaKey_GamepadFaceRight},
+		{ArboriaKey_A, ArboriaKey_GamepadFaceLeft},
+		{ArboriaKey_D, ArboriaKey_GamepadFaceUp},
+		{ArboriaKey_LeftArrow, ArboriaKey_GamepadDpadLeft},
+		{ArboriaKey_RightArrow, ArboriaKey_GamepadDpadRight},
+		{ArboriaKey_UpArrow, ArboriaKey_GamepadDpadUp},
+		{ArboriaKey_DownArrow, ArboriaKey_GamepadDpadDown},
+		{ArboriaKey_W, ArboriaKey_GamepadLeftTrigger_1},
+		{ArboriaKey_E, ArboriaKey_GamepadRightTrigger_1},
+		{ArboriaKey_Q, ArboriaKey_GamepadLeftTrigger_2},
+		{ArboriaKey_C, ArboriaKey_GamepadRightTrigger_2},
+		{ArboriaKey_R, ArboriaKey_GamepadLeftTrigger_3},
+		{ArboriaKey_J, ArboriaKey_GamepadRightTrigger_3},
+		{ArboriaKey_Return, ArboriaKey_GamepadStart},
+		{ArboriaKey_Space, ArboriaKey_GamepadBack}
+	};
+
 	int InputManager::translateKeyCode(SDL_Scancode keycode)
 	{
 		switch (keycode) {
@@ -125,6 +148,42 @@ namespace Arboria {
 		}
 		return 0;
 	}
+
+	int InputManager::translateGamepadCode(SDL_GameControllerButton button)
+	{
+		switch (button) {
+		case SDL_CONTROLLER_BUTTON_A: return ArboriaKey_GamepadFaceDown;
+		case SDL_CONTROLLER_BUTTON_B: return ArboriaKey_GamepadFaceRight;
+		case SDL_CONTROLLER_BUTTON_X: return ArboriaKey_GamepadFaceLeft;
+		case SDL_CONTROLLER_BUTTON_Y: return ArboriaKey_GamepadFaceUp;
+		case SDL_CONTROLLER_BUTTON_BACK: return ArboriaKey_GamepadBack;
+		case SDL_CONTROLLER_BUTTON_START: return ArboriaKey_GamepadStart;
+		case SDL_CONTROLLER_BUTTON_LEFTSTICK: return ArboriaKey_GamepadLeftTrigger_3;
+		case SDL_CONTROLLER_BUTTON_RIGHTSTICK: return ArboriaKey_GamepadRightTrigger_3;
+		case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: return ArboriaKey_GamepadLeftTrigger_1;
+		case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: return ArboriaKey_GamepadRightTrigger_1;
+		case SDL_CONTROLLER_BUTTON_DPAD_UP: return ArboriaKey_GamepadDpadUp;
+		case SDL_CONTROLLER_BUTTON_DPAD_DOWN: return ArboriaKey_GamepadDpadDown;
+		case SDL_CONTROLLER_BUTTON_DPAD_LEFT: return ArboriaKey_GamepadDpadLeft;
+		case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: return ArboriaKey_GamepadDpadRight;
+		default: return ArboriaKey_Unknown;
+		}
+		return 0;
+	}
+
+	int InputManager::translateGamepadAxis(SDL_GameControllerAxis axis)
+	{
+		switch (axis) {
+		case SDL_CONTROLLER_AXIS_LEFTX: return AXIS_LEFT_X;
+		case SDL_CONTROLLER_AXIS_LEFTY: return AXIS_LEFT_Y;
+		case SDL_CONTROLLER_AXIS_RIGHTX: return AXIS_RIGHT_X;
+		case SDL_CONTROLLER_AXIS_RIGHTY: return AXIS_RIGHT_Y;
+		case SDL_CONTROLLER_AXIS_TRIGGERLEFT: return AXIS_LEFT_TRIGGER;
+		case SDL_CONTROLLER_AXIS_TRIGGERRIGHT: return AXIS_RIGHT_TRIGGER;
+		}
+		return 0;
+	}
+
 	InputManager::InputManager() {
 		head = 0;
 		tail = 0;
@@ -156,45 +215,97 @@ namespace Arboria {
 					}
 					break;
 				case SDL_KEYDOWN:
-					e.inputDeviceType = InputDeviceType::INPUT_DEVICE_KEYBOARD;
-					e.keyboardEvent.keyCode = translateKeyCode(_se.key.keysym.scancode);
-					e.keyboardEvent.mods = SDL_GetModState();
-					e.eventType = EventType::EVENT_KEY_DOWN;
+				case SDL_KEYUP:
+					e.eventType = EventType::EVENT_KEY;
+					e.eventValue = translateKeyCode(_se.key.keysym.scancode);
+					e.eventValue2 = _se.type == SDL_KEYDOWN;
 					submitEvent(&e);
 					break;
-				case SDL_KEYUP:
-					if (_se.key.keysym.scancode < 128) {
-						e.inputDeviceType = InputDeviceType::INPUT_DEVICE_KEYBOARD;
-						e.keyboardEvent.scancode = _se.key.keysym.scancode;
-						e.keyboardEvent.keyCode = _se.key.keysym.sym;
-						e.keyboardEvent.mods = SDL_GetModState();
-						e.keyboardEvent.keyState = _se.key.state == SDL_PRESSED;
-						e.eventType = EventType::EVENT_KEY_PRESS;
-						this->submitEvent(&e);
+				case SDL_CONTROLLERAXISMOTION:
+				{
+					const int range = 16384;
+
+					int inputAxis = translateGamepadAxis((SDL_GameControllerAxis)_se.caxis.axis);
+					e.eventType = EventType::EVENT_CONTROLLER_AXIS;
+					e.eventValue = inputAxis;
+					e.eventValue2 = _se.caxis.value;
+					if (inputAxis == AXIS_LEFT_X) {
+						pushAxisButton(ArboriaKey_GamepadLStickLeft, (_se.caxis.value < -range));
+						pushAxisButton(ArboriaKey_GamepadLStickRight, (_se.caxis.value > range));
 					}
-					break;
-				case SDL_JOYAXISMOTION:
-					e.inputDeviceType = InputDeviceType::INPUT_DEVICE_CONTROLLER_AXIS;
-					e.controllerEvent.joystickId = _se.jaxis.which;
-					e.controllerEvent.axisValues[_se.jaxis.axis] = _se.jaxis.value;
-					e.controllerEvent.button = _se.jaxis.value;
-					e.controllerEvent.buttonState = _se.jaxis.value != 0 ? 1 : 0;
+					else if (inputAxis == AXIS_LEFT_Y) {
+						pushAxisButton(ArboriaKey_GamepadLStickUp, (_se.caxis.value < -range));
+						pushAxisButton(ArboriaKey_GamepadLStickDown, (_se.caxis.value > range));
+					}
+					else if (inputAxis == AXIS_RIGHT_X) {
+						pushAxisButton(ArboriaKey_GamepadRStickLeft, (_se.caxis.value < -range));
+						pushAxisButton(ArboriaKey_GamepadRStickRight, (_se.caxis.value > range));
+					}
+					else if (inputAxis == AXIS_RIGHT_Y) {
+						pushAxisButton(ArboriaKey_GamepadRStickUp, (_se.caxis.value < -range));
+						pushAxisButton(ArboriaKey_GamepadRStickDown, (_se.caxis.value > range));
+					}
+					else if (inputAxis == AXIS_LEFT_TRIGGER) {
+						pushAxisButton(ArboriaKey_GamepadLeftTrigger_2, (_se.caxis.value > range));
+					}
+					else if (inputAxis == AXIS_RIGHT_TRIGGER) {
+						pushAxisButton(ArboriaKey_GamepadRightTrigger_2, (_se.caxis.value > range));
+					}
+
+					//handle deadzone
+					if (inputAxis >= AXIS_LEFT_X && inputAxis < MAX_TRIGGER_AXIS) {
+						//get cvar deadzone's float
+
+						float dz = joyAxis_deadzone.getFloat();
+						float val = fabsf(_se.caxis.value * (1.0f / 32767.0f));
+
+						if (val < dz)
+							val = 0.0f;
+						else {
+							val -= dz;
+
+							val *= val * (1.0f / (1.0f - dz));
+
+							if (_se.caxis.value < 0)
+								val = -val;
+						}
+
+						e.eventValue2 = val;
+					}
 					this->submitEvent(&e);
-					break;
-				case SDL_JOYBUTTONUP:
-					e.inputDeviceType = InputDeviceType::INPUT_DEVICE_CONTROLLER_BUTTON;
-					e.controllerEvent.joystickId = _se.jbutton.which;
-					e.controllerEvent.button = _se.jbutton.button;
-					e.controllerEvent.buttonState = _se.jbutton.state == SDL_PRESSED;
-					this->submitEvent(&e);
-					break;
+					continue;
+				}
+				break;
+				case SDL_CONTROLLERBUTTONDOWN:
 				case SDL_CONTROLLERBUTTONUP:
-					e.inputDeviceType = InputDeviceType::INPUT_DEVICE_CONTROLLER_BUTTON;
-					e.controllerEvent.joystickId = _se.cbutton.which;
-					e.controllerEvent.button = _se.cbutton.button;
-					e.controllerEvent.buttonState = _se.cbutton.state == SDL_PRESSED;
-					e.eventType = EventType::EVENT_BUTTON_UP;
+					e.eventType = EventType::EVENT_CONTROLLER_BUTTON;
+					e.eventValue = translateGamepadCode((SDL_GameControllerButton)_se.cbutton.button);
+					e.eventValue2 = _se.type == SDL_CONTROLLERBUTTONDOWN;
 					this->submitEvent(&e);
+					break;
+				case SDL_MOUSEMOTION:
+					e.eventType = EventType::EVENT_MOUSE_MOVE;
+					e.eventValue = _se.motion.x;
+					e.eventValue2 = _se.motion.y;
+					this->submitEvent(&e);
+					break;
+				case SDL_MOUSEBUTTONDOWN:
+				case SDL_MOUSEBUTTONUP:
+					e.eventType = EventType::EVENT_KEY;
+					switch (_se.button.button) {
+					case SDL_BUTTON_LEFT:
+						e.eventValue = ArboriaKey_MouseLeft;
+						break;
+					case SDL_BUTTON_RIGHT:
+						e.eventValue = ArboriaKey_MouseRight;
+						break;
+					case SDL_BUTTON_MIDDLE:
+						e.eventValue = ArboriaKey_MouseMiddle;
+						break;
+					default:
+						break;
+					}
+					e.eventValue2 = _se.type == SDL_MOUSEBUTTONDOWN;
 					break;
 				default:
 					break;
@@ -226,6 +337,10 @@ namespace Arboria {
 		memset(queue, 0, sizeof(queue));
 		head = 0;
 		tail = 0;
+	}
+	bool InputManager::isGamepadKey(int scancode)
+	{
+		return false;
 	}
 	int InputManager::getRepeatCount(int key, float repeat_delay, float repeat_rate)
 	{
@@ -282,5 +397,212 @@ namespace Arboria {
 			keyData->downDuration = -1.0f;
 			keyData->analog = 0.0f;
 		}
+	}
+
+	void InputManager::unbindKeyAction(int keyNum, int action)
+	{
+		if (keyNum <= ArboriaKey_Unknown || keyNum >= ArboriaKey_GamepadStart) {
+			Engine::printError("InputManager::unbindKeyAction failed. keyNum input was not a key");
+			return;
+		}
+		if (action <= ACTION_NONE || action > ACTION_SELECT) {
+			Engine::printError("InputManager::unbindKeyAction failed. action input was invalid");
+			return;
+		}
+		keyStates[keyNum].binding = ArboriaKey_Unknown;
+	}
+
+	void InputManager::unbindKeyAction(int action)
+	{
+		for (int i = 0; i < ArboriaKey_GamepadStart; i++) {
+			if (keyStates[i].binding == action) {
+				keyStates[i].binding = ACTION_NONE;
+				return;
+			}
+		}
+	}
+
+	void InputManager::unbindGamepadAction(int buttonNum, int action)
+	{
+		if (buttonNum < ArboriaKey_GamepadStart || buttonNum > ArboriaKey_GamepadRStickDown) {
+			Engine::printError("InputManager::unbindGamepadAction: requested button number was not a proper gamepad button");
+			return;
+		}
+		if (action <= ACTION_NONE || action > ACTION_SELECT) {
+			Engine::printError("InputManager::unbindGamepadAction failed. action input was invalid");
+			return;
+		}
+		keyStates[buttonNum] = ArboriaKey_Unknown;
+	}
+
+	void InputManager::unbindGamepadAction(int action)
+	{
+		for (int i = ArboriaKey_GamepadStart; i < ArboriaKey_MouseLeft; i++) {
+			if (keyStates[i].binding == action) {
+				keyStates[i].binding = ACTION_NONE;
+				return;
+			}
+		}
+	}
+
+	void InputManager::bindAction(int keynum, int action)
+	{
+		keyStates[keynum].binding = action;
+	}
+
+	int InputManager::getKeyFromAction(int action)
+	{
+		for (int i = ArboriaKey_A; i < ArboriaKey_GamepadStart; i++) {
+			if (keyStates[i].binding == action)
+				return i;
+		}
+		return -1;
+	}
+
+	int InputManager::getGamepadButtonFromAction(int action) {
+		for (int i = ArboriaKey_GamepadStart; i < ArboriaKey_MouseLeft; i++) {
+			if (keyStates[i].binding == action)
+				return i;
+		}
+		return -1;
+	}
+
+	KeyState* InputManager::getKeyInputFromAction(int action)
+	{
+		for (int i = ArboriaKey_A; i < ArboriaKey_GamepadStart; i++) {
+			if (keyStates[i].binding == action)
+				return &keyStates[i];
+		}
+		return NULL;
+	}
+
+	KeyState* InputManager::getButtonInputFromAction(int action) {
+		for (int i = ArboriaKey_GamepadStart; i < ArboriaKey_MouseLeft; i++) {
+			if (keyStates[i].binding == action)
+				return &keyStates[i];
+		}
+		return NULL;
+	}
+
+	void InputManager::pushAxisButton(int key, bool value)
+	{
+		if (keyStates[key].down != value) {
+			AEvent res = { EventType::EVENT_CONTROLLER_BUTTON, key, value ? 1 : 0, NULL };
+			submitEvent(&res);
+		}
+	}
+
+	void InputManager::restoreDefaults() {
+		for (int act = ACTION_CONFIRM; act < ACTION_SELECT + 1; act++) {
+			int key = getKeyFromAction(act);
+			if (key > -1)
+				unbindKeyAction(key, act);
+			bindAction(defaultBindings[act].key, act);
+			int button = getGamepadButtonFromAction(act);
+			if (button > -1)
+				unbindGamepadAction(button, act);
+			bindAction(defaultBindings[act].button, act);
+		}
+	}
+
+	void InputManager::saveUserBindings() {
+		PHYSFS_File* outFile = PHYSFS_openWrite("inputs.ini");
+		for (int act = ACTION_CONFIRM; act < ACTION_SELECT + 1; act++) {
+			int key = getKeyFromAction(act);
+			int button = getGamepadButtonFromAction(act);
+			String bindString = convertToString(act, key, button);
+			if (act == ACTION_SELECT) {
+				bindString[bindString.length() - 1] = '\0';
+			}
+			PHYSFS_writeBytes(outFile, (void*)bindString.c_str(), bindString.length());
+		}
+		PHYSFS_close(outFile);
+	}
+
+	bool InputManager::loadUserBindings() {
+		void* fileBuffer;
+		int fLength = readFileFromPhysFS("inputs.ini", &fileBuffer);
+
+		int action = ACTION_NONE;
+		int key = ArboriaKey_Unknown;
+		int button = ArboriaKey_Unknown;
+
+		int boundKey = ArboriaKey_Unknown;
+		int boundButton = ArboriaKey_Unknown;
+
+		Lexer src;
+		Token t;
+		src.loadMemory((char*)fileBuffer, fLength, 0);
+		do {
+			if (!src.readToken(&t))
+				return false;
+			if (t == "Action") {
+				if (!parseActionBindings(src, action, key, button))
+					return false;
+				else {
+					boundKey = getKeyFromAction(action);
+					if (boundKey != key) {
+						if (boundKey == -1) {
+							bindAction(key, action);
+						}
+						else {
+							unbindKeyAction(boundKey, action);
+							bindAction(key, action);
+						}
+					}
+					boundButton = getGamepadButtonFromAction(action);
+					if (boundButton != button) {
+						if (boundButton != -1) {
+							bindAction(button, action);
+						}
+						else {
+							unbindGamepadAction(boundButton, action);
+							bindAction(button, action);
+						}
+					}
+				}
+			}
+		} while (1);
+
+		return true;
+	}
+
+	bool InputManager::parseActionBindings(Lexer& src, int& act, int& key, int& button) {
+		Token tok;
+
+		if (!src.expectTokenString("=")) return false;
+		if (!src.expectTokenString("(")) return false;
+
+		while (src.readToken(&tok)) {
+			if (tok == ")") return true;
+			src.unreadToken(&tok);
+			if (tok == "action") {
+				src.expectTokenString("=");
+				src.expectTokenType(TOKENTYPE_NUMBER, TOKENSUBTYPE_INTEGER, &tok);
+				act = tok.getIntegerValue();
+				if (act <= ACTION_NONE || act >= ACTION_SELECT) {
+					Engine::printError("Error parsing an action binding: action value is not a valid action");
+					return false;
+				}
+			}
+			if (tok == "key") {
+				src.expectTokenString("=");
+				src.expectTokenType(TOKENTYPE_NUMBER, TOKENSUBTYPE_INTEGER, &tok);
+				key = tok.getIntegerValue();
+			}
+			if (tok == "button") {
+				src.expectTokenString("=");
+				src.expectTokenType(TOKENTYPE_NUMBER, TOKENSUBTYPE_INTEGER, &tok);
+				button = tok.getIntegerValue();
+			}
+		}
+		return true;
+	}
+
+	String& InputManager::convertToString(const int& act, const int& key, const int& button)
+	{
+		String bindString = "Action=(action=";
+		bindString = bindString + act + " key=" + key + " button=" + button + ")\n";
+		return bindString;
 	}
 }

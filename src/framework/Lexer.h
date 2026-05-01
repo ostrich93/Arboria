@@ -24,15 +24,20 @@ namespace Arboria {
 		public:
 			Lexer();
 			Lexer(int _flags);
-			Lexer(const char* ptr, int length, int _flags = 0);
+			Lexer(const char* _filename, int flags = 0);
+			Lexer(const char* ptr, int length, const char* name, int _flags = 0);
 			~Lexer();
 
-			bool loadMemory(const char* ptr, int _length, int startLine = 1);
+			int loadFile(const char* _filename);
+			bool loadMemory(const char* ptr, int _length, const char* name, int startLine = 1);
 			void freeMemory();
 			bool isLoaded();
 			bool readToken(Token* token);
 			bool expectTokenString(const char* string);
 			bool expectTokenType(int tType, int tSubtype, Token* token);
+			bool expectAnyToken(Token* token);
+			bool checkTokenString(const char* string);
+			bool checkTokenType(int _type, int _subtype, Token* token);
 			void unreadToken(const Token* token);
 			void setFlags(int _flags);
 			int getFlags();
@@ -41,8 +46,12 @@ namespace Arboria {
 			void handleError(const char* str, ...);
 			bool hasError() const;
 			bool atEnd();
+			float parseFloat();
+			bool parseBool();
+			int parseInt();
 		private:
 			bool loaded;
+			String filename;
 			bool allocated;
 			const char* buffer;
 			const char* cursorPtr;

@@ -12,7 +12,9 @@ namespace Arboria {
 	class Image;
 	class Surface;
 	class Palette;
-	typedef void (*windowCallback)(Widget*);
+	class Window;
+	class Lexer;
+	typedef bool (*windowCallback)(Widget*, AEvent*);
 	
 	class Widget {
 	private:
@@ -20,26 +22,47 @@ namespace Arboria {
 		Surface* surface;
 		Palette* palette;
 		void* data;
-		HashTable<GUIEventType, List<eventCallback>> eventCallbacks;
 		preRenderCallback preRenderFunction;
 	protected:
-		Widget* parent;
+		uint32_t flags;
+		int lastTimeRun;
+		bool clickable;
+		bool visible;
 		windowCallback callbacks[12]{ NULL };
-		Vector2<int> resolvedLocation; //actual location derived from the parent.
+		
 		Color backgroundColor;
 		Color foregroundColor;
 		Color selectColor;
 		Color borderColor;
 		float borderSize;
 		Vector2<float> maxScale;
-		uint32_t flags;
+		String name;
+
+		Widget* parent;
+		List<Widget*> children;
+		
+		Widget* focusedChild;
+		bool hovered = false;
+		
+		Window* gui;
 	public:
 		Widget();
-		bool enabled;
-		bool clickable;
-		String name;
+		Widget(Window* gui);
+
 		Vector2<int> position, size;
-		List<Widget*> children;
+
+		List<Widget*>& getChildren() { return children; }
+		Widget* findChildAtPoint(int x, int y, Widget* below = nullptr);
+		int findChildIndex(Widget* widget);
+		int getChildCount() const { return children.getLength(); }
+		Widget* getChild(int index);
+		void removeChild(Widget* widget);
+		bool insertChild(Widget* widget, Widget* before);
+		Widget* getFocusedChild();
+		Widget* setFocus(Widget* widget);
+
+		Window* getGui() { return gui; }
+		void setGui(Window* w) { gui = w; }
 
 		uint32_t getFlags() const { return flags; }
 		void setFlag(unsigned int f);
@@ -62,8 +85,10 @@ namespace Arboria {
 		void setMaxScaleY(float y) { maxScale.y = y; }
 		Vector2<float> getMaxScale() const { return maxScale; }
 		bool isDirty() const { return (flags & WidgetStateFlags::WIDGET_DIRTY) != 0; }
-		bool isVisible() const { return (flags & WidgetStateFlags::WIDGET_VISIBLE) != 0; }
+		bool isVisible() const { return visible; }
+		void setVisibility(bool visibility) { visible = visibility; }
 		void setParent(Widget* _parent);
+		void setParent(Widget* _parent, int pos);
 		Widget* getParent() const { return parent; }
 		Surface* getSurface() const { return surface; }
 		static int align(HorizontalAlignment _halign, int parentWidth, int childWidth);
@@ -76,14 +101,14 @@ namespace Arboria {
 		void* getData() const { return data; }
 		void setData(void* _data) { data = _data; }
 		void setDirty();
-		void resolveLocation();
 		void render();
 		Palette* getPalette() const { return palette; }
 		void setPalette(Palette* p) { palette = p; }
+		bool containsPos(int x, int y);
+		Vector2<int> getActualPosition();
+		String& getName() { return name; }
 
-		void submitGuiEvent(GUIEventType eventType, AEvent* parentEvent);
-		void addEventCallback(GUIEventType eventType, eventCallback callback);
-		void executeEventCallbacks(AEvent* e);
+		virtual bool routeCursorCoordinates(); //this is primarily used to deal with mouse position, but it's also meant to be overwritten by tables/lists to handle directional inputs
 
 		template<typename T, std::enable_if_t<std::is_base_of_v<Widget, T>, bool> = true>
 		T* findWidget(String widgetId) {
@@ -97,12 +122,13 @@ namespace Arboria {
 
 		template<typename T, std::enable_if_t<std::is_base_of_v<Widget, T>, bool> = true, typename... Args>
 		T* createChild(Args&&...args) {
-			T* newWidget = new T(args...);
+			T* newWidget = new T(gui, args...);
 			newWidget->setParent(this);
 			return newWidget;
 		}
 
 		void addCallback(int actionType, windowCallback callback);
+		void executeCallback(int actionType, AEvent* ev);
 		virtual void run();
 		virtual bool onEvent(AEvent* e);
 		virtual void onRender();
@@ -115,33 +141,19 @@ namespace Arboria {
 		bool operator==(const Widget& other) const {
 			return name == other.name;
 		}
+
+		bool parse(Lexer* src, bool rebuild = true);
+		virtual bool parseInternalValue(const char* name, Lexer* src);
+		void parseVect2i(Lexer* src, Vector2<int>& out);
+		void parseVect2f(Lexer* src, Vector2<float>& out);
+		void parseColor(Lexer* src, Color& out);
+		void parseString(Lexer* src, String& out);
+		void parsePalette(Lexer* src, Palette* out);
+		void parseAlignment(Lexer* src, VerticalAlignment& out1, HorizontalAlignment& out2);
+		virtual void parseImage(Lexer* src, Image* img);
+		//virtual configureFromFile(const char* fileData);
 	};
 
-	template<typename V>
-	class HashNode<GUIEventType, V> {
-	public:
-		GUIEventType key;
-		V value;
-		HashNode<GUIEventType, V>* next;
-
-		HashNode(const GUIEventType& _key, const V& _value) : key(_key), value(_value), next(NULL) {}
-		HashNode(const GUIEventType& _key, const V& _value, HashNode* _next) : key(_key), value(_value), next(_next) {}
-		HashNode(GUIEventType& _key, V& _value, HashNode* _next) : key(_key), value(_value), next(_next) {}
-
-		static int getHash(const GUIEventType& key, const int maskValue) {
-			return static_cast<int>(key) & maskValue;
-		}
-
-		static int compare(const GUIEventType& keyA, const GUIEventType& keyB) {
-			if (keyA < keyB)
-				return -1;
-
-			else if (keyA > keyB)
-				return 1;
-
-			return 0;
-		}
-	};
 };
 
 #endif

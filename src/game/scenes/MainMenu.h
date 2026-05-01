@@ -1,35 +1,26 @@
 #ifndef MAIN_MENU_H
 #define MAIN_MENU_H
 
-#include "../../framework/UIContext.h"
-#include "../../gui/Widget.h"
+#include "../../gui/Window.h"
 
 namespace Arboria {
-	class MainMenuScreen : public UIContext {
-		private:
-			Widget root; //canvas has one child, which is a listbox.
+	class MainMenu : public Window {
 		public:
-			MainMenuScreen();
-			~MainMenuScreen() override;
-			void draw() override;
-			void enter() override;
-			//void eventOccured(SystemEvent* ev) override;
-			bool onEvent(AEvent* ev) override;
-			void leave() override;
-			void pause() override;
-			void resume() override;
-			void run() override;
-			bool isTransitioning() const override;
+			MainMenu();
+			~MainMenu() override;
+			void render() override;
+			void onEvent(AEvent* e) override;
+			bool postParse() override;
 		protected:
-			bool compare(const UIContext& other) const override {
-				if (MainMenuScreen* ptr = dynamic_cast<MainMenuScreen*>(const_cast<UIContext*>(&other))) {
+			bool compare(const Window& other) const override {
+				if (MainMenu* ptr = dynamic_cast<MainMenu*>(const_cast<Window*>(&other))) {
 					return (root == ptr->root);
 				}
 			}
 	};
 
-	void pushOptionsMenu(AEvent* e, void* context);
-	void setQuit(AEvent* e, void* context);
+	bool pushOptionsMenu(Widget* w, AEvent* e);
+	bool setQuit(Widget* w, AEvent* e);
 }
 
 #endif

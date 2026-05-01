@@ -1,9 +1,11 @@
 #include "../renderer/Renderer.h"
 #include "../renderer/Texture.h"
 #include "Graphic.h"
+#include "../framework/Lexer.h"
+#include "../framework/ResourceManager.h"
 
 namespace Arboria {
-	Graphic::Graphic(Image* img) : Widget(), image(img), hAlign(HorizontalAlignment::HOR_LEFT),
+	Graphic::Graphic(Window* gui, Image* img) : Widget(gui), image(img), hAlign(HorizontalAlignment::HOR_LEFT),
 		vAlign(VerticalAlignment::VERT_TOP), imageFill(FillMethod::FIT), autoSize(false)
 	{
 	}
@@ -85,6 +87,25 @@ namespace Arboria {
 	void Graphic::setImage(Image* img)
 	{
 		image = img;
+	}
+
+	void Graphic::parseImage(Lexer* src, Image* img)
+	{
+		Token tok;
+		if (!src->expectTokenType(TOKENTYPE_NUMBER, 0, &tok)) {
+			Engine::printError("Could not read the expected image id value");
+			return;
+		}
+		img = resourceManager->loadTexture(tok.getUnsignedIntegerValue(), getPalette() != NULL);
+	}
+
+	bool Graphic::parseInternalValue(const char* _name, Lexer* src)
+	{
+		if (String::iCompare(_name, "imageId") == 0) {
+			parseImage(src, image);
+			return true;
+		}
+		return Widget::parseInternalValue(_name, src);
 	}
 
 

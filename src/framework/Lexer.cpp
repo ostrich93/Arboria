@@ -1,9 +1,11 @@
 #include "Lexer.h"
 #include "Engine.h"
+#include "../FileSystem.h"
 
 namespace Arboria {
 	Lexer::Lexer() : buffer(nullptr), cursorPtr(nullptr), endPtr(nullptr), lastCursorPtr(nullptr), whitespaceStartPtr(nullptr), whitespaceEndPtr(nullptr) {
 		loaded = false;
+		filename = "";
 		allocated = false;
 		flags = 0;
 		length = 0;
@@ -18,23 +20,61 @@ namespace Arboria {
 		flags = _flags;
 	}
 
-	Lexer::Lexer(const char* ptr, int _length, int _flags) {
+	Lexer::Lexer(const char* _filename, int flags)
+	{
+		loaded = false;
+		flags = flags;
+		allocated = false;
+		currentToken = "";
+		loadFile(_filename);
+	}
+
+	Lexer::Lexer(const char* ptr, int _length, const char* name, int _flags) {
 		loaded = false;
 		allocated = false;
 		flags = _flags;
 		currentToken = "";
 		error = false;
-		loadMemory(ptr, _length);
+		loadMemory(ptr, _length, name);
 	}
 
 	Lexer::~Lexer() {
 		freeMemory();
 	}
 
-	bool Lexer::loadMemory(const char* ptr, int _length, int startLine) {
+	int Lexer::loadFile(const char* _filename)
+	{
+		String pathname;
+		int _length;
+		void* buf;
+
+		if (loaded) {
+			Engine::printError("Lexer::loadFile: another script file is already loaded");
+			return 0;
+		}
+
+		pathname = _filename;
+		_length = readFileFromPhysFS(pathname, &buf);
+		buffer = static_cast<char*>(buf);
+		length = _length;
+		cursorPtr = buffer;
+		lastCursorPtr = buffer;
+		endPtr = &(buffer[length]);
+		tokenAvailable = false;
+		line = 1;
+		lastLine = 1;
+		allocated = true;
+		loaded = true;
+
+		Mem_Free(buf);
+		return 1;
+	}
+
+	bool Lexer::loadMemory(const char* ptr, int _length, const char* name, int startLine) {
 		if (loaded) //if data already loaded into memory
 			return false;
 
+		filename = name;
 		buffer = ptr;
 		length = _length;
 		cursorPtr = buffer;
@@ -43,6 +83,7 @@ namespace Arboria {
 		tokenAvailable = false;
 		line = startLine;
 		lastLine = line;
+		allocated = false;
 		loaded = true;
 
 		return true;
@@ -206,6 +247,44 @@ namespace Arboria {
 		}
 
 		return true;
+	}
+
+	bool Lexer::expectAnyToken(Token* token)
+	{
+		if (!readToken(token)) {
+			handleError("Could not read expected token");
+			return false;
+		}
+		return true;
+	}
+
+	bool Lexer::checkTokenString(const char* string)
+	{
+		Token tok;
+		if (!readToken(&tok))
+			return false;
+
+		if (tok == string)
+			return true;
+
+		cursorPtr = lastCursorPtr;
+		line = lastLine;
+		return false;
+	}
+
+	bool Lexer::checkTokenType(int _type, int _subtype, Token* token)
+	{
+		Token tok;
+		if (!readToken(&tok))
+			return false;
+
+		if (tok.type == token->type && (tok.subtype & token->subtype)) {
+			*token = tok;
+			return true;
+		}
+		cursorPtr = lastCursorPtr;
+		line = lastLine;
+		return false;
 	}
 
 	void Lexer::unreadToken(const Token* token) {
@@ -618,5 +697,48 @@ namespace Arboria {
 			}
 		}
 		return false;
+	}
+
+	bool Lexer::parseBool() {
+		Token tok;
+		if (!expectTokenType(TOKENTYPE_NUMBER, 0, &tok)) {
+			Engine::printError("Could not read the expected boolean value");
+			return false;
+		}
+		return tok.getIntegerValue() != 0;
+	}
+
+	int Lexer::parseInt() {
+		Token tok;
+
+		if (!readToken(&tok)) {
+			Engine::printError("Could not read expected integer value");
+			return 0;
+		}
+		if (tok.type == TOKENTYPE_PUNCTUATION && tok == "-") {
+			expectTokenType(TOKENTYPE_NUMBER, TOKENSUBTYPE_INTEGER, &tok);
+			return -((signed int)tok.getIntegerValue());
+		}
+		else if (tok.type != TOKENTYPE_NUMBER || tok.subtype == TOKENSUBTYPE_FLOAT)
+			Engine::printError("Expected integer value, found '%s'", tok.c_str());
+
+		return tok.getIntegerValue();
+	}
+
+	float Lexer::parseFloat() {
+		Token tok;
+
+		if (!readToken(&tok)) {
+			Engine::printError("Could not read expected float value");
+			return 0.0f;
+		}
+		if (tok.type == TOKENTYPE_PUNCTUATION && tok == "-") {
+			expectTokenType(TOKENTYPE_NUMBER, TOKENSUBTYPE_FLOAT, &tok);
+			return -tok.getFloatValue();
+		}
+		else if (tok.type != TOKENTYPE_NUMBER) {
+			Engine::printError("Expected float value, found '%s'", tok.c_str());
+		}
+		return tok.getFloatValue();
 	}
 }

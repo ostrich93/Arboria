@@ -63,28 +63,30 @@ set (ARBORIA_SOURCE_FILES
 		./src/Heap.cpp
 		./src/containers/HashIndex.cpp
 		./src/events/Event.cpp
-		./src/framework/ActionManager.cpp
 		./src/framework/Camera.cpp
+		./src/framework/CommandArgs.cpp
 		./src/framework/CVariableSystem.cpp
 		./src/framework/Engine.cpp
 		./src/framework/InputManager.cpp
 		./src/framework/Lexer.cpp
 		./src/framework/RenderDevice.cpp
 		./src/framework/ResourceManager.cpp
-		./src/framework/ScreenManager.cpp
+		./src/framework/Session.cpp
+		./src/framework/Session_menu.cpp
 		./src/framework/String.cpp
 		./src/framework/SystemCVars.cpp
 		./src/framework/Token.cpp
-		./src/framework/UIContext.cpp
 		./src/game/scenes/MainMenu.cpp
 		./src/game/scenes/OptionsMenu.cpp
 		./src/gui/Graphic.cpp
+		./src/gui/GraphicButton.cpp
 		./src/gui/Label.cpp
 		./src/gui/ListBoxWidget.cpp
-		./src/gui/ScrollAreaWidget.cpp
 		./src/gui/ScrollbarWidget.cpp
+		./src/gui/Spinner.cpp
 		./src/gui/TextButton.cpp
 		./src/gui/Widget.cpp
+		./src/gui/Window.cpp
 		./src/renderer/Atlas.cpp
 		./src/renderer/ColoredPrimitiveShader.cpp
 		./src/renderer/Font.cpp
@@ -112,8 +114,9 @@ set (ARBORIA_HEADER_FILES
 		./src/containers/Queue.h
 		./src/containers/Stack.h
 		./src/events/Event.h
-		./src/framework/ActionManager.h
 		./src/framework/Camera.h
+		./src/framework/CommandArgs.h
+		./src/framework/CommandSystem.h
 		./src/framework/ConfigOptions.h
 		./src/framework/Cursor.h
 		./src/framework/CVariableSystem.h
@@ -125,22 +128,22 @@ set (ARBORIA_HEADER_FILES
 		./src/framework/RenderDevice.h
 		./src/framework/ResourceManager.h
 		./src/framework/ResourceObject.h
-		./src/framework/ScreenManager.h
 		./src/framework/Session.h
 		./src/framework/String.h
 		./src/framework/SystemCVars.h
 		./src/framework/Token.h
-		./src/framework/UIContext.h
 		./src/game/scenes/MainMenu.h
 		./src/game/scenes/OptionsMenu.h
 		./src/gui/Graphic.h
+		./src/gui/GraphicButton.h
 		./src/gui/Label.h
 		./src/gui/ListBoxWidget.h
-		./src/gui/ScrollAreaWidget.h
 		./src/gui/ScrollbarWidget.h	
+		./src/gui/Spinner.h 
 		./src/gui/TextButton.h
 		./src/gui/Widget.h
 		./src/gui/WidgetEnums.h
+		./src/gui/Window.h
 		./src/renderer/Atlas.h
 		./src/renderer/CodepointView.h
 		./src/renderer/ColoredPrimitiveShader.h
@@ -163,7 +166,7 @@ set (ARBORIA_HEADER_FILES
 		./src/utils/Numerics.h
 		./src/utils/Rectangle.h
 		./src/utils/Vector.h
-)
+ )
 
 #set(ARBORIA_LIST_SOURCE_FILES
 #	./src/Heap.cpp

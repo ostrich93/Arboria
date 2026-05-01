@@ -1,46 +1,70 @@
-#include "./Widget.h"
+#include "Window.h"
 #include "../framework/InputActionType.h"
-#include "../framework/ActionManager.h"
+#include "../framework/InputManager.h"
+#include "../framework/ResourceManager.h"
+#include "../framework/Lexer.h"
 #include "../renderer/Renderer.h"
 #include "../renderer/RenderData.h"
+#include "ListBoxWidget.h"
+#include "TextButton.h"
+#include "Graphic.h"
+#include "GraphicButton.h"
+#include "Spinner.h"
+#include "Label.h"
 
 namespace Arboria {
 	bool Widget::onEvent(AEvent* e)
 	{
-		for (auto ctrlIdx = children.begin(); ctrlIdx != children.end();) {
-			auto c = *ctrlIdx;
-			if ((c->flags & WidgetStateFlags::WIDGET_VISIBLE) && c->enabled) {
-				c->onEvent(e);
-				if (e->isHandled) {
-					return e->isHandled;
+		static bool actionDown;
+
+		if (flags & WIDGET_ROOT) {
+			actionDown = false;
+		}
+
+		if (visible) {
+			if (e->eventType >= EventType::EVENT_KEY && e->eventType <= EventType::EVENT_CONTROLLER_BUTTON) {
+				int c = children.getLength();
+				while (--c >= 0) {
+					if (children[c]->visible && children[c]->containsPos(gui->getCursorX(), gui->getCursorY())) {
+						Widget* child = children[c];
+						if (e->eventValue2) {
+							setFocus(child);
+							e->isHandled = child->onEvent(e);
+						}
+					}
+				}
+				if (e->eventValue2 && !actionDown) {
+					int action = inputManager->getBinding(e->eventValue);
+					if (action > -1 && callbacks[action]) {
+						actionDown = callbacks[action](this, e);
+						e->isHandled = actionDown;
+					}
 				}
 			}
-			++ctrlIdx;
-		}
-
-		if (e->eventType == EventType::EVENT_KEY_DOWN || e->eventType == EventType::EVENT_BUTTON_UP) {
-			if (flags & WidgetStateFlags::WIDGET_FOCUSED) {
-				submitGuiEvent(e->eventType == EventType::EVENT_KEY_DOWN ? GUIEventType::KEY_DOWN : GUIEventType::KEY_UP, e);
-				e->isHandled = true;
+			if (e->eventType == EventType::EVENT_MOUSE_MOVE || e->eventType == EventType::EVENT_MOUSE_MOVE_ABS) {
+				e->isHandled = routeCursorCoordinates();
+				return e->isHandled;
 			}
 		}
 
-		if (e->eventType == EventType::EVENT_KEY_PRESS) {
-			if (flags & WidgetStateFlags::WIDGET_FOCUSED) {
-				submitGuiEvent(GUIEventType::KEY_PRESS, e);
-				e->isHandled = true;
-			}
-		}
 		return e->isHandled;
 	}
 
 	void Widget::onRender() {}
 
 	Widget::Widget() : maxScale({ 1,1 }), name(""), parent(NULL), preRenderFunction(NULL),
-		flags(WIDGET_ACTIVE | WIDGET_ENABLED | WIDGET_VISIBLE), borderSize(0), borderColor({ 0, 0, 0, 0 }), foregroundColor({ 0,0,0,0 }),
-		backgroundColor({ 0,0,0,0 }), data(NULL), enabled(true),
-		clickable(false), surface(NULL), palette(NULL), position({ 0,0 }), resolvedLocation({ 0,0 }),
-		size({0,0})
+		flags(0), borderSize(0), borderColor({ 0, 0, 0, 0 }), foregroundColor({ 0,0,0,0 }),
+		backgroundColor({ 0,0,0,0 }), data(NULL), visible(true),
+		clickable(false), surface(NULL), palette(NULL), position({ 0,0 }),
+		size({ 0,0 }), gui(NULL) 
+	{
+	}
+
+	Widget::Widget(Window* gui) : maxScale({ 1,1 }), name(""), parent(NULL), preRenderFunction(NULL),
+		flags(0), borderSize(0), borderColor({ 0, 0, 0, 0 }), foregroundColor({ 0,0,0,0 }),
+		backgroundColor({ 0,0,0,0 }), data(NULL), visible(true),
+		clickable(false), surface(NULL), palette(NULL), position({ 0,0 }),
+		size({0,0}), gui(gui)
 	{
 	}
 
@@ -64,36 +88,30 @@ namespace Arboria {
 		}
 	}
 
-	void Widget::resolveLocation() {
-		auto previousLocation = resolvedLocation;
-		auto parentControl = parent;
+	Widget* Widget::getFocusedChild()
+	{
+		if (flags & WIDGET_ROOT)
+			return gui->getRoot()->focusedChild;
+		return nullptr;
+	}
 
-		if (parentControl == NULL) {
-			resolvedLocation.x = position.x;
-			resolvedLocation.y = position.y;
-		}
-		else {
-			if (position.x > parentControl->size.x || position.y > parentControl->size.y) {
-				resolvedLocation.x = -99999;
-				resolvedLocation.y = -99999;
+	Widget* Widget::setFocus(Widget* widget) {
+		Widget* lastFocused = NULL;
+		if (flags & WIDGET_FOCUSABLE) {
+			lastFocused = gui->getRoot()->focusedChild;
+			if (lastFocused) {
+				lastFocused->clearFlag(WIDGET_FOCUSED);
+
 			}
-			else {
-				resolvedLocation.x = position.x + parentControl->resolvedLocation.x;
-				resolvedLocation.y = position.y + parentControl->resolvedLocation.y;
-			}
+			widget->setFlag(WIDGET_FOCUSED);
+			gui->getRoot()->focusedChild = widget;
 		}
-		for (int i = 0; i < children.getLength(); i++) {
-			Widget child = *children[i];
-			child.resolveLocation();
-		}
-		if (previousLocation != resolvedLocation) {
-			setDirty();
-		}
+		return lastFocused;
 	}
 
 	void Widget::render()
 	{
-		if (!(flags & WidgetStateFlags::WIDGET_VISIBLE) || size.x == 0 || size.y == 0) {
+		if (!visible || size.x == 0 || size.y == 0) {
 			return;
 		}
 
@@ -157,6 +175,190 @@ namespace Arboria {
 		unloadResources();
 	}
 
+	bool Widget::parse(Lexer* src, bool rebuild)
+	{
+		Token token, token2, token3;
+
+		src->expectTokenType(TOKENTYPE_NAME, 0, &token);
+		name = token;
+
+		src->expectTokenString("{");
+		src->expectAnyToken(&token);
+
+		bool ret = true;
+
+		while (token != "}") {
+			if (token == "widget") {
+				src->expectTokenType(TOKENTYPE_NAME, 0, &token);
+				token2 = token;
+				src->unreadToken(&token);
+
+				Widget* wid = new Widget(gui);
+				wid->parse(src, rebuild);
+				wid->setParent(this);
+			}
+			else if (token == "listbox") {
+				ListBoxWidget* wid = new ListBoxWidget(gui);
+				wid->parse(src, rebuild);
+				wid->setParent(this);
+			}
+			else if (token == "graphic") {
+				Graphic* wid = new Graphic(gui);
+				wid->parse(src, rebuild);
+				wid->setParent(this);
+			}
+			else if (token == "graphicButton") {
+				GraphicButton* wid = new GraphicButton(gui);
+				wid->parse(src, rebuild);
+				wid->setParent(this);
+			}
+			else if (token == "label") {
+				Label* wid = new Label(gui);
+				wid->parse(src, rebuild);
+				wid->setParent(this);
+			}
+			else if (token == "textButton") {
+				TextButton* wid = new TextButton(gui);
+				wid->parse(src, rebuild);
+				wid->setParent(this);
+			}
+			else if (token == "spinner") {
+				Spinner* wid = new Spinner(gui);
+				wid->parse(src, rebuild);
+				wid->setParent(this);
+			}
+			else if (token == "scrollbar") {
+				ScrollbarWidget* wid = new ScrollbarWidget(gui);
+				wid->parse(src, rebuild);
+				wid->setParent(this);
+			}
+			else if (parseInternalValue(token, src)) {
+			}
+
+			//parsing alignment, separated by commas
+			else if (String::iCompare(token, "alignment") == 0) {
+				HorizontalAlignment hal = HorizontalAlignment::HOR_LEFT;
+				VerticalAlignment val = VerticalAlignment::VERT_TOP;
+				parseAlignment(src, val, hal);
+				align(hal, val);
+			}
+		}
+	}
+
+	bool Widget::parseInternalValue(const char* _name, Lexer* src)
+	{
+		if (String::iCompare(_name, "size") == 0) {
+			parseVect2i(src, size);
+			return true;
+		}
+		if (String::iCompare(_name, "position") == 0) {
+			parseVect2i(src, position);
+			return true;
+		}
+		if (String::iCompare(_name, "backgroundColor") == 0) {
+			parseColor(src, selectColor);
+			return true;
+		}
+		if (String::iCompare(_name, "foregroundColor") == 0) {
+			parseColor(src, foregroundColor);
+			return true;
+		}
+		if (String::iCompare(_name, "selectColor") == 0) {
+			parseColor(src, selectColor);
+			return true;
+		}
+		if (String::iCompare(_name, "borderColor") == 0) {
+			parseColor(src, borderColor);
+			return true;
+		}
+		if (String::iCompare(_name, "borderSize") == 0) {
+			borderSize = src->parseInt();
+			return true;
+		}
+		if (String::iCompare(_name, "name") == 0) {
+			parseString(src, name);
+			return true;
+		}
+		if (String::iCompare(_name, "maxScale") == 0) {
+			parseVect2f(src, maxScale);
+			return true;
+		}
+		if (String::iCompare(_name, "clickable") == 0) {
+			clickable = src->parseBool();
+			return true;
+		}
+		if (String::iCompare(_name, "visible") == 0) {
+			visible = src->parseBool();
+			return true;
+		}
+		if (String::iCompare(_name, "palette") == 0) {
+			parsePalette(src, palette);
+			return true;
+		}
+		return false;
+	}
+
+	void Widget::parseVect2i(Lexer* src, Vector2<int>& out)
+	{
+		Token tok;
+		src->readToken(&tok);
+		out.x = atoi(tok);
+		src->expectTokenString(",");
+		src->readToken(&tok);
+		out.y = atoi(tok);
+	}
+
+	void Widget::parseVect2f(Lexer* src, Vector2<float>& out) {
+		Token tok;
+		src->readToken(&tok);
+		out.x = atof(tok);
+		src->expectTokenString(",");
+		src->readToken(&tok);
+		out.y = atof(tok);
+	}
+
+	void Widget::parseColor(Lexer* src, Color& out) {
+		Token tok;
+		src->readToken(&tok);
+		out.r = (uint8_t)atoi(tok);
+		src->expectTokenString(",");
+		src->readToken(&tok);
+		out.g = (uint8_t)atoi(tok);
+		src->expectTokenString(",");
+		src->readToken(&tok);
+		out.b = (uint8_t)atoi(tok);
+		src->expectTokenString(",");
+		src->readToken(&tok);
+		out.a = (uint8_t)atoi(tok);
+	}
+
+	void Widget::parseString(Lexer* src, String& out) {
+		Token tok;
+		if (src->readToken(&tok))
+			out = tok;
+	}
+
+	void Widget::parsePalette(Lexer* src, Palette* out)
+	{
+		Token tok;
+		if (!src->expectTokenType(TOKENTYPE_NUMBER, 0, &tok)) {
+			Engine::printError("Could not read the expected palette id value");
+			return;
+		}
+		out = resourceManager->loadPalette(tok.getUnsignedIntegerValue());
+	}
+
+	void Widget::parseAlignment(Lexer* src, VerticalAlignment& out1, HorizontalAlignment& out2)
+	{
+		Token tok;
+		src->readToken(&tok);
+		out1 = (VerticalAlignment)atoi(tok);
+		src->readToken(&tok);
+		out2 = (HorizontalAlignment)atoi(tok);
+	}
+
+	void Widget::parseImage(Lexer* src, Image* img) {}
+
 	void Widget::setParent(Widget* _parent) {
 		if (_parent) {
 			_parent->children.append(this);
@@ -165,68 +367,42 @@ namespace Arboria {
 		parent = _parent;
 	}
 
-	void Widget::submitGuiEvent(GUIEventType eventType, AEvent* parentEvent) {
-		AEvent* event = nullptr;
-
-		switch (eventType) {
-			case GUIEventType::KEY_DOWN:
-			case GUIEventType::KEY_PRESS:
-			case GUIEventType::KEY_UP:
-			{
-				event = new AEvent();
-				event->eventType = EventType::EVENT_UI_INTERACTION;
-				event->guiEvent.raisedBy = this;
-				event->guiEvent.eventType = eventType;
-				event->guiEvent.keyInfo = parentEvent->keyboardEvent;
-				inputManager->submitEvent(event);
-				setDirty();
-				break;
-			}
-			case GUIEventType::BUTTON_CLICK:
-			case GUIEventType::SCROLLBAR_CHANGE:
-			case GUIEventType::LISTBOX_CHANGE_HOVER:
-			case GUIEventType::LISTBOX_CHANGE_SELECTED:
-			{
-				event = new AEvent();
-				event->eventType = EventType::EVENT_UI_INTERACTION;
-				if (parentEvent->eventType == EventType::EVENT_UI_INTERACTION) {
-					event->guiEvent = parentEvent->guiEvent;
-				}
-				event->guiEvent.raisedBy = this;
-				event->guiEvent.eventType = eventType;
-				inputManager->submitEvent(event);
-				setDirty();
-				break;
-			}
-			default:
-				break;
+	void Widget::setParent(Widget* _parent, int pos)
+	{
+		if (_parent) {
+			_parent->children.insert(this, pos);
+			_parent->setDirty();
 		}
-		executeEventCallbacks(event);
+		parent = _parent;
 	}
 
-	void Widget::addEventCallback(GUIEventType eventType, eventCallback callback)
+	bool Widget::containsPos(int x, int y)
 	{
-		List<eventCallback>* eCallbacks;
-		eventCallbacks.get(eventType, &eCallbacks);
-		if (eCallbacks) { //if there's a list of callbacks for that event type, add
-			eCallbacks->append(callback);
-		}
-		else { //if no list of callbacks found, create a new one, add it to the list, and set the hashtable
-			eCallbacks = new List<eventCallback>();
-			eCallbacks->append(callback);
-			eventCallbacks.set(eventType, *eCallbacks);
-		}
+		if (x < 0 || y < 0) return false;
+		Vector2<int> actualPos = getActualPosition();
+		return (x >= actualPos.x && x <= actualPos.x + size.x) &&
+			(y >= actualPos.y && y <= actualPos.y + size.y);
 	}
 
-	void Widget::executeEventCallbacks(AEvent* e)
+	Vector2<int> Widget::getActualPosition()
 	{
-		List<eventCallback>* _callbacks;
-		eventCallbacks.get(e->guiEvent.eventType, &_callbacks);
-		if (_callbacks) {
-			for (auto& cb : *_callbacks) {
-				cb(e, this);
+		if (parent)
+			return parent->getActualPosition() + position;
+		return position;
+	}
+
+	bool Widget::routeCursorCoordinates()
+	{
+
+		int c = children.getLength();
+		while (c > 0) {
+			Widget* child = children[c];
+			if (child->isVisible() && child->containsPos(gui->getCursorX(), gui->getCursorY())) {
+				child->hovered = true;
+				child->routeCursorCoordinates();
 			}
 		}
+		return false;
 	}
 
 	int Widget::align(HorizontalAlignment _halign, int parentWidth, int childWidth) {
@@ -287,7 +463,14 @@ namespace Arboria {
 	void Widget::addCallback(int actionType, windowCallback callback)
 	{
 		if (actionType > 0) {
-			callbacks[actionType - 1] = callback;
+			callbacks[actionType] = callback;
+		}
+	}
+
+	void Widget::executeCallback(int actionType, AEvent* ev)
+	{
+		if (actionType >= ACTION_CONFIRM && actionType <= ACTION_SELECT) {
+			callbacks[actionType](this, ev);
 		}
 	}
 

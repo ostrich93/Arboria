@@ -27,6 +27,7 @@ namespace Arboria {
 
 		bool isEmpty() const noexcept { return c.isEmpty(); }
 		int count() const noexcept { return c.count(); }
+		void clear() const noexcept { c.clear(); }
 	};
 }
 

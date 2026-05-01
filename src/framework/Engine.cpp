@@ -1,12 +1,13 @@
 #include "../game/scenes/MainMenu.h"
 #include "ResourceManager.h"
-#include "ScreenManager.h"
 #include "../renderer/Font.h"
-#include "ActionManager.h"
+#include "InputManager.h"
+#include "SystemCVars.h"
 #include "../renderer/Renderer.h"
 #include "../renderer/Texture.h"
 #include "../globals.h"
 #include "../FileSystem.h"
+#include "Session.h"
 #include <physfs.h>
 
 unsigned int gCurrentDrawCount = 0;
@@ -19,11 +20,9 @@ namespace Arboria {
 	constexpr size_t scaleValues[5] = {2, 3, 4, 5, 6};
 
 	InputManager* inputManager = NULL;
-	ScreenManager* screenManager = NULL;
 	FontManager* fontManager = NULL;
 	ResourceManager* resourceManager = NULL;
 	RenderDevice* renderDevice = NULL;
-	ActionManager* actionManager = NULL;
 	Renderer* renderer = NULL;
 	bool _isQuit = false;
 
@@ -52,32 +51,29 @@ namespace Arboria {
 	}
 	Engine::~Engine()
 	{
-		screenManager->clear();
 
 		freeFileSystem();
 		//SDL_Quit();
 		delete inputManager;
-		delete screenManager;
 		delete renderer;
 		delete resourceManager;
 		delete renderDevice;
 	}
 	void Engine::init()
 	{
+		systemConfig->initialize();
 		renderDevice = new RenderDevice();
 		renderDevice->initialize();
 		resourceManager = ResourceManager::createResourceManager();
 		inputManager = new InputManager();
-		screenManager = new ScreenManager();
 		renderer = new Renderer();
 		//renderer->initialize();
-		actionManager = new ActionManager();
+
+		session->init();
+		session->handleStartMenu();
 	}
 
 	void Engine::run() {
-		MainMenuScreen firstScreen;
-		screenManager->push(firstScreen);
-
 		float updateTime = 1.0f / MAX_FPS;
 		uint64_t currentTimeNs = 0;
 		uint64_t elapsedTimeNs = 0;
@@ -88,46 +84,12 @@ namespace Arboria {
 
 			processEvents();
 
-			if (screenManager->isEmpty()) {
+			if (_isQuit)
 				break;
-			}
-
-			screenManager->getCurrent()->run();
-
-			for (int i = 0; i < screenManager->getScreenCommands().getLength(); i++) {
-				ScreenCommand screenCommand = screenManager->getScreenCommands()[i];
-				switch(screenCommand.commandType) {
-					case ScreenCommand::ScreenCommandType::CONTINUE:
-						break;
-					case ScreenCommand::ScreenCommandType::PUSH:
-						screenManager->push(*screenCommand.nextScene);
-						break;
-					case ScreenCommand::ScreenCommandType::POP:
-						screenManager->pop();
-						break;
-					case ScreenCommand::ScreenCommandType::REPLACEHEAD:
-						screenManager->pop();
-						screenManager->push(*screenCommand.nextScene);
-						break;
-					case ScreenCommand::ScreenCommandType::REPLACEALL:
-						screenManager->clear();
-						screenManager->push(*screenCommand.nextScene);
-						break;
-					case ScreenCommand::ScreenCommandType::QUIT:
-						_isQuit = true;
-						screenManager->clear();
-						break;
-				}
-				if (_isQuit) break;
-			}
-			screenManager->getScreenCommands().clear();
-
-			if (screenManager->getCurrent()) {
-				screenManager->getCurrent()->draw();
-				renderer->flush();
-				renderer->newFrame();
-				SDL_GL_SwapWindow(renderDevice->getWindow());
-			}
+			session->render();
+			renderer->flush();
+			renderer->newFrame();
+			SDL_GL_SwapWindow(renderDevice->getWindow());
 			elapsedTimeNs = getNanoseconds() - currentTimeNs;
 			delay_ms = Math::floor(1000.f / MAX_FPS - elapsedTimeNs / 1e6);
 			time_ns = (elapsedTimeNs + delay_ms * 1e9 / 1e6);
@@ -147,7 +109,7 @@ namespace Arboria {
 		QueryPerformanceCounter((LARGE_INTEGER*)&current_time);
 		inputManager->setDeltaTime((float)(current_time - gCurrentTime) / ticksPerSecond);
 		gCurrentTime = current_time;
-		while (!inputManager->isQueueEmpty() && !screenManager->isEmpty()) {
+		while (!inputManager->isQueueEmpty()) {
 			AEvent* e;
 			e = &inputManager->getFront();
 			inputManager->popFront();
@@ -155,14 +117,16 @@ namespace Arboria {
 				shutdown();
 			}
 			else {
-				switch (e->inputDeviceType) {
-				case InputDeviceType::INPUT_DEVICE_KEYBOARD:
-					inputManager->updateKeyState(e->keyboardEvent.keyCode, e->eventType == EventType::EVENT_KEY_DOWN);
+				switch (e->eventType) {
+				case EventType::EVENT_KEY:
+				case EventType::EVENT_CONTROLLER_BUTTON:
+					inputManager->updateKeyState(e->eventValue, e->eventValue2);
 					break;
 				default:
 					break;
 				}
-				screenManager->getCurrent()->onEvent(e);
+				session->processEvent(e);
+				//screenManager->getCurrent()->onEvent(e);
 			}
 		}
 
@@ -170,37 +134,16 @@ namespace Arboria {
 		
 	}
 
-	UIContext* Engine::getCurrentScreen()
-	{
-		return screenManager->getCurrent();
-	}
-
-	UIContext* Engine::getPreviousScreen()
-	{
-		return screenManager->getPrevious();
-	}
-
-	UIContext* Engine::getPreviousScreen(UIContext* from)
-	{
-		return screenManager->getPrevious(*from);
-	}
-
-	void Engine::pushScreenCommand(const ScreenCommand& cmd)
-	{
-		screenManager->pushScreenCommand(cmd);
-	}
-
 	void Engine::shutdown()
 	{
-		screenManager->clear();
+		
 		_isQuit = true;
 	}
 
-	void Engine::resize(int scaleIndex) {
-		int idx = Math::clampInt(0, 4, scaleIndex);
+	void Engine::resize() {
 
-		size_t scaleValue = scaleValues[idx];
-		renderDevice->resize(scaleValue);
+		size_t scaleValue = systemConfig->windowViewportX->getInteger() / systemConfig->windowViewportY->getInteger();
+		renderDevice->resize();
 		if (renderDevice->getDisplayX() != renderDevice->getWindowWidth() || renderDevice->getDisplayY() != renderDevice->getWindowHeight()) {
 			if (scaleSurface) {
 				free(scaleSurface);

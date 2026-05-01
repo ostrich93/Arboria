@@ -13,7 +13,7 @@ namespace Arboria {
 		VerticalAlignment vAlign;
 		FillMethod imageFill;
 		bool autoSize;
-		Graphic(Image* img = nullptr);
+		Graphic(Window* gui, Image* img = nullptr);
 		~Graphic() override;
 
 		void run() override;
@@ -23,6 +23,9 @@ namespace Arboria {
 
 		Image* getImage() const;
 		void setImage(Image* img);
+
+		void parseImage(Lexer* src, Image* img) override;
+		bool parseInternalValue(const char* _name, Lexer* src) override;
 	};
 }
 
