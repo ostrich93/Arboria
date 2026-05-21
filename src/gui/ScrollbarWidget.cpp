@@ -6,7 +6,7 @@
 #include "Window.h"
 
 namespace Arboria {
-	ScrollbarWidget::ScrollbarWidget(Window* gui, Orientation orientation, Color _gripperColor) : Widget(gui), scrollValue(0), scrollStep(1), barOrientation(orientation), maximum(1), minimum(0), color({ (uint8_t)255, (uint8_t)255, (uint8_t)255, (uint8_t)128 }), gripperColor(_gripperColor) {
+	ScrollbarWidget::ScrollbarWidget(Window* gui, Orientation orientation, Color _gripperColor) : Widget(gui), scrollValue(0), scrollStep(1), barOrientation(orientation), maximum(1), minimum(0), color({ (uint8_t)255, (uint8_t)255, (uint8_t)255, (uint8_t)128 }), gripperColor(_gripperColor), segmentSize(1.0) {
 		
 	}
 

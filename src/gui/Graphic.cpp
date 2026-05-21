@@ -96,7 +96,7 @@ namespace Arboria {
 			Engine::printError("Could not read the expected image id value");
 			return;
 		}
-		img = resourceManager->loadTexture(tok.getUnsignedIntegerValue(), getPalette() != NULL);
+		image = resourceManager->loadTexture(tok.getUnsignedIntegerValue(), getPalette() != NULL);
 	}
 
 	bool Graphic::parseInternalValue(const char* _name, Lexer* src)

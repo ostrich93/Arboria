@@ -53,6 +53,18 @@ namespace Arboria {
 		String name;
 	};
 
+	struct WidgetPtrWrapper {
+		Widget* ptr;
+
+		WidgetPtrWrapper() : ptr(NULL) {}
+		WidgetPtrWrapper(Widget& widget) : ptr(&widget) {}
+		WidgetPtrWrapper(Widget* widget) : ptr(widget) {}
+
+		~WidgetPtrWrapper() {
+			ptr = nullptr; //have it point to nothing.
+		}
+	};
+
 	class WindowManager {
 		friend class Window;
 	public:
@@ -70,17 +82,6 @@ namespace Arboria {
 		Stack<WidgetPtrWrapper> focusStack;
 	};
 
-	struct WidgetPtrWrapper {
-		Widget* ptr;
-
-		WidgetPtrWrapper() : ptr(NULL) {}
-		WidgetPtrWrapper(Widget& widget) : ptr(&widget) {}
-		WidgetPtrWrapper(Widget* widget) : ptr(widget) {}
-
-		~WidgetPtrWrapper() {
-			ptr = nullptr; //have it point to nothing.
-		}
-	};
 
 	extern WindowManager* guiManager;
 }

@@ -25,6 +25,8 @@ namespace Arboria {
 		{ArboriaKey_Space, ArboriaKey_GamepadBack}
 	};
 
+	CVariable joyAxis_deadzone = CVariable("joyAxisDeadzone", "0.25", CVAR_FLOAT | CVAR_ENGINE, "");
+
 	int InputManager::translateKeyCode(SDL_Scancode keycode)
 	{
 		switch (keycode) {
@@ -552,7 +554,7 @@ namespace Arboria {
 					}
 					boundButton = getGamepadButtonFromAction(action);
 					if (boundButton != button) {
-						if (boundButton != -1) {
+						if (boundButton == -1) {
 							bindAction(button, action);
 						}
 						else {
@@ -575,12 +577,12 @@ namespace Arboria {
 
 		while (src.readToken(&tok)) {
 			if (tok == ")") return true;
-			src.unreadToken(&tok);
+			//src.unreadToken(&tok);
 			if (tok == "action") {
 				src.expectTokenString("=");
 				src.expectTokenType(TOKENTYPE_NUMBER, TOKENSUBTYPE_INTEGER, &tok);
 				act = tok.getIntegerValue();
-				if (act <= ACTION_NONE || act >= ACTION_SELECT) {
+				if (act <= ACTION_NONE || act > ACTION_SELECT) {
 					Engine::printError("Error parsing an action binding: action value is not a valid action");
 					return false;
 				}

@@ -11,9 +11,9 @@ namespace Arboria {
 	SystemConfig::SystemConfig()
 	{
 		defaultWindowViewportX = new CVariable("defaultWindowViewportX", "640", CVAR_INTEGER | CVAR_CONFIG | CVAR_ENGINE | CVAR_FROMENGINE, "");
-		defaultWindowViewportY = new CVariable("defaultWindowViewportY", "360", CVAR_INTEGER | CVAR_CONFIG | CVAR_ENGINE | CVAR_FROMENGINE, "" );
+		defaultWindowViewportY = new CVariable("defaultWindowViewportY", "480", CVAR_INTEGER | CVAR_CONFIG | CVAR_ENGINE | CVAR_FROMENGINE, "" );
 		defaultFullscreenWindowViewportX = new CVariable("defaultFullscreenWindowViewportX", "640", CVAR_INTEGER | CVAR_CONFIG | CVAR_ENGINE | CVAR_FROMENGINE, "" );
-		defaultFullscreenWindowViewportY = new CVariable("defaultFullscreenWindowViewportY", "360", CVAR_INTEGER | CVAR_CONFIG | CVAR_ENGINE | CVAR_FROMENGINE, "" );
+		defaultFullscreenWindowViewportY = new CVariable("defaultFullscreenWindowViewportY", "480", CVAR_INTEGER | CVAR_CONFIG | CVAR_ENGINE | CVAR_FROMENGINE, "" );
 		
 		defaultGamma = new CVariable("defaultGamma", "0.500000", CVAR_FLOAT | CVAR_CONFIG | CVAR_ENGINE | CVAR_FROMENGINE, "");
 		defaultBrightness = new CVariable("defaultBrightness", "1.000000", CVAR_FLOAT | CVAR_CONFIG | CVAR_ENGINE | CVAR_FROMENGINE, "" );
@@ -93,7 +93,7 @@ namespace Arboria {
 			}
 			if (t == "WindowScale") {
 				src.expectTokenString("=");
-				src.expectTokenType(TOKENTYPE_NUMBER, TOKENSUBTYPE_INTEGER, &t);
+				src.expectTokenType(TOKENTYPE_NUMBER, TOKENSUBTYPE_FLOAT, &t);
 				windowScale->setFloat(atof(t.c_str()));
 			}
 			if (t == "MusicVolume") {

@@ -496,6 +496,7 @@ namespace Arboria {
 				str2 += tok;
 				str2 += " ";
 			}
+			spinner->setSelectedOption(spinner->getSelectedIndex());
 			if (str2.length()) {
 				str2.stripTrailingWhitespace();
 				spinner->setOption(optIndex, str2.c_str(), (void*)&optionData[optIndex]);

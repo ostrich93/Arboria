@@ -3,6 +3,39 @@
 #include "../FileSystem.h"
 
 namespace Arboria {
+	
+	static const PunctuationEntry punctuationTable[] = {
+		{"..."},
+		{"*"},
+		{"/"},
+		{"%"},
+		{"+"},
+		{"-"},
+		{"="},
+		{"&"},
+		{"|"},
+		{"^"},
+		{"~"},
+		{"!"},
+		{">"},
+		{"<"},
+		{"."},
+		{","},
+		{";"},
+		{":"},
+		{"?"},
+		{"("},
+		{")"},
+		{"{"},
+		{"}"},
+		{"["},
+		{"]"},
+		{"\\"},
+		{"#"},
+		{"$"},
+		{NULL},
+	};
+
 	Lexer::Lexer() : buffer(nullptr), cursorPtr(nullptr), endPtr(nullptr), lastCursorPtr(nullptr), whitespaceStartPtr(nullptr), whitespaceEndPtr(nullptr) {
 		loaded = false;
 		filename = "";
@@ -66,7 +99,6 @@ namespace Arboria {
 		allocated = true;
 		loaded = true;
 
-		Mem_Free(buf);
 		return 1;
 	}
 
@@ -567,7 +599,6 @@ namespace Arboria {
 			dot = 0;
 			while (true) {
 				if (c >= '0' && c <= '9') {
-					continue;
 				}
 				else if (c == '.') {
 					dot++;
@@ -628,7 +659,7 @@ namespace Arboria {
 				return 0;
 			}
 			else {
-				token->subtype == TOKENSUBTYPE_DECIMAL || TOKENSUBTYPE_INTEGER;
+				token->subtype = TOKENSUBTYPE_DECIMAL | TOKENSUBTYPE_INTEGER;
 			}
 		}
 
@@ -671,14 +702,14 @@ namespace Arboria {
 	}
 
 	bool Lexer::readPunctuation(Token* token) {
-		int i, l, ct;
+		int i, l;
 		const char* p;
-
-		p = PUNCTUATIONSTR;
+		const PunctuationEntry* punc;
 		i = 0;
-		ct = strlen(PUNCTUATIONSTR);
 
-		for (i = 0; i < ct; i++) {
+		for (i = 0; punctuationTable[i].p; i++) {
+			punc = &punctuationTable[i];
+			p = punc->p;
 			for (l = 0; p[l] && cursorPtr[l]; l++) {
 				if (p[l] != cursorPtr[l]) {
 					break;

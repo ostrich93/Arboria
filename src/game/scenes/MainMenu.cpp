@@ -22,10 +22,10 @@ namespace Arboria {
 		ListBoxWidget* mainMenuSelect = root->findWidget<ListBoxWidget>("mainMenuSelect");
 		if (!mainMenuSelect)
 			return false;
-		TextButton* optionsButton = root->findWidget<TextButton>("optionsButton");
+		TextButton* optionsButton = mainMenuSelect->findWidget<TextButton>("optionsButton");
 		if (!optionsButton)
 			return false;
-		TextButton* quitButton = root->findWidget<TextButton>("quitButton");
+		TextButton* quitButton = mainMenuSelect->findWidget<TextButton>("quitButton");
 		if (!quitButton)
 			return false;
 		root->setFocus(mainMenuSelect);

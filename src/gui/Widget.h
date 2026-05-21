@@ -52,12 +52,12 @@ namespace Arboria {
 		Vector2<int> position, size;
 
 		List<Widget*>& getChildren() { return children; }
-		Widget* findChildAtPoint(int x, int y, Widget* below = nullptr);
-		int findChildIndex(Widget* widget);
+		//Widget* findChildAtPoint(int x, int y, Widget* below = nullptr);
+		//int findChildIndex(Widget* widget);
 		int getChildCount() const { return children.getLength(); }
 		Widget* getChild(int index);
-		void removeChild(Widget* widget);
-		bool insertChild(Widget* widget, Widget* before);
+		//void removeChild(Widget* widget);
+		//bool insertChild(Widget* widget, Widget* before);
 		Widget* getFocusedChild();
 		Widget* setFocus(Widget* widget);
 
@@ -87,6 +87,8 @@ namespace Arboria {
 		bool isDirty() const { return (flags & WidgetStateFlags::WIDGET_DIRTY) != 0; }
 		bool isVisible() const { return visible; }
 		void setVisibility(bool visibility) { visible = visibility; }
+		bool isClickable() const { return clickable; }
+		void setClickable(bool _clickable) { clickable = _clickable; }
 		void setParent(Widget* _parent);
 		void setParent(Widget* _parent, int pos);
 		Widget* getParent() const { return parent; }

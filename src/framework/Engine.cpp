@@ -24,6 +24,7 @@ namespace Arboria {
 	ResourceManager* resourceManager = NULL;
 	RenderDevice* renderDevice = NULL;
 	Renderer* renderer = NULL;
+	CommandSystem* commandSystem = NULL;
 	bool _isQuit = false;
 
 	const short MAX_FPS = 60;
@@ -58,14 +59,18 @@ namespace Arboria {
 		delete renderer;
 		delete resourceManager;
 		delete renderDevice;
+		delete commandSystem;
 	}
 	void Engine::init()
 	{
+		commandSystem = new CommandSystem();
+		systemConfig = new SystemConfig();
 		systemConfig->initialize();
 		renderDevice = new RenderDevice();
 		renderDevice->initialize();
 		resourceManager = ResourceManager::createResourceManager();
 		inputManager = new InputManager();
+		inputManager->loadUserBindings();
 		renderer = new Renderer();
 		//renderer->initialize();
 

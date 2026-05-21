@@ -16,11 +16,11 @@ namespace Arboria
 	{
 		Widget::onEvent(e);
 
-		if (e->eventType >= EventType::EVENT_KEY && e->eventType <= EventType::EVENT_CONTROLLER_BUTTON) {
+		if (e->eventType >= EventType::EVENT_KEY && e->eventType <= EventType::EVENT_CONTROLLER_BUTTON && e->eventValue2 == 1) {
 			int action = inputManager->getBinding(e->eventValue);
 			int newCursor;
 			switch (action) {
-				case 6: //UP
+				case ACTION_UPARROW: //UP
 					if (viewOrientation == Orientation::HORIZONTAL) //HORIZONTAL LIST
 						break;
 					newCursor = Math::iMax(cursor - 1, 0);
@@ -33,7 +33,7 @@ namespace Arboria
 					cursor = newCursor;
 					hovered = children[cursor];
 					break;
-				case 7: //DOWN
+				case ACTION_DOWNARROW: //DOWN
 					if (viewOrientation == Orientation::HORIZONTAL) //HORIZONTAL LIST
 						break;
 					newCursor = Math::iMin(cursor + 1, itemCount - 1);
@@ -46,7 +46,7 @@ namespace Arboria
 					cursor = newCursor;
 					hovered = children[cursor];
 					break;
-				case 8: //LEFT
+				case ACTION_LEFTARROW: //LEFT
 					if (viewOrientation == Orientation::VERTICAL)
 						break;
 					newCursor = Math::iMax(cursor - 1, 0);
@@ -60,7 +60,7 @@ namespace Arboria
 					cursor = newCursor;
 					hovered = children[cursor];
 					break;
-				case 9: //RIGHT
+				case ACTION_RIGHTARROW: //RIGHT
 					if (viewOrientation == Orientation::HORIZONTAL)
 						break;
 					newCursor = Math::iMin(cursor + 1, itemCount - 1);
@@ -73,10 +73,10 @@ namespace Arboria
 					cursor = newCursor;
 					hovered = children[cursor];
 					break;
-				case 1: //CONFIRM
+				case ACTION_CONFIRM: //CONFIRM
 					selected = hovered != nullptr ? hovered : children[cursor];
 					break;
-				case 2: //CANCEL
+				case ACTION_CANCEL: //CANCEL
 					selected = nullptr;
 					break;
 				default:
@@ -113,7 +113,7 @@ namespace Arboria
 
 				switch (viewOrientation) {
 				case Orientation::VERTICAL:
-					child->position.y = child->size.y - scrollOffset;
+					child->position.y = controlOffset - scrollOffset;
 					controlOffset += child->size.y + itemSpacing;
 					break;
 				case Orientation::HORIZONTAL:
@@ -238,6 +238,10 @@ namespace Arboria
 			itemSize = src->parseInt();
 			return true;
 		}
+		if (String::iCompare(_name, "itemCount") == 0) {
+			itemCount = src->parseInt();
+			return true;
+		}
 		if (String::iCompare(_name, "itemSpacing") == 0) {
 			itemSpacing = src->parseInt();
 			return true;
@@ -291,16 +295,14 @@ namespace Arboria
 
 	void ListBoxWidget::configureScrollbar(Orientation orientation) {
 		if (orientation == Orientation::VERTICAL) {
-			scrollbar = createChild<ScrollbarWidget>(gui);
-			scrollbar->barOrientation = orientation;
+			scrollbar = createChild<ScrollbarWidget>(orientation);
 			scrollbar->size.x = 16;
 			scrollbar->position.x = size.x - scrollbar->size.x;
 			scrollbar->position.y = 0;
 			scrollbar->size.y = size.y;
 		}
 		else {
-			scrollbar = createChild<ScrollbarWidget>(gui);
-			scrollbar->barOrientation = orientation;
+			scrollbar = createChild<ScrollbarWidget>(orientation);
 			scrollbar->size.y = 16;
 			scrollbar->position.y = size.y - scrollbar->size.y;
 			scrollbar->position.x = 0;

@@ -73,7 +73,7 @@ namespace Arboria {
 				return true;
 			}
 			if (String::iCompare(_name, "font") == 0) {
-				parseFont(src, font);
+				parseFont(src);
 				return true;
 			}
 			if (String::iCompare(_name, "wordWrap") == 0) {
@@ -86,7 +86,7 @@ namespace Arboria {
 		return false;
 	}
 
-	void Label::parseFont(Lexer* src, Font* out)
+	void Label::parseFont(Lexer* src)
 	{
 		Token tok;
 		int fontSize = 0;
@@ -95,14 +95,14 @@ namespace Arboria {
 			Engine::printError("Could not read the expected font id value");
 			return;
 		}
-		tok2 = tok;
+		tok2 = tok.c_str();
 		src->expectAnyToken(&tok);
-		if (String::iCompare(tok, "fontSize")) {
+		if (String::iCompare(tok, "fontSize") == 0) {
 			src->readToken(&tok);
 			fontSize = atoi(tok);
 		}
 
-		out = resourceManager->loadFont(tok2, fontSize);
+		font = resourceManager->loadFont(tok2, fontSize);
 		return;
 	}
 }

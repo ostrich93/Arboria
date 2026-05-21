@@ -74,6 +74,7 @@ namespace Arboria {
 			Token token;
 			while (src.readToken(&token)) {
 				if (String::iCompare(token, "widget") == 0) {
+					root = new Widget(this);
 					if (root->parse(&src, rebuild)) {
 						root->setFlag(WIDGET_ROOT);
 					}

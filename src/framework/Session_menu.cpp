@@ -10,6 +10,12 @@
 
 
 namespace Arboria {
+	Window* Session::setGui(Window* gui) {
+		guiActive = gui;
+
+		return guiActive;
+	}
+
 	void Session::handleStartMenu() {
 		if (guiActive == mainMenu) {
 			return;

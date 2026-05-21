@@ -32,6 +32,9 @@ namespace Arboria {
 		systemConfig->windowViewportY->setInteger(systemConfig->defaultWindowViewportY->getInteger());
 		systemConfig->windowScale->setFloat(systemConfig->defaultWindowScale->getFloat());
 
+		displayX = systemConfig->windowViewportX->getInteger();
+		displayY = systemConfig->windowViewportY->getInteger();
+
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -41,7 +44,7 @@ namespace Arboria {
 		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-		window = SDL_CreateWindow("Arboria", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, baseDisplayX * systemConfig->windowScale->getInteger(), baseDisplayY * systemConfig->windowScale->getInteger(), SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+		window = SDL_CreateWindow("Arboria", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, systemConfig->windowViewportX->getInteger(), systemConfig->windowViewportY->getInteger(), SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 		if (!window) {
 			Engine::printError("RenderDevice::initialize: Failed to create the window: %s\n", SDL_GetError());
 			_isQuit = true;

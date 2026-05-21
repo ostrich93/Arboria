@@ -56,6 +56,10 @@ widget root {
 				spinner			resolutionOptions {
 					position	300, 0
 					size		300, 72
+					font		"logotypegothicregular.ttf"
+					fontSize	24
+					palette		0
+					textHAlign	1
 					options		"640x480;800x600;1024x768;1280x960"
 				}
 			}
@@ -75,6 +79,8 @@ widget root {
 				spinner		vsyncSpinner {
 					position	300, 0
 					size		300, 72
+					fontSize	24
+					textHAlign	1
 					options		"On;Off"
 				}
 			}

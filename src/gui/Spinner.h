@@ -6,6 +6,16 @@
 namespace Arboria {
 	class GraphicButton;
 	class Label;
+	class Font;
+	
+	struct SpinnerOption {
+		String optionName;
+		void* optionData;
+		
+		SpinnerOption() : optionData(NULL) {}
+		SpinnerOption(const char* str) : optionName(str), optionData(NULL) {}
+		SpinnerOption(const char* str, void* data) : optionName(str), optionData(data) {}
+	};
 
 	class Spinner : public Widget {
 	private:
@@ -39,15 +49,9 @@ namespace Arboria {
 		List<SpinnerOption>& getOptions() { return options; }
 
 		bool parseInternalValue(const char* _name, Lexer* src) override;
+		void parseFont(Lexer* src, Font* out);
 	};
 
-	struct SpinnerOption {
-		const char* optionName;
-		void* optionData;
-		
-		SpinnerOption(const char* str) : optionName(str), optionData(NULL) {}
-		SpinnerOption(const char* str, void* data) : optionName(str), optionData(data) {}
-	};
 }
 
 #endif

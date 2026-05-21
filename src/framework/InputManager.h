@@ -244,7 +244,7 @@ namespace Arboria {
 		MOUSE
 	};
 
-	extern CVariableFloat joyAxis_deadzone;
+	extern CVariable joyAxis_deadzone;
 	static float joyAxis[MAX_TRIGGER_AXIS];
 
 	struct ActBinding {

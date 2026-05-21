@@ -1,8 +1,7 @@
 widget root {
 	position	0, 0
 	size		640, 480
-	alignment	1, 1
-	graphicDef canvas {
+	graphic	canvas {
 		size	640, 480
 		imageId	0
 	}
@@ -33,47 +32,47 @@ widget root {
 		displayCount	4
 		viewOrientation	0
 		backgroundColor	20, 45, 210, 192
-		textbutton newGameButton {
+		textButton newGameButton {
 			position	0, 0
 			size		192, 48
 			textHAlign	1
 			textVAlign	1
 			palette		0
-			clickable	false
+			clickable	0
 			font		"logotypegothicregular.ttf"
 			fontSize	24
 			text	"New Game"
 		}
-		textbutton continueButton {
+		textButton continueButton {
 			position	0, 48
 			size		192, 48
 			textHAlign	1
 			textVAlign	1
 			palette		0
-			clickable	false
+			clickable	0
 			font		"logotypegothicregular.ttf"
 			fontSize	24
 			text		"Continue"
 		}
-		textbutton optionsButton {
+		textButton optionsButton {
 			position	0, 96
 			size		192, 48
 			textHAlign	1
 			textVAlign	1
 			palette		0
-			clickable	true
+			clickable	1
 			font		"logotypegothicregular.ttf"
 			fontSize	24
 			text		"Options"
 		}
-		textbutton quitButton {
+		textButton quitButton {
 			position	0, 144
 			size		192, 48
 			textHAlign	1
 			textVAlign	1
 			palette		0
-			clickable	true
-			font		"logogothictyperegular.ttf"
+			clickable	1
+			font		"logotypegothicregular.ttf"
 			fontSize	24
 			text		"Quit"
 		}

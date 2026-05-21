@@ -31,7 +31,7 @@ namespace Arboria {
 			void setFont(Font* _font);
 
 			bool parseInternalValue(const char* _name, Lexer* src) override;
-			void parseFont(Lexer* src, Font* out);
+			void parseFont(Lexer* src);
 	};
 }
 

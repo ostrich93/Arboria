@@ -16,7 +16,7 @@ namespace Arboria {
 		using const_reference = typename Container::const_reference;
 
 		Queue() : Queue(Container()) {}
-		explicit Queue(const Queue& rhs) : c(rhs) {}
+		explicit Queue(const Container& rhs) : c(rhs) {}
 
 		void push(const value_type& v) { c.push_back(v); }
 		void pop() { c.pop_front(); }
@@ -27,7 +27,7 @@ namespace Arboria {
 
 		bool isEmpty() const noexcept { return c.isEmpty(); }
 		int count() const noexcept { return c.count(); }
-		void clear() const noexcept { c.clear(); }
+		void clear() noexcept { c.clear(); }
 	};
 }
 

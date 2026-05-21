@@ -19,6 +19,10 @@ namespace Arboria {
 		LEXER_ONLYSTRINGS = 1 << 8
 	};
 
+	struct PunctuationEntry {
+		const char* p;
+	};
+
 	class Token;
 	class Lexer {
 		public:

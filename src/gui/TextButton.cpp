@@ -12,7 +12,8 @@ namespace Arboria {
 	textHAlign(HorizontalAlignment::HOR_CENTER), textVAlign(VerticalAlignment::VERT_CENTER), cachedSurface(nullptr) {
 		clickable = true;
 		label = new Label(gui, txt, font);
-		label->setPalette(font->palette);
+		if (font)
+			label->setPalette(font->palette);
 	}
 
 	TextButton::~TextButton() = default;

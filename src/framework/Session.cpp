@@ -17,6 +17,7 @@ namespace Arboria {
 		mainMenu = NULL;
 		guiActive = NULL;
 		lastInputDevice = 0;
+		activeScene = 0;
 	}
 
 	void Session::init() {

@@ -109,6 +109,8 @@ namespace Arboria {
 	inline void Token::appendDirty(const char c) {
 		ensureAllocated(m_data->len + 2, true);
 		m_data->data[m_data->len] = c;
+		m_data->len++;
+		m_data->data[m_data->len] = '\0';
 	}
 }
 

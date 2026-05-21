@@ -88,6 +88,15 @@ namespace Arboria {
 		}
 	}
 
+	Widget* Widget::getChild(int index)
+	{
+		if (index < 0 || index > children.getLength()) {
+			Engine::printError("Widget::getChild: index out of bounds");
+			return nullptr;
+		}
+		return children[index];
+	}
+
 	Widget* Widget::getFocusedChild()
 	{
 		if (flags & WIDGET_ROOT)
@@ -142,12 +151,7 @@ namespace Arboria {
 			Framebuffer* fbo = dynamic_cast<Framebuffer*>(renderer->getCurrentSurface()->renderData);
 			renderDefaultSurface = fbo->fbo_id == 0;
 		}
-		if (enabled) {
 			renderer->draw(surface, Vector2<float>(position.x, position.y), renderDefaultSurface);
-		}
-		else {
-			renderer->drawTinted(surface, Vector2<float>(position.x, position.y), Color{ 255, 255,255,128 }, renderDefaultSurface);
-		}
 	}
 
 	void Widget::preRender()
@@ -180,7 +184,7 @@ namespace Arboria {
 		Token token, token2, token3;
 
 		src->expectTokenType(TOKENTYPE_NAME, 0, &token);
-		name = token;
+		name = token.c_str();
 
 		src->expectTokenString("{");
 		src->expectAnyToken(&token);
@@ -242,7 +246,14 @@ namespace Arboria {
 				parseAlignment(src, val, hal);
 				align(hal, val);
 			}
+			if (!src->readToken(&token)) {
+				Engine::printError("Widget::parse: Unexpected end of file");
+				ret = false;
+				break;
+			}
 		}
+
+		return ret;
 	}
 
 	bool Widget::parseInternalValue(const char* _name, Lexer* src)
@@ -353,6 +364,10 @@ namespace Arboria {
 		Token tok;
 		src->readToken(&tok);
 		out1 = (VerticalAlignment)atoi(tok);
+		if (!src->expectTokenString(",")) { //if horizontal alignment is NOT specified, go with default, otherwise, read another token and get the result.
+			out2 = HorizontalAlignment::HOR_LEFT;
+			return;
+		}
 		src->readToken(&tok);
 		out2 = (HorizontalAlignment)atoi(tok);
 	}
@@ -396,7 +411,7 @@ namespace Arboria {
 
 		int c = children.getLength();
 		while (c > 0) {
-			Widget* child = children[c];
+			Widget* child = children[c--];
 			if (child->isVisible() && child->containsPos(gui->getCursorX(), gui->getCursorY())) {
 				child->hovered = true;
 				child->routeCursorCoordinates();
@@ -438,10 +453,18 @@ namespace Arboria {
 	}
 
 	void Widget::align(HorizontalAlignment _halign) {
+		if (!parent) {
+			position.x = this->align(_halign, 0, size.x);
+			return;
+		}
 		position.x = this->align(_halign, parent->size.x, size.x);
 	}
 
 	void Widget::align(VerticalAlignment _valign) {
+		if (!parent) {
+			position.y = this->align(_valign, 0, size.y);
+			return;
+		}
 		position.y = this->align(_valign, parent->size.y, size.y);
 	}
 

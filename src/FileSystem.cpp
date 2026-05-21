@@ -87,6 +87,13 @@ namespace Arboria {
 			exit(PHYSFS_getLastErrorCode());
 		}
 
+		temp[0] = '\0';
+		strcpy(temp, output);
+		strcat(temp, "guis" DIR_SEPARATOR_STR);
+		if (!PHYSFS_mount(temp, NULL, 1)) {
+			exit(PHYSFS_getLastErrorCode());
+		}
+
 		Mem_Free(buildDir);
 		Mem_Free(srcDir);
 		return 1;
