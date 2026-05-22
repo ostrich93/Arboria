@@ -411,7 +411,7 @@ namespace Arboria {
 
 		int c = children.getLength();
 		while (c > 0) {
-			Widget* child = children[c--];
+			Widget* child = children[--c];
 			if (child->isVisible() && child->containsPos(gui->getCursorX(), gui->getCursorY())) {
 				child->hovered = true;
 				child->routeCursorCoordinates();
@@ -485,7 +485,7 @@ namespace Arboria {
 
 	void Widget::addCallback(int actionType, windowCallback callback)
 	{
-		if (actionType > 0) {
+		if (actionType >= 0) {
 			callbacks[actionType] = callback;
 		}
 	}

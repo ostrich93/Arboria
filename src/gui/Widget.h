@@ -28,7 +28,7 @@ namespace Arboria {
 		int lastTimeRun;
 		bool clickable;
 		bool visible;
-		windowCallback callbacks[12]{ NULL };
+		windowCallback callbacks[16]{ NULL };
 		
 		Color backgroundColor;
 		Color foregroundColor;

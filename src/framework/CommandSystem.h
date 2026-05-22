@@ -22,7 +22,10 @@ namespace Arboria {
 	public:
 		CommandSystem() {};
 		~CommandSystem() = default;
-		const char* getCommand() { return commandQueue.front(); }
+		const char* getCommand() {
+			if (commandQueue.isEmpty()) return NULL;
+			return commandQueue.front();
+		}
 		void pushCommand(char* cmd) { commandQueue.push(cmd); }
 		void popCommand() { commandQueue.pop(); }
 		void clearCommandQueue() { commandQueue.clear(); }
