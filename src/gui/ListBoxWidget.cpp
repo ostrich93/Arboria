@@ -1,4 +1,5 @@
 #include "ListBoxWidget.h"
+#include "Window.h"
 #include "../renderer/Renderer.h"
 #include "../framework/InputManager.h"
 #include "../framework/Lexer.h"
@@ -30,6 +31,10 @@ namespace Arboria
 						indexOffset = Math::iMax(indexOffset - 1, 0);
 						children[indexOffset]->setVisibility(true);
 					}
+					if (cursor != newCursor) {
+						gui->setCursor((int)(children[newCursor]->getActualPosition().x + (children[newCursor]->size.x) / 2),
+							(int)(children[newCursor]->getActualPosition().y + (children[newCursor]->size.y) / 2));
+					}
 					cursor = newCursor;
 					hovered = children[cursor];
 					break;
@@ -42,6 +47,10 @@ namespace Arboria
 						scrollbar->scrollNext();
 						indexOffset = Math::iMin(indexOffset + 1, itemCount - displayCount);
 						children[(displayCount - 1) + indexOffset]->setVisibility(true);
+					}
+					if (cursor != newCursor) {
+						gui->setCursor((int)(children[newCursor]->getActualPosition().x + (children[newCursor]->size.x) / 2),
+							(int)(children[newCursor]->getActualPosition().y + (children[newCursor]->size.y) / 2));
 					}
 					cursor = newCursor;
 					hovered = children[cursor];
@@ -56,7 +65,10 @@ namespace Arboria
 						indexOffset = Math::iMax(indexOffset - 1, 0);
 						children[indexOffset]->setVisibility(true);
 					}
-					
+					if (cursor != newCursor) {
+						gui->setCursor((int)(children[newCursor]->getActualPosition().x + (children[newCursor]->size.x) / 2),
+							(int)(children[newCursor]->getActualPosition().y + (children[newCursor]->size.y) / 2));
+					}
 					cursor = newCursor;
 					hovered = children[cursor];
 					break;
@@ -69,6 +81,10 @@ namespace Arboria
 						scrollbar->scrollNext();
 						indexOffset = Math::iMin(indexOffset + 1, itemCount - displayCount);
 						children[(displayCount - 1) + indexOffset]->setVisibility(true);
+					}
+					if (cursor != newCursor) {
+						gui->setCursor((int)(children[newCursor]->getActualPosition().x + (children[newCursor]->size.x) / 2),
+							(int)(children[newCursor]->getActualPosition().y + (children[newCursor]->size.y) / 2));
 					}
 					cursor = newCursor;
 					hovered = children[cursor];
@@ -117,7 +133,7 @@ namespace Arboria
 					controlOffset += child->size.y + itemSpacing;
 					break;
 				case Orientation::HORIZONTAL:
-					controlOffset += child->size.x - scrollOffset;
+					child->position.x = controlOffset - scrollOffset;
 					controlOffset += child->size.x + itemSpacing;
 					break;
 				default:

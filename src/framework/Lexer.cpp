@@ -142,7 +142,7 @@ namespace Arboria {
 
 		if (tokenAvailable) {
 			tokenAvailable = false;
-			*token = token;
+			*token = currentToken;
 			return true;
 		}
 

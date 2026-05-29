@@ -1,5 +1,6 @@
 #include "Session.h"
 #include "../game/scenes/MainMenu.h"
+#include "../game/scenes/OptionsMenu.h"
 #include "../gui/Window.h"
 #include "CommandSystem.h"
 #include "InputManager.h"
@@ -22,6 +23,7 @@ namespace Arboria {
 
 	void Session::init() {
 		mainMenu = dynamic_cast<MainMenu*>(guiManager->findWindow(String{"mainmenu.gui"}, true, false));
+		optionsMenu = dynamic_cast<OptionsMenu*>(guiManager->findWindow(String{"optionsmenu.gui"}, true, false));
 		guiActive = NULL;
 		activeScene = 0;
 	}

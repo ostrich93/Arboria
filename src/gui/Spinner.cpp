@@ -80,13 +80,25 @@ namespace Arboria {
 		displayLabel->setText(options[idx].optionName);
 	}
 
+	void Spinner::insertOption(const char* optName, void* _data)
+	{
+		options.insert({ optName, _data });
+	}
+
 	void Spinner::setOption(int idx, const char* optName, void* _data)
 	{
 		if (idx >= options.getLength()) {
 			Engine::printError("Spinner::setOption: %i index out of bounds", idx);
 			return;
 		}
-		options.insert({ optName, _data }, idx);
+		options[idx] = { optName, _data };
+	}
+
+	bool Spinner::parse(Lexer* src, bool rebuild)
+	{
+		bool ret = Widget::parse(src, rebuild);
+		rightArrow->position.x = size.x - 32;
+		return ret;
 	}
 
 	//
@@ -100,14 +112,19 @@ namespace Arboria {
 			if (displayLabel == NULL) {
 				displayLabel = new Label(gui);
 				displayLabel->size = size - 64;
-				displayLabel->align(HorizontalAlignment::HOR_CENTER);
+				//displayLabel->setDirty();
 			}
-			parseFont(src, displayLabel->getFont());
+			parseFont(src);
+			displayLabel->setParent(this);
+			displayLabel->halign = HorizontalAlignment::HOR_CENTER;
+			displayLabel->valign = VerticalAlignment::VERT_CENTER;
+			displayLabel->align(HorizontalAlignment::HOR_CENTER);
+			displayLabel->setVisibility(true);
 		}
 		return ret;
 	}
 
-	void Spinner::parseFont(Lexer* src, Font* out) {
+	void Spinner::parseFont(Lexer* src) {
 		Token tok;
 		int fontSize = 0;
 		Token tok2;
@@ -116,14 +133,15 @@ namespace Arboria {
 			Engine::printError("Could not read the expected font id value");
 			return;
 		}
-		tok2 = tok;
+		tok2 = tok.c_str();
 		src->expectAnyToken(&tok);
-		if (String::iCompare(tok, "fontSize")) {
+		if (String::iCompare(tok, "fontSize") == 0) {
 			src->readToken(&tok);
 			fontSize = atoi(tok);
 		}
 
-		out = resourceManager->loadFont(tok2, fontSize);
+		Font* out = resourceManager->loadFont(tok2, fontSize);
+		displayLabel->setFont(out);
 		return;
 	}
 

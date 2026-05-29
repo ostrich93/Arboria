@@ -34,6 +34,7 @@ namespace Arboria {
 		}
 
 		dispatchCommand(guiActive, command);
+		commandSystem->popCommand();
 	}
 
 	bool Session::lastInputDeviceMatches(const AEvent* e)
@@ -75,16 +76,18 @@ namespace Arboria {
 				return;
 			}
 			if (String::iCompare(command, "options") == 0) {
-				Window* optionsMenu = guiManager->findWindow(String("optionsmenu.gui"), true);
-				if (optionsMenu) {
-					guiActive = optionsMenu;
-					ListBoxWidget* tabList = guiActive->getRoot()->findWidget<ListBoxWidget>("tabbedList");
-					if (tabList) {
-						guiActive->getRoot()->setVisibility(true);
-						guiActive->getRoot()->setFocus(tabList);
-						return;
-					}
+				if (!optionsMenu)
+					optionsMenu = dynamic_cast<OptionsMenu*>(guiManager->findWindow(String("optionsmenu.gui"), true));
+				
+				guiActive = optionsMenu;
+				ListBoxWidget* tabList = guiActive->getRoot()->findWidget<ListBoxWidget>("tabbedList");
+				if (tabList) {
+					guiActive->setCursor(tabList->getActualPosition().x, tabList->getActualPosition().y);
+					guiActive->getRoot()->setVisibility(true);
+					guiActive->getRoot()->setFocus(tabList);
+					return;
 				}
+				
 			}
 			if (handleOptionsMenuCommands(commandArgs, icmd)) {
 				continue;

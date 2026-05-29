@@ -8,11 +8,13 @@ namespace Arboria {
 	class AEvent;
 	class Window;
 	class MainMenu;
+	class OptionsMenu;
 
 	class Session {
 		private:
 			Window* guiActive;
 			MainMenu* mainMenu;
+			OptionsMenu* optionsMenu;
 			int activeScene;
 			int lastInputDevice; // used to keep track of the type of the previous user input
 			void handleMainMenuCommands(Window* gui, const char* command);

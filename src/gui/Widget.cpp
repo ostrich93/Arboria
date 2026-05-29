@@ -267,7 +267,7 @@ namespace Arboria {
 			return true;
 		}
 		if (String::iCompare(_name, "backgroundColor") == 0) {
-			parseColor(src, selectColor);
+			parseColor(src, backgroundColor);
 			return true;
 		}
 		if (String::iCompare(_name, "foregroundColor") == 0) {
@@ -303,7 +303,7 @@ namespace Arboria {
 			return true;
 		}
 		if (String::iCompare(_name, "palette") == 0) {
-			parsePalette(src, palette);
+			parsePalette(src);
 			return true;
 		}
 		return false;
@@ -349,14 +349,14 @@ namespace Arboria {
 			out = tok;
 	}
 
-	void Widget::parsePalette(Lexer* src, Palette* out)
+	void Widget::parsePalette(Lexer* src)
 	{
 		Token tok;
 		if (!src->expectTokenType(TOKENTYPE_NUMBER, 0, &tok)) {
 			Engine::printError("Could not read the expected palette id value");
 			return;
 		}
-		out = resourceManager->loadPalette(tok.getUnsignedIntegerValue());
+		palette = resourceManager->loadPalette(tok.getUnsignedIntegerValue());
 	}
 
 	void Widget::parseAlignment(Lexer* src, VerticalAlignment& out1, HorizontalAlignment& out2)

@@ -67,11 +67,16 @@ namespace Arboria {
 		tabbedList = root->findWidget<ListBoxWidget>("tabbedList");
 		tabbedWindows[0] = root->findWidget<Widget>("displayScreen");
 		tabbedWindows[1] = root->findWidget<Widget>("inputScreen");
-		Spinner* resOptionSpinner = root->findWidget<Spinner>("resolutionOptions");
+
+		Widget* resolutionWindow = tabbedWindows[0]->findWidget<ListBoxWidget>("displayOptions")->getChild(0);
+		Spinner* resOptionSpinner = resolutionWindow->findWidget<Spinner>("resolutionOptions");
 		if (!resOptionSpinner)
 			return false;
 
-		Spinner* vSyncSpinner = root->findWidget<Spinner>("vsyncSpinner");
+		setCursor(tabbedList->getChild(0)->position.x, tabbedList->getChild(0)->position.y);
+
+		Widget* vSyncRow = tabbedWindows[0]->findWidget<ListBoxWidget>("displayOptions")->getChild(1);
+		Spinner* vSyncSpinner = vSyncRow->findWidget<Spinner>("vsyncSpinner");
 		if (!vSyncSpinner)
 			return false;
 
@@ -85,41 +90,44 @@ namespace Arboria {
 		tabbedList->addCallback(ACTION_LEFTARROW, handleSelectedTabChange);
 		tabbedList->addCallback(ACTION_RIGHTARROW, handleSelectedTabChange);
 
-		ListBoxWidget* displayOptions = root->findWidget<ListBoxWidget>("displayOptions");
+		ListBoxWidget* displayOptions = tabbedWindows[0]->findWidget<ListBoxWidget>("displayOptions");
 		displayOptions->addCallback(ACTION_CANCEL, handleReturnToTabList);
-		ListBoxWidget* bindingOptions = root->findWidget<ListBoxWidget>("bindingOptions");
+		ListBoxWidget* bindingOptions = tabbedWindows[1]->findWidget<ListBoxWidget>("bindingOptions");
 		bindingOptions->addCallback(ACTION_CANCEL, handleReturnToTabList);
 
-		TextButton* applyButton = root->findWidget<TextButton>("applyButton");
+		Widget* applyRow = displayOptions->findWidget<Widget>("applyRow");
+		TextButton* applyButton = applyRow->findWidget<TextButton>("applyButton");
 		applyButton->addCallback(ACTION_CONFIRM, handleApplyDisplayChanges);
-		TextButton* defaultSettingsButton = root->findWidget<TextButton>("defaultDisplayButton");
+		Widget* restoreDisplayRow = displayOptions->findWidget<Widget>("restoreDisplayRow");
+		TextButton* defaultSettingsButton = restoreDisplayRow->findWidget<TextButton>("defaultDisplayButton");
 		defaultSettingsButton->addCallback(ACTION_CONFIRM, handleRestoreDefaultDisplaySettings);
 
-		Widget* confirmRow = root->findWidget<Widget>("confirmRow");
+		Widget* confirmRow = bindingOptions->findWidget<Widget>("confirmRow");
 		confirmRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_CONFIRM), inputManager->getGamepadButtonFromAction(ACTION_CONFIRM), ACTION_CONFIRM });
 		confirmRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 
-		Widget* cancelRow = root->findWidget<Widget>("cancelRow");
+		Widget* cancelRow = bindingOptions->findWidget<Widget>("cancelRow");
 		cancelRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_CANCEL), inputManager->getGamepadButtonFromAction(ACTION_CANCEL), ACTION_CANCEL });
 		cancelRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 
-		Widget* unitMenuRow = root->findWidget<Widget>("unitMenuRow");
+		Widget* unitMenuRow = bindingOptions->findWidget<Widget>("unitMenuRow");
 		unitMenuRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_TOGGLE_DISPLAY), inputManager->getGamepadButtonFromAction(ACTION_TOGGLE_DISPLAY), ACTION_TOGGLE_DISPLAY });
 		unitMenuRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 
-		Widget* helpRow = root->findWidget<Widget>("helpRow");
+		Widget* helpRow = bindingOptions->findWidget<Widget>("helpRow");
 		helpRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_HELP), inputManager->getGamepadButtonFromAction(ACTION_HELP), ACTION_HELP });
 		helpRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 		
-		Widget* lShiftRow = root->findWidget<Widget>("leftShiftRow");
+		Widget* lShiftRow = bindingOptions->findWidget<Widget>("leftShiftRow");
 		lShiftRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_L_TRIGGER_1), inputManager->getGamepadButtonFromAction(ACTION_L_TRIGGER_1), ACTION_L_TRIGGER_1 });
 		lShiftRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 		
-		Widget* rShiftRow = root->findWidget<Widget>("rightShiftRow");
+		Widget* rShiftRow = bindingOptions->findWidget<Widget>("rightShiftRow");
 		rShiftRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_R_TRIGGER_1), inputManager->getGamepadButtonFromAction(ACTION_R_TRIGGER_1), ACTION_R_TRIGGER_1 });
 		rShiftRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 		
-		TextButton* restoreDefaultBindingsButton = root->findWidget<TextButton>("restoreDefaultBindingsButton");
+		Widget* restoreDefaultBindingsRow = bindingOptions->findWidget<Widget>("restoreDefaultBindingsRow");
+		TextButton* restoreDefaultBindingsButton = restoreDefaultBindingsRow->findWidget<TextButton>("restoreDefaultBindingsButton");
 		restoreDefaultBindingsButton->addCallback(ACTION_CONFIRM, handleRestoreDefaultBindings);
 
 		return true;
@@ -127,25 +135,26 @@ namespace Arboria {
 
 	bool OptionsMenu::parseBindings()
 	{
-		GraphicButton* confirmOption = root->findWidget<GraphicButton>("confirmOption");
+		ListBoxWidget* bindingOptions = tabbedWindows[1]->findWidget<ListBoxWidget>("bindingOptions");
+		GraphicButton* confirmOption = bindingOptions->getChild(0)->findWidget<GraphicButton>("confirmOption");
 		if (!confirmOption)
 			return false;
-		GraphicButton* cancelOption = root->findWidget<GraphicButton>("cancelOption");
+		GraphicButton* cancelOption = bindingOptions->getChild(1)->findWidget<GraphicButton>("cancelOption");
 		if (!cancelOption)
 			return false;
-		GraphicButton* unitMenuOption = root->findWidget<GraphicButton>("unitMenuOption");
+		GraphicButton* unitMenuOption = bindingOptions->getChild(2)->findWidget<GraphicButton>("unitMenuOption");
 		if (!unitMenuOption)
 			return false;
-		GraphicButton* helpOption = root->findWidget<GraphicButton>("helpOption");
+		GraphicButton* helpOption = bindingOptions->getChild(3)->findWidget<GraphicButton>("helpOption");
 		if (!helpOption)
 			return false;
-		GraphicButton* leftShiftOption = root->findWidget<GraphicButton>("leftShiftOption");
+		GraphicButton* leftShiftOption = bindingOptions->getChild(4)->findWidget<GraphicButton>("leftShiftOption");
 		if (!leftShiftOption)
 			return false;
-		GraphicButton* rightShiftOption = root->findWidget<GraphicButton>("rightShiftOption");
+		GraphicButton* rightShiftOption = bindingOptions->getChild(5)->findWidget<GraphicButton>("rightShiftOption");
 		if (!rightShiftOption)
 			return false;
-		TextButton* defaultBindingsButton = root->findWidget<TextButton>("restoreDefaultBindingsButton");
+		TextButton* defaultBindingsButton = bindingOptions->getChild(6)->findWidget<TextButton>("restoreDefaultBindingsButton");
 		if (!defaultBindingsButton)
 			return false;
 
@@ -170,7 +179,7 @@ namespace Arboria {
 
 	void OptionsMenu::onEvent(AEvent* e) {
 		if (session->isBindWait) {
-			root->findWidget<ListBoxWidget>("bindingOptions")->getSelected()->executeCallback(ACTION_CONFIRM, e);
+			tabbedWindows[1]->findWidget<ListBoxWidget>("bindingOptions")->getSelected()->executeCallback(ACTION_CONFIRM, e);
 		}
 
 		Window::onEvent(e);
@@ -179,7 +188,7 @@ namespace Arboria {
 	void OptionsMenu::resetOptions()
 	{
 		ResolutionOptions actualResolution{ "", systemConfig->windowViewportX->getInteger(), systemConfig->windowViewportY->getInteger() };
-		Spinner* resolutionSpinner = root->findWidget<Spinner>("resolutionOptions");
+		Spinner* resolutionSpinner = tabbedWindows[0]->getChild(0)->findWidget<Spinner>("resolutionOptions");
 		List<SpinnerOption>& spinnerOptions = resolutionSpinner->getOptions();
 
 		for (int i = 0; i < spinnerOptions.getLength(); i++) {
@@ -190,7 +199,7 @@ namespace Arboria {
 			}
 		}
 
-		Spinner* vsyncSpinner = root->findWidget<Spinner>("vsyncSpinner");
+		Spinner* vsyncSpinner = tabbedWindows[0]->getChild(0)->findWidget<Spinner>("vsyncSpinner");
 		List<SpinnerOption>& vsyncOptions = vsyncSpinner->getOptions();
 		for (int j = 0; j < vsyncOptions.getLength(); j++) {
 			bool vsyncData = *(bool*)vsyncOptions[j].optionData;
@@ -203,7 +212,7 @@ namespace Arboria {
 
 	void OptionsMenu::restoreDefaultSettings() {
 		ResolutionOptions defaultResolution{ "", systemConfig->defaultWindowViewportX->getInteger(), systemConfig->defaultFullscreenWindowViewportY->getInteger() };
-		Spinner* resolutionSpinner = root->findWidget<Spinner>("resolutionOptions");
+		Spinner* resolutionSpinner = tabbedWindows[0]->getChild(0)->findWidget<Spinner>("resolutionOptions");
 		List<SpinnerOption>& spinnerOptions = resolutionSpinner->getOptions();
 
 		for (int i = 0; i < spinnerOptions.getLength(); i++) {
@@ -214,7 +223,7 @@ namespace Arboria {
 			}
 		}
 
-		Spinner* vsyncSpinner = root->findWidget<Spinner>("vsyncSpinner");
+		Spinner* vsyncSpinner = tabbedWindows[0]->getChild(1)->findWidget<Spinner>("vsyncSpinner");
 		List<SpinnerOption>& vsyncOptions = vsyncSpinner->getOptions();
 		for (int j = 0; j < vsyncOptions.getLength(); j++) {
 			bool vsyncData = *(bool*)vsyncOptions[j].optionData;
@@ -228,7 +237,9 @@ namespace Arboria {
 
 	void OptionsMenu::restoreDefaultBindings()
 	{
-		Widget* confirmRow = root->findWidget<Widget>("confirmRow");
+		ListBoxWidget* bindingOptions = tabbedWindows[1]->findWidget<ListBoxWidget>("bindingOptions");
+		
+		Widget* confirmRow = bindingOptions->findWidget<Widget>("confirmRow");
 		int confirmKey = inputManager->getKeyFromAction(ACTION_CONFIRM);
 		int confirmButton = inputManager->getGamepadButtonFromAction(ACTION_CONFIRM);
 		BindingData* confirmBind = (BindingData*)confirmRow->getData();
@@ -238,7 +249,7 @@ namespace Arboria {
 		confirmOption->setImage(resourceManager->loadTexture(confirmKey + 3));
 		confirmOption->setDirty();
 
-		Widget* cancelRow = root->findWidget<Widget>("cancelRow");
+		Widget* cancelRow = bindingOptions->findWidget<Widget>("cancelRow");
 		int cancelKey = inputManager->getKeyFromAction(ACTION_CANCEL);
 		int cancelButton = inputManager->getGamepadButtonFromAction(ACTION_CANCEL);
 		BindingData* cancelBind = (BindingData*)cancelRow->getData();
@@ -248,7 +259,7 @@ namespace Arboria {
 		cancelOption->setImage(resourceManager->loadTexture(cancelKey + 3));
 		cancelOption->setDirty();
 
-		Widget* unitMenuRow = root->findWidget<Widget>("unitMenuRow");
+		Widget* unitMenuRow = bindingOptions->findWidget<Widget>("unitMenuRow");
 		int unitMenuKey = inputManager->getKeyFromAction(ACTION_TOGGLE_DISPLAY);
 		int unitMenuButton = inputManager->getGamepadButtonFromAction(ACTION_TOGGLE_DISPLAY);
 		BindingData* unitMenuBind = (BindingData*)unitMenuRow->getData();
@@ -258,7 +269,7 @@ namespace Arboria {
 		unitMenuOption->setImage(resourceManager->loadTexture(unitMenuKey + 3));
 		unitMenuOption->setDirty();
 
-		Widget* helpRow = root->findWidget<Widget>("helpRow");
+		Widget* helpRow = bindingOptions->findWidget<Widget>("helpRow");
 		int helpKey = inputManager->getKeyFromAction(ACTION_HELP);
 		int helpButton = inputManager->getGamepadButtonFromAction(ACTION_HELP);
 		BindingData* helpBind = (BindingData*)helpRow->getData();
@@ -268,7 +279,7 @@ namespace Arboria {
 		helpOption->setImage(resourceManager->loadTexture(helpKey + 3));
 		helpOption->setDirty();
 
-		Widget* leftShiftRow = root->findWidget<Widget>("leftShiftRow");
+		Widget* leftShiftRow = bindingOptions->findWidget<Widget>("leftShiftRow");
 		int leftShiftKey = inputManager->getKeyFromAction(ACTION_L_TRIGGER_1);
 		int leftShiftButton = inputManager->getGamepadButtonFromAction(ACTION_L_TRIGGER_1);
 		BindingData* leftShiftBind = (BindingData*)leftShiftRow->getData();
@@ -278,7 +289,7 @@ namespace Arboria {
 		leftShiftOption->setImage(resourceManager->loadTexture(leftShiftKey + 3));
 		leftShiftOption->setDirty();
 
-		Widget* rightShiftRow = root->findWidget<Widget>("rightShiftRow");
+		Widget* rightShiftRow = bindingOptions->findWidget<Widget>("rightShiftRow");
 		int rightShiftKey = inputManager->getKeyFromAction(ACTION_R_TRIGGER_1);
 		int rightShiftButton = inputManager->getGamepadButtonFromAction(ACTION_R_TRIGGER_1);
 		BindingData* rightShiftBind = (BindingData*)rightShiftRow->getData();
@@ -288,7 +299,6 @@ namespace Arboria {
 		rightShiftOption->setImage(resourceManager->loadTexture(rightShiftKey + 3));
 		rightShiftOption->setDirty();
 
-		ListBoxWidget* bindingOptions = root->findWidget<ListBoxWidget>("bindingOptions");
 		bindingOptions->setSelected(NULL);
 	}
 
@@ -387,6 +397,10 @@ namespace Arboria {
 	{
 		ListBoxWidget* tabbedList = w->getGui()->getRoot()->findWidget<ListBoxWidget>("tabbedList");
 		w->getGui()->getRoot()->setFocus(tabbedList);
+		if (w->getName().compare("displayOptions"))
+			w->getGui()->setCursor(tabbedList->getChild(0)->position.x, tabbedList->getChild(0)->position.y);
+		else
+			w->getGui()->setCursor(tabbedList->getChild(1)->position.x, tabbedList->getChild(1)->position.y);
 		return true;
 	}
 
@@ -403,7 +417,9 @@ namespace Arboria {
 		inputManager->restoreDefaults();
 		Window* optMenu = w->getGui();
 		if (optMenu) {
-			Widget* confirmRow = optMenu->getRoot()->findWidget<Widget>("confirmRow");
+			Widget* inputScreen = optMenu->getRoot()->findWidget<Widget>("inputScreen");
+			ListBoxWidget* bindingOptions = inputScreen->findWidget<ListBoxWidget>("bindingOptions");
+			Widget* confirmRow = bindingOptions->getChild(0);
 			int confirmKey = inputManager->getKeyFromAction(ACTION_CONFIRM);
 			int confirmButton = inputManager->getGamepadButtonFromAction(ACTION_CONFIRM);
 			BindingData* confirmBind = (BindingData*)confirmRow->getData();
@@ -413,7 +429,7 @@ namespace Arboria {
 			confirmOption->setImage(resourceManager->loadTexture(confirmKey + 3));
 			confirmOption->setDirty();
 
-			Widget* cancelRow = optMenu->getRoot()->findWidget<Widget>("cancelRow");
+			Widget* cancelRow = bindingOptions->getChild(1);
 			int cancelKey = inputManager->getKeyFromAction(ACTION_CANCEL);
 			int cancelButton = inputManager->getGamepadButtonFromAction(ACTION_CANCEL);
 			BindingData* cancelBind = (BindingData*)cancelRow->getData();
@@ -423,7 +439,7 @@ namespace Arboria {
 			cancelOption->setImage(resourceManager->loadTexture(cancelKey + 3));
 			cancelOption->setDirty();
 
-			Widget* unitMenuRow = optMenu->getRoot()->findWidget<Widget>("unitMenuRow");
+			Widget* unitMenuRow = bindingOptions->getChild(2);
 			int unitMenuKey = inputManager->getKeyFromAction(ACTION_TOGGLE_DISPLAY);
 			int unitMenuButton = inputManager->getGamepadButtonFromAction(ACTION_TOGGLE_DISPLAY);
 			BindingData* unitMenuBind = (BindingData*)unitMenuRow->getData();
@@ -433,7 +449,7 @@ namespace Arboria {
 			unitMenuOption->setImage(resourceManager->loadTexture(unitMenuKey + 3));
 			unitMenuOption->setDirty();
 
-			Widget* helpRow = optMenu->getRoot()->findWidget<Widget>("helpRow");
+			Widget* helpRow = bindingOptions->getChild(3);
 			int helpKey = inputManager->getKeyFromAction(ACTION_HELP);
 			int helpButton = inputManager->getGamepadButtonFromAction(ACTION_HELP);
 			BindingData* helpBind = (BindingData*)helpRow->getData();
@@ -443,7 +459,7 @@ namespace Arboria {
 			helpOption->setImage(resourceManager->loadTexture(helpKey + 3));
 			helpOption->setDirty();
 
-			Widget* leftShiftRow = optMenu->getRoot()->findWidget<Widget>("leftShiftRow");
+			Widget* leftShiftRow = bindingOptions->getChild(4);
 			int leftShiftKey = inputManager->getKeyFromAction(ACTION_L_TRIGGER_1);
 			int leftShiftButton = inputManager->getGamepadButtonFromAction(ACTION_L_TRIGGER_1);
 			BindingData* leftShiftBind = (BindingData*)leftShiftRow->getData();
@@ -453,7 +469,7 @@ namespace Arboria {
 			leftShiftOption->setImage(resourceManager->loadTexture(leftShiftKey + 3));
 			leftShiftOption->setDirty();
 
-			Widget* rightShiftRow = optMenu->getRoot()->findWidget<Widget>("rightShiftRow");
+			Widget* rightShiftRow = bindingOptions->getChild(5);
 			int rightShiftKey = inputManager->getKeyFromAction(ACTION_R_TRIGGER_1);
 			int rightShiftButton = inputManager->getGamepadButtonFromAction(ACTION_R_TRIGGER_1);
 			BindingData* rightShiftBind = (BindingData*)rightShiftRow->getData();
@@ -463,7 +479,6 @@ namespace Arboria {
 			rightShiftOption->setImage(resourceManager->loadTexture(rightShiftKey + 3));
 			rightShiftOption->setDirty();
 
-			ListBoxWidget* bindingOptions = optMenu->getRoot()->findWidget<ListBoxWidget>("bindingOptions");
 			bindingOptions->setSelected(NULL);
 
 			return true;
@@ -487,19 +502,19 @@ namespace Arboria {
 				if (tok == ";") {
 					if (str2.length()) {
 						str2.stripTrailingWhitespace();
-						spinner->setOption(optIndex, str2.c_str(), (void*)&optionData[optIndex]);
+						spinner->insertOption(str2.c_str(), (void*)&optionData[optIndex]);
 						str2 = "";
 						optIndex++;
 					}
 					continue;
 				}
 				str2 += tok;
-				str2 += " ";
+				//str2 += " ";
 			}
 			spinner->setSelectedOption(spinner->getSelectedIndex());
 			if (str2.length()) {
 				str2.stripTrailingWhitespace();
-				spinner->setOption(optIndex, str2.c_str(), (void*)&optionData[optIndex]);
+				spinner->insertOption(str2.c_str(), (void*)&optionData[optIndex]);
 			}
 		}
 	}

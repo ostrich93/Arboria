@@ -144,13 +144,13 @@ namespace Arboria {
 			return name == other.name;
 		}
 
-		bool parse(Lexer* src, bool rebuild = true);
+		virtual bool parse(Lexer* src, bool rebuild = true);
 		virtual bool parseInternalValue(const char* name, Lexer* src);
 		void parseVect2i(Lexer* src, Vector2<int>& out);
 		void parseVect2f(Lexer* src, Vector2<float>& out);
 		void parseColor(Lexer* src, Color& out);
 		void parseString(Lexer* src, String& out);
-		void parsePalette(Lexer* src, Palette* out);
+		void parsePalette(Lexer* src);
 		void parseAlignment(Lexer* src, VerticalAlignment& out1, HorizontalAlignment& out2);
 		virtual void parseImage(Lexer* src, Image* img);
 		//virtual configureFromFile(const char* fileData);

@@ -45,11 +45,13 @@ namespace Arboria {
 		void setOptionsString(String& val) { optionsString = val; }
 		void setOptionsString(const char* val) { optionsString = val; }
 
+		void insertOption(const char* optName, void* _data);
 		void setOption(int idx, const char* optName, void* _data);
 		List<SpinnerOption>& getOptions() { return options; }
 
+		bool parse(Lexer* src, bool rebuild = true) override;
 		bool parseInternalValue(const char* _name, Lexer* src) override;
-		void parseFont(Lexer* src, Font* out);
+		void parseFont(Lexer* src);
 	};
 
 }
