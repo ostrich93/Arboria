@@ -66,6 +66,8 @@ namespace Arboria {
 			uint8_t getSelectedResolutionIndex() { return selectResolutionIndex; }
 			void setSelectedResolutionIndex(int8_t v) { selectResolutionIndex = v; }
 
+			uint8_t searchForClosestResolutionOption();
+
 			template<typename T>
 			void parseSpinnerOptions(Spinner* spinner, List<T> optionData);
 		protected:

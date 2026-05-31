@@ -147,10 +147,12 @@ namespace Arboria {
 		}
 		if (String::iCompare(cmd, "mainMenu") == 0) {
 			auto optMenu = dynamic_cast<OptionsMenu*>(guiActive);
-			if (optMenu && optMenu->isDisplayChangePending()) {
+			if (optMenu) {
 				optMenu->getRoot()->setVisibility(false);
-				optMenu->resetOptions();
-				optMenu->setDisplayChangePending(false);
+				if (optMenu->isDisplayChangePending()) {
+					optMenu->resetOptions();
+					optMenu->setDisplayChangePending(false);
+				}
 				guiActive = mainMenu;
 				return true;
 			}

@@ -10,6 +10,7 @@
 #include "../../framework/Lexer.h"
 #include "../../framework/Session.h"
 #include "../../framework/SystemCVars.h"
+#include "../../utils/math.h"
 
 namespace Arboria {
 	
@@ -73,7 +74,7 @@ namespace Arboria {
 		if (!resOptionSpinner)
 			return false;
 
-		setCursor(tabbedList->getChild(0)->position.x, tabbedList->getChild(0)->position.y);
+		setCursor(tabbedList->getChild(0)->getActualPosition().x, tabbedList->getChild(0)->getActualPosition().y);
 
 		Widget* vSyncRow = tabbedWindows[0]->findWidget<ListBoxWidget>("displayOptions")->getChild(1);
 		Spinner* vSyncSpinner = vSyncRow->findWidget<Spinner>("vsyncSpinner");
@@ -82,6 +83,15 @@ namespace Arboria {
 
 		parseSpinnerOptions<ResolutionOptions>(resOptionSpinner, resolutionData);
 		parseSpinnerOptions<bool>(vSyncSpinner, vsyncOptionData);
+
+		//set selected Option
+		int actualSelResIdx = searchForClosestResolutionOption();
+		resOptionSpinner->setSelectedOption(actualSelResIdx);
+
+		if (systemConfig->vSync->getBool())
+			vSyncSpinner->setSelectedOption(0);
+		else
+			vSyncSpinner->setSelectedOption(1);
 
 		resOptionSpinner->addCallback(ACTION_CANCEL, returnToDisplayList);
 		vSyncSpinner->addCallback(ACTION_CANCEL, returnToDisplayList);
@@ -300,6 +310,59 @@ namespace Arboria {
 		rightShiftOption->setDirty();
 
 		bindingOptions->setSelected(NULL);
+	}
+
+	uint8_t OptionsMenu::searchForClosestResolutionOption()
+	{
+		if (resolutionData.getLength() == 0) {
+			return -1;
+		}
+		if (resolutionData.getLength() == 1)
+			return 0;
+
+		int lBound = 0;
+		int rBound = resolutionData.getLength();
+		int midpoint = 0;
+		int xScore, yScore = 0;
+		int scoreSum = -1;
+
+		int actualX = systemConfig->windowViewportX->getInteger();
+		int actualY = systemConfig->windowViewportY->getInteger();
+
+		int* scoreSums = (int*)Mem_Alloc(rBound * sizeof(int));
+		int retVal = 0;
+		int retInd = 0;
+
+		while (lBound <= rBound && scoreSum != 0) {
+			midpoint = lBound + Math::ftoi(Math::floor(rBound - lBound) / 2);
+			xScore = resolutionData[midpoint].x - actualX;
+			yScore = resolutionData[midpoint].y - actualY;
+
+			scoreSum = xScore + yScore;
+			scoreSums[midpoint] = scoreSum;
+
+			if (actualX >= resolutionData[midpoint].x)
+				lBound = midpoint;
+			else
+				rBound = midpoint;
+		}
+
+		if (scoreSum == 0) {
+			delete scoreSums;
+			return midpoint;
+		}
+
+		retVal = scoreSums[0];
+
+		for (int a = 0; a < resolutionData.getLength(); a++) {
+			if (abs(0 - scoreSums[a]) <= abs(0 - retVal)) {
+				retVal = scoreSums[a];
+				retInd = a;
+			}
+		}
+
+		delete scoreSums;
+		return retInd;
 	}
 
 	bool handleApplyDisplayChanges(Widget* w, AEvent* ev)

@@ -81,6 +81,7 @@ widget root {
 					font		"logotypegothicregular.ttf"
 					fontSize	24
 					textHAlign	1
+					palette		0
 					options		"On;Off"
 				}
 			}

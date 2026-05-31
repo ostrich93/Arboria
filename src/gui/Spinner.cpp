@@ -82,7 +82,7 @@ namespace Arboria {
 
 	void Spinner::insertOption(const char* optName, void* _data)
 	{
-		options.insert({ optName, _data });
+		options.append({ optName, _data });
 	}
 
 	void Spinner::setOption(int idx, const char* optName, void* _data)
