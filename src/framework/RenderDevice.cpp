@@ -21,16 +21,12 @@ namespace Arboria {
 	}
 	void RenderDevice::initialize()
 	{
-		systemConfig = new SystemConfig();
+		
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS) < 0) {
 			Engine::printError("RenderDevice::Initialize: SDL could not intialize: %s\n", SDL_GetError());
 			_isQuit = true;
 			return;
 		}
-
-		systemConfig->windowViewportX->setInteger(systemConfig->defaultWindowViewportX->getInteger());
-		systemConfig->windowViewportY->setInteger(systemConfig->defaultWindowViewportY->getInteger());
-		systemConfig->windowScale->setFloat(systemConfig->defaultWindowScale->getFloat());
 
 		displayX = systemConfig->windowViewportX->getInteger();
 		displayY = systemConfig->windowViewportY->getInteger();
