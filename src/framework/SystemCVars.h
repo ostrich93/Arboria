@@ -32,6 +32,7 @@ namespace Arboria {
 		SystemConfig();
 		bool initialize();
 		bool updateConfigFile();
+		bool generateInitialUserSettings();
 	};
 
 	extern SystemConfig* systemConfig;

@@ -4,7 +4,7 @@
 
 namespace Arboria {
 	
-	static constexpr const char* configHeader = "[ConfigurationOptions]\\n";
+	static constexpr const char* configHeader = "[ConfigurationOptions]\n";
 
 	SystemConfig* systemConfig = NULL;
 
@@ -50,7 +50,14 @@ namespace Arboria {
 
 	bool SystemConfig::initialize() {
 		void* fileBuffer;
-		int fLength = readFileFromPhysFS("user.ini", &fileBuffer);
+		int fLength = readFileFromPhysFS("usersettings.ini", &fileBuffer);
+		if (fLength < 0) {
+			bool userSettingsGenerated = generateInitialUserSettings();
+			if (!userSettingsGenerated) {
+				return false;
+			}
+			fLength = readFileFromPhysFS("usersettings.ini", &fileBuffer);
+		}
 
 		Lexer src;
 		Token t;
@@ -123,28 +130,54 @@ namespace Arboria {
 	bool SystemConfig::updateConfigFile()
 	{
 		//open user.ini file then save parameters
-		PHYSFS_File* outFile = PHYSFS_openWrite("user.ini");
+		PHYSFS_File* outFile = PHYSFS_openWrite("usersettings.ini");
 
-		PHYSFS_writeBytes(outFile, (void*)configHeader, strlen(configHeader));
+		//PHYSFS_writeBytes(outFile, (void*)configHeader, strlen(configHeader));
 		
 		char str[1024];
 
 		sprintf(str, configHeader);
-		sprintf(str, "WindowViewportX=%d\\n", windowViewportX->getInteger());
-		sprintf(str, "WindowViewportY=%d\\n", windowViewportY->getInteger());
-		sprintf(str, "FullscreenWindowViewportX=%d\\n", fullscreenWindowViewportX->getInteger());
-		sprintf(str, "FullscreenWindowViewportY=%d\\n", fullscreenWindowViewportY->getInteger());
-		sprintf(str, "Gamma=%f\\n", gamma->getFloat());
-		sprintf(str, "Brightness=%f\\n", brightness->getFloat());
-		sprintf(str, "WindowScale=%d\\n", windowScale->getInteger());
-		sprintf(str, "MusicVolume=%f\\n", musicVolume->getFloat());
-		sprintf(str, "SoundVolume=%f\\n", soundVolume->getFloat());
-		sprintf(str, "Latency=%d\\n", latency->getInteger());
-		sprintf(str, "VSync=%d\\n\0", vSync->getInteger());
+		sprintf(str+strlen(str), "WindowViewportX=%d\n", windowViewportX->getInteger());
+		sprintf(str+strlen(str), "WindowViewportY=%d\n", windowViewportY->getInteger());
+		sprintf(str+strlen(str), "FullscreenWindowViewportX=%d\n", fullscreenWindowViewportX->getInteger());
+		sprintf(str+strlen(str), "FullscreenWindowViewportY=%d\n", fullscreenWindowViewportY->getInteger());
+		sprintf(str+strlen(str), "Gamma=%f\n", gamma->getFloat());
+		sprintf(str+strlen(str), "Brightness=%f\n", brightness->getFloat());
+		sprintf(str+strlen(str), "WindowScale=%f\n", windowScale->getFloat());
+		sprintf(str+strlen(str), "MusicVolume=%f\n", musicVolume->getFloat());
+		sprintf(str+strlen(str), "SoundVolume=%f\n", soundVolume->getFloat());
+		sprintf(str+strlen(str), "Latency=%d\n", latency->getInteger());
+		sprintf(str+strlen(str), "VSync=%d\n\0", vSync->getInteger());
 
 		int bytesWritten = PHYSFS_writeBytes(outFile, (void*)str, strlen(str));
 
 		PHYSFS_close(outFile);
+		return bytesWritten > 0;
+	}
+
+	//If user settings is not in the write directory, we call this function to write a fresh one using the default values
+	bool SystemConfig::generateInitialUserSettings()
+	{
+		PHYSFS_File* file = PHYSFS_openWrite("usersettings.ini");
+
+		char str[1024];
+
+		sprintf(str, configHeader);
+		sprintf(str+strlen(str), "WindowViewportX=%d\n", defaultWindowViewportX->getInteger());
+		sprintf(str+strlen(str), "WindowViewportY=%d\n", defaultWindowViewportY->getInteger());
+		sprintf(str+strlen(str), "FullscreenWindowViewportX=%d\n", defaultFullscreenWindowViewportX->getInteger());
+		sprintf(str+strlen(str), "FullscreenWindowViewportY=%d\n", defaultFullscreenWindowViewportY->getInteger());
+		sprintf(str+strlen(str), "Gamma=%f\n", defaultGamma->getFloat());
+		sprintf(str+strlen(str), "Brightness=%f\n", defaultBrightness->getFloat());
+		sprintf(str+strlen(str), "WindowScale=%f\n", defaultWindowScale->getFloat());
+		sprintf(str+strlen(str), "MusicVolume=%f\n", defaultMusicVolume->getFloat());
+		sprintf(str+strlen(str), "SoundVolume=%f\n", defaultSoundVolume->getFloat());
+		sprintf(str+strlen(str), "Latency=%d\n", defaultLatency->getInteger());
+		sprintf(str+strlen(str), "VSync=%d\n\0", defaultVSync->getInteger());
+
+		int bytesWritten = PHYSFS_writeBytes(file, (void*)str, strlen(str));
+
+		PHYSFS_close(file);
 		return bytesWritten > 0;
 	}
 

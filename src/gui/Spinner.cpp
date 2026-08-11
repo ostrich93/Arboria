@@ -61,6 +61,7 @@ namespace Arboria {
 	void Spinner::onRender()
 	{
 		Widget::onRender();
+		
 	}
 
 	void Spinner::run()
@@ -77,7 +78,8 @@ namespace Arboria {
 	{
 		selIndex = idx < 0 ? options.getLength() - 1 : idx % options.getLength();
 		setDirty();
-		displayLabel->setText(options[idx].optionName);
+		//setFlag(WIDGET_TEXTCHANGED);
+		displayLabel->setText(options[selIndex].optionName);
 	}
 
 	void Spinner::insertOption(const char* optName, void* _data)

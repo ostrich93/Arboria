@@ -50,7 +50,9 @@ namespace Arboria {
 		return e->isHandled;
 	}
 
-	void Widget::onRender() {}
+	void Widget::onRender() {
+		renderer->clear(backgroundColor);
+	}
 
 	Widget::Widget() : maxScale({ 1,1 }), name(""), parent(NULL), preRenderFunction(NULL),
 		flags(0), borderSize(0), borderColor({ 0, 0, 0, 0 }), foregroundColor({ 0,0,0,0 }),

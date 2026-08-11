@@ -4,6 +4,10 @@
 #include "framework/String.h"
 #include <physfs.h>
 
+#define ORGANIZATION "Vultan"
+#define APP_NAME "Arboria"
+#define ARCHIVE_EXT "7z"
+
 namespace Arboria {
 	int initializeFileSystem();
 	void freeFileSystem();

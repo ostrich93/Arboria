@@ -17,7 +17,6 @@ namespace Arboria {
 	};
 
 	struct ResolutionOptions {
-		String description;
 		int32_t x;
 		int32_t y;
 	};
@@ -36,9 +35,9 @@ namespace Arboria {
 	class OptionsMenu : public Window {
 		private:
 			ListBoxWidget* tabbedList;
-			Widget* tabbedWindows[2];
-			Widget* currentWindow;
-			Widget* bindWindow;
+			ListBoxWidget* tabbedWindows[2];
+			ListBoxWidget* currentWindow;
+			ListBoxWidget* bindWindow;
 			bool inBindWindow;
 			bool waitingBind; //when changing the key/button bindings
 			uint8_t selectTab;
@@ -69,7 +68,7 @@ namespace Arboria {
 			uint8_t searchForClosestResolutionOption();
 
 			template<typename T>
-			void parseSpinnerOptions(Spinner* spinner, List<T> optionData);
+			void parseSpinnerOptions(Spinner* spinner, const List<T>& optionData);
 		protected:
 			bool compare(const Window& other) const override {
 				if (OptionsMenu* ptr = dynamic_cast<OptionsMenu*>(const_cast<Window*>(&other))) {
@@ -87,6 +86,8 @@ namespace Arboria {
 	bool handleReturnToTabList(Widget* w, AEvent* ev);
 	bool returnToDisplayList(Widget* w, AEvent* ev);
 	bool handleRestoreDefaultBindings(Widget* w, AEvent* ev);
+	bool handleNavigateToDisplayWindow(Widget* w, AEvent* ev);
+	bool handleNavigateToBindingsWindow(Widget* w, AEvent* ev);
 }
 
 #endif

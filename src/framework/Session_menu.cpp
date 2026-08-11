@@ -158,7 +158,7 @@ namespace Arboria {
 			}
 		}
 		if (String::iCompare(cmd, "applyDisplaySettings") == 0) {
-			ListBoxWidget* optionsList = guiActive->getRoot()->findWidget<ListBoxWidget>("displayOptions");
+			ListBoxWidget* optionsList = (ListBoxWidget*)guiActive->getRoot()->getChild(1);
 			if (optionsList) {
 				for (auto& row : optionsList->getChildren()) {
 					if (row->getName() == "resolutionRow") {
@@ -171,8 +171,8 @@ namespace Arboria {
 						renderDevice->resize();
 						continue;
 					}
-					if (row->getName() == "vSyncRow") {
-						Spinner* vSyncOptions = row->findWidget<Spinner>("vSyncSpinner");
+					if (row->getName() == "vsyncRow") {
+						Spinner* vSyncOptions = row->findWidget<Spinner>("vsyncSpinner");
 						bool* vSyncer = static_cast<bool*>(vSyncOptions->getSelectedData());
 						systemConfig->vSync->setBool(*vSyncer);
 						continue;
@@ -194,9 +194,12 @@ namespace Arboria {
 			if (optMenu) {
 				optMenu->restoreDefaultSettings(); //restore cvars to default values in this function
 				optMenu->setDisplayChangePending(false);
-				ListBoxWidget* optionsList = optMenu->getRoot()->findWidget<ListBoxWidget>("displayOptions");
-				optionsList->getSelected()->clearFlag(WIDGET_SELECTED);
-				optionsList->setSelected(nullptr);
+				ListBoxWidget* optionsList = (ListBoxWidget*)optMenu->getRoot()->getChild(1);
+				Widget* selected = optionsList->getSelected();
+				if (selected) {
+					optionsList->getSelected()->clearFlag(WIDGET_SELECTED);
+					optionsList->setSelected(nullptr);
+				}
 				optMenu->getRoot()->setFocus(optionsList);
 				return true;
 			}
@@ -206,9 +209,12 @@ namespace Arboria {
 			if (optMenu) {
 				inputManager->restoreDefaults();
 				optMenu->restoreDefaultBindings();
-				ListBoxWidget* bindingOptions = guiActive->getRoot()->findWidget<ListBoxWidget>("bindingOptions");
-				bindingOptions->getSelected()->clearFlag(WIDGET_SELECTED);
-				bindingOptions->setSelected(nullptr);
+				ListBoxWidget* bindingOptions = guiActive->getRoot()->getChild(1)->findWidget<ListBoxWidget>("bindingOptions");
+				Widget* selected = bindingOptions->getSelected();
+				if (selected) {
+					bindingOptions->getSelected()->clearFlag(WIDGET_SELECTED);
+					bindingOptions->setSelected(nullptr);
+				}
 				optMenu->getRoot()->setFocus(bindingOptions);
 				return true;
 			}

@@ -34,6 +34,10 @@ namespace Arboria {
 			void setSelected(Widget* widget);
 			Widget* getSelected() { return selected; }
 			Widget* getHovered() { return hovered; }
+			void setHovered() { 
+				if (cursor >= 0) 
+					hovered = children[cursor]; 
+			}
 			void setHoverColor(Color newColor) { hoverColor = newColor; }
 			Color getHoverColor() const { return hoverColor; }
 			Color setSelectColor(Color newColor) { selectColor = newColor; }

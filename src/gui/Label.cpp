@@ -19,7 +19,6 @@ namespace Arboria {
 		int xpos = align(halign, size.x, font->getTextWidth(text));
 		int ypos = align(valign, size.y, font->getMaxHeight(text));
 
-		//go through each character in the text. Each time, 
 		renderer->drawText(font, text, xpos, ypos);
 		//textRenderer->draw(font, new Vector2<int>(position.x, position.y), tint, text);
 	}
@@ -34,15 +33,17 @@ namespace Arboria {
 		return text;
 	}
 
-	void Label::setText(String& _text) { 
+	void Label::setText(String& _text) { //
 		text = _text;
 		setDirty();
+		//setFlag(WIDGET_TEXTCHANGED);
 	}
 
 	void Label::setText(const char* _text)
 	{
 		text = _text;
 		setDirty();
+		//setFlag(WIDGET_TEXTCHANGED);
 	}
 
 	Font* Label::getFont() const { return font; }

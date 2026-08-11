@@ -73,7 +73,7 @@ namespace Arboria
 					hovered = children[cursor];
 					break;
 				case ACTION_RIGHTARROW: //RIGHT
-					if (viewOrientation == Orientation::HORIZONTAL)
+					if (viewOrientation == Orientation::VERTICAL)
 						break;
 					newCursor = Math::iMin(cursor + 1, itemCount - 1);
 					if (cursor != newCursor && cursor > (displayCount - 1) + indexOffset) {

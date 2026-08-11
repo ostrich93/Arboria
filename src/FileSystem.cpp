@@ -19,7 +19,7 @@ namespace Arboria {
 		char temp[128] = "";
 		SDL_assert(PHYSFS_init(0) > 0);
 		PHYSFS_permitSymbolicLinks(1);
-		PHYSFS_setSaneConfig("Vultan", "Arboria", "7z", 0, 0);
+		PHYSFS_setSaneConfig(ORGANIZATION, APP_NAME, ARCHIVE_EXT, 0, 0);
 		if (strlen(srcDir) > 0) {
 			strcpy(output, srcDir);
 			if (output[strlen(output) - 1] != DIR_SEPARATOR_CHAR) {
@@ -31,7 +31,7 @@ namespace Arboria {
 			exit(PHYSFS_getLastErrorCode());
 			//return 0;
 		}
-		PHYSFS_setWriteDir(output);
+		
 		/*strcpy(temp, output);
 		strcat(temp, "saves" DIR_SEPARATOR_STR);
 		if (!PHYSFS_mount(temp, NULL, 1)) {
@@ -91,6 +91,13 @@ namespace Arboria {
 		strcpy(temp, output);
 		strcat(temp, "guis" DIR_SEPARATOR_STR);
 		if (!PHYSFS_mount(temp, NULL, 1)) {
+			exit(PHYSFS_getLastErrorCode());
+		}
+
+		PHYSFS_freeList(PHYSFS_getSearchPath());
+		const char* writeDir = PHYSFS_getPrefDir(ORGANIZATION, APP_NAME);
+		PHYSFS_setWriteDir(writeDir);
+		if (!PHYSFS_mount(writeDir, "/", 0)) {
 			exit(PHYSFS_getLastErrorCode());
 		}
 
