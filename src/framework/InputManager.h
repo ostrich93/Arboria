@@ -295,6 +295,7 @@ namespace Arboria {
 			void setDeltaTime(float v) { deltaTime = v; }
 
 			void restoreDefaults();
+			bool generateDefaults();
 			void saveUserBindings();
 			bool loadUserBindings();
 			bool parseActionBindings(Lexer& src, int& act, int& key, int& button);

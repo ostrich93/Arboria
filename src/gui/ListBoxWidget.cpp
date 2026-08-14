@@ -163,6 +163,7 @@ namespace Arboria
 				}
 				if (child == hovered) {
 					renderer->drawBorders(Vector2<float>{child->position.x, child->position.y}, Vector2<float>{child->size.x, child->size.y}, hoverColor);
+					renderer->drawRectangle(Vector2<float>{child->position.x, child->position.y}, Vector2<float>{child->size.x, child->size.y}, hoverColor);
 				}
 			}
 		}

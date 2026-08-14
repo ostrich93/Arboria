@@ -181,7 +181,10 @@ namespace Arboria {
 
 		m_data = new StringData;
 		ensureAllocated(len + 1, false);
-		strncpy(m_data->data, oldData->data, static_cast<size_t>(len) + 1);
+		if (oldData->data != NULL)
+			strncpy(m_data->data, oldData->data, static_cast<size_t>(len) + 1);
+		else //if the data is an empty string (e.g. when it is cleared)
+			memset(m_data->data, 0, static_cast<size_t>(len) + 1);
 		m_data->len = len;
 		oldData->deleteReference();
 	}
@@ -478,6 +481,7 @@ namespace Arboria {
 	inline void String::empty() {
 		if (m_data->data != emptyString) {
 			delete[] m_data->data;
+			m_data->data = NULL;
 		}
 	}
 

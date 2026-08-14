@@ -507,8 +507,31 @@ namespace Arboria {
 		}
 	}
 
+	bool InputManager::generateDefaults()
+	{
+		PHYSFS_File* outFile = PHYSFS_openWrite("userinputs.ini");
+		char str[1024];
+
+		for (int i = 0; i < 16; i++) {
+			if (i == 0) {
+				sprintf(str, "Action=(action=%d key=%d button=%d)\n", i, defaultBindings[i].key, defaultBindings[i].button);
+			}
+			else {
+				sprintf(str+strlen(str), "Action=(action=%d key=%d button=%d)\n", i, defaultBindings[i].key, defaultBindings[i].button);
+				if (i == 15) {
+					sprintf(str + strlen(str), "\0");
+				}
+			}
+		}
+
+		int bytesWritten = PHYSFS_writeBytes(outFile, (void*)str, strlen(str));
+
+		PHYSFS_close(outFile);
+		return bytesWritten > 0;
+	}
+
 	void InputManager::saveUserBindings() {
-		PHYSFS_File* outFile = PHYSFS_openWrite("inputs.ini");
+		PHYSFS_File* outFile = PHYSFS_openWrite("userinputs.ini");
 		for (int act = ACTION_CONFIRM; act < ACTION_SELECT + 1; act++) {
 			int key = getKeyFromAction(act);
 			int button = getGamepadButtonFromAction(act);
@@ -523,7 +546,14 @@ namespace Arboria {
 
 	bool InputManager::loadUserBindings() {
 		void* fileBuffer;
-		int fLength = readFileFromPhysFS("inputs.ini", &fileBuffer);
+		int fLength = readFileFromPhysFS("userinputs.ini", &fileBuffer);
+		if (fLength < 0) {
+			bool userBindingsLoaded = generateDefaults();
+			if (!userBindingsLoaded) {
+				return false;
+			}
+			fLength = readFileFromPhysFS("userinputs.ini", &fileBuffer);
+		}
 
 		int action = ACTION_NONE;
 		int key = ArboriaKey_Unknown;

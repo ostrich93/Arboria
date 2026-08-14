@@ -5,6 +5,7 @@ widget root {
 		position		0, 0
 		size			192, 48
 		borderSize		1
+		hoverColor		255,255,255,128
 		itemCount		2
 		itemSize		48
 		itemSpacing		0
@@ -32,6 +33,7 @@ widget root {
 	listbox		displayOptions {
 		position		0, 48
 		size			600, 372
+		hoverColor		255,255,255,128
 		itemCount		4
 		itemSize		93
 		itemSpacing		0
@@ -141,6 +143,7 @@ widget root {
 		visible			0
 		position		0, 48
 		size			300, 372
+		hoverColor		255,255,255,128
 		itemCount		7
 		displayCount	6
 		itemSpacing		0

@@ -26,6 +26,7 @@ widget root {
 	listbox mainMenuSelect {
 		position		224, 144
 		size			192, 192
+		hoverColor		255,255,255,128
 		itemSize		48
 		itemSpacing		0
 		itemCount		4
