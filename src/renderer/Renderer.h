@@ -67,6 +67,7 @@ namespace Arboria {
 			void drawRectangle(Vector2<float> _position, Vector2<float> _size, Color c);
 			void drawBorders(Vector2<float> _position, Vector2<float> _size, Color c, float thickness = 1.0f);
 			void flush();
+			void resizeDefaultSurface(int32_t x, int32_t y);
 
 			int maxSpriteBuffers = 0;
 			int maxTextureBuffers = 0;

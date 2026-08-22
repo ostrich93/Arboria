@@ -180,12 +180,16 @@ namespace Arboria {
 		}
 
 		TextureVertices v;
+
+		float left = renderDefaultSurface ? static_cast<float>((viewport_size.x - 640) / 2) : position.x;
+		float top = renderDefaultSurface ? static_cast<float>((viewport_size.y - 480) / 2) : position.y;
+
 		glm::mat4 projection = renderDefaultSurface ?
 			glm::ortho(0.0f, static_cast<float>(viewport_size.x), static_cast<float>(viewport_size.y), 0.0f, -1.0f, 1.0f)
 			: glm::ortho(0.0f, static_cast<float>(viewport_size.x), 0.0f, static_cast<float>(viewport_size.y));
 
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(position, 0.0f));
+		model = renderDefaultSurface ? glm::translate(model, glm::vec3(left, top, 0.0f)) : glm::translate(model, glm::vec3(position, 0.0f));
 
 		model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0));
 		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); //rotation for now is always 0 but when it becomes time, we'll replace it with a parameter value

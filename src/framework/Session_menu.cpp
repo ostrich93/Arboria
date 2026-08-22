@@ -7,7 +7,7 @@
 #include "InputManager.h"
 #include "SystemCVars.h"
 #include "ResourceManager.h"
-
+#include "../renderer/Renderer.h"
 
 namespace Arboria {
 	Window* Session::setGui(Window* gui) {
@@ -169,6 +169,7 @@ namespace Arboria {
 						renderDevice->setDisplayX(resData->x);
 						renderDevice->setDisplayY(resData->y);
 						renderDevice->resize();
+						renderer->resizeDefaultSurface(resData->x, resData->y);
 						continue;
 					}
 					if (row->getName() == "vsyncRow") {

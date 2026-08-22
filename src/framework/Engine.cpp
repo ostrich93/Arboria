@@ -153,7 +153,7 @@ namespace Arboria {
 			if (scaleSurface) {
 				free(scaleSurface);
 			}
-			scaleSurface = new Surface(Vector2<unsigned int>{Math::iMax(640, renderDevice->getDisplayX()), Math::iMax(360, renderDevice->getDisplayY())});
+			scaleSurface = new Surface(Vector2<unsigned int>{Math::iMax(640, renderDevice->getDisplayX()), Math::iMax(480, renderDevice->getDisplayY())});
 		}
 		else {
 			if (scaleSurface) {

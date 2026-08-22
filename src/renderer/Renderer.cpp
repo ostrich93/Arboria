@@ -337,4 +337,24 @@ namespace Arboria {
 			state = RendererState::Idle;
 		}
 	}
+	void Renderer::resizeDefaultSurface(int32_t x, int32_t y)
+	{
+		if (default_surface == nullptr) {
+			default_surface = new Surface(Vector2<int>{renderDevice->getWindowWidth(), renderDevice->getWindowHeight()});
+			default_surface->renderData = new Framebuffer(0, Vector2<int>(x, y));
+			return;
+		}
+
+		if (x != default_surface->getWidth() || y != default_surface->getHeight()) {
+			default_surface->setSize(Vector2<int>(x, y));
+			Framebuffer* surfaceFbo = static_cast<Framebuffer*>(default_surface->renderData);
+			surfaceFbo->size = default_surface->getSize();
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, surfaceFbo->tex_id);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+			glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, surfaceFbo->tex_id, 0);
+
+		}
+	}
 }
