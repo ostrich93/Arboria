@@ -411,7 +411,7 @@ namespace Arboria {
 			Engine::printError("InputManager::unbindKeyAction failed. action input was invalid");
 			return;
 		}
-		keyStates[keyNum].binding = ArboriaKey_Unknown;
+		keyStates[keyNum].binding = ACTION_NONE;
 	}
 
 	void InputManager::unbindKeyAction(int action)
@@ -434,7 +434,7 @@ namespace Arboria {
 			Engine::printError("InputManager::unbindGamepadAction failed. action input was invalid");
 			return;
 		}
-		keyStates[buttonNum] = ArboriaKey_Unknown;
+		keyStates[buttonNum].binding = ACTION_NONE;
 	}
 
 	void InputManager::unbindGamepadAction(int action)
@@ -535,7 +535,8 @@ namespace Arboria {
 		for (int act = ACTION_CONFIRM; act < ACTION_SELECT + 1; act++) {
 			int key = getKeyFromAction(act);
 			int button = getGamepadButtonFromAction(act);
-			String bindString = convertToString(act, key, button);
+			String bindString = String::format("Action=(action=%i key=%i button=%i)\n", act, key, button);
+			//convertToString(act, key, button, bindString);
 			if (act == ACTION_SELECT) {
 				bindString[bindString.length() - 1] = '\0';
 			}
@@ -631,10 +632,12 @@ namespace Arboria {
 		return true;
 	}
 
-	String& InputManager::convertToString(const int& act, const int& key, const int& button)
+	void InputManager::convertToString(const int& act, const int& key, const int& button, String& out)
 	{
-		String bindString = "Action=(action=";
-		bindString = bindString + act + " key=" + key + " button=" + button + ")\n";
-		return bindString;
+		out = "Action=(action=";
+		out += act;
+		out += " key=" + key;
+		out += " button=" + button;
+		out += ")\n";
 	}
 }

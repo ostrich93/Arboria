@@ -132,6 +132,8 @@ namespace Arboria {
 			static int iCompareN(const char* s1, const char* s2, size_t n);
 			static void append(char* dest, const char* src, int destsize);
 			static void copyN(char* dest, const char* src, size_t n);
+			static int snPrintf(char* dest, int _size, const char* fmt, ...);
+			static int vsnPrintf(char* dest, int _size, const char* fmt, va_list ap);
 			static int length(const char* str);
 			static char* toLower(char* str);
 			static char* toUpper(char* str);
@@ -150,6 +152,9 @@ namespace Arboria {
 
 			void reallocate(int amount, bool keepOld);
 			int dynamicMemoryUsed() const;
+
+			static String format(const char* fmt, ...);
+			static String vFormat(const char* fmt, va_list argptr);
 
 			static const char emptyString[1];
 		protected:
@@ -274,8 +279,8 @@ namespace Arboria {
 		char text[64];
 		int l;
 
-		sprintf(text, "%d", i);
-		l = static_cast<int>(strlen(text));
+		l = sprintf(text, "%d", i);
+		//l = static_cast<int>(strlen(text));
 		ensureAllocated(l + 1);
 		strcpy(m_data->data, text);
 		m_data->len = l;
@@ -285,8 +290,8 @@ namespace Arboria {
 		char text[64];
 		int l;
 
-		sprintf(text, "%u", u);
-		l = static_cast<int>(strlen(text));
+		l = sprintf(text, "%u", u);
+		//l = static_cast<int>(strlen(text));
 		ensureAllocated(l + 1);
 		strcpy(m_data->data, text);
 		m_data->len = l;
@@ -296,7 +301,7 @@ namespace Arboria {
 	{
 		char text[64];
 		int l;
-		l = snprintf(text, sizeof(text), "%f", f);
+		l = String::snPrintf(text, sizeof(text), "%f", f);
 		while (l > 0 && text[l - 1] == '0') text[--l] = '\0';
 		while (l > 0 && text[l - 1] == '.') text[--l] = '\0';
 		ensureAllocated(l + 1);
@@ -508,19 +513,28 @@ namespace Arboria {
 		int i;
 
 		ensureAllocated(newLen + 1);
-		strcat(m_data->data, text.c_str());
+		for (i = 0; text[i]; i++) {
+			m_data->data[m_data->len+i] = text[i];
+		}
+		
 		m_data->len = newLen;
+		m_data->data[m_data->len] = '\0';
 	}
 
 	inline void String::append(const char* text) {
 		assert(text);
 		int newLen;
+		int i;
 
 		if (text) {
-			newLen = length() +static_cast<int>(strlen(text));
+			newLen = length() + static_cast<int>(strlen(text));
 			ensureAllocated(newLen + 1);
-			strcat(m_data->data, text);
+			for (i = 0; text[i]; i++) {
+				m_data->data[m_data->len+i] = text[i];
+			}
+
 			m_data->len = newLen;
+			m_data->data[m_data->len] = '\0';
 		}
 	}
 
@@ -534,8 +548,8 @@ namespace Arboria {
 			for (i = 0; text[i] && i < index; i++) {
 				m_data->data[m_data->len + i] = text[i];
 			}
-			m_data->data[newLen] = '\0';
 			m_data->len = newLen;
+			m_data->data[newLen] = '\0';
 		}
 	}
 

@@ -52,6 +52,20 @@ namespace Arboria {
 		int btn = inputManager->getGamepadButtonFromAction(action);
 	}
 
+	void resetDefaultBinding(Widget* wd, int act)
+	{
+		int actKey = inputManager->getKeyFromAction(act);
+		int actButton = inputManager->getGamepadButtonFromAction(act);
+		BindingOption* boundAction = (BindingOption*)wd->getData();
+		BindingData* boundData = boundAction->bindingData;
+		boundData->key = actKey;
+		boundData->gamepad = actButton;
+		GraphicButton* actWidget = dynamic_cast<GraphicButton*>(wd->getChild(1));
+		actWidget->setImage(resourceManager->loadTexture(actKey + 3));
+		boundAction->command.clear();
+		actWidget->setDirty();
+	}
+
 	OptionsMenu::OptionsMenu() : Window()
 	{
 		selectTab = 0;
@@ -62,6 +76,9 @@ namespace Arboria {
 		tabbedList = NULL;
 		bindWindow = NULL;
 		selectedResolutionOption = NULL;
+
+		if (bindingDataList.getLength() == 0)
+			initializeBindingDataList();
 	}
 
 	OptionsMenu::~OptionsMenu() = default;
@@ -108,7 +125,7 @@ namespace Arboria {
 		//ListBoxWidget* displayOptions = tabbedWindows[0]->findWidget<ListBoxWidget>("displayOptions");
 		tabbedWindows[0]->addCallback(ACTION_CANCEL, returnToTabList);
 		//ListBoxWidget* bindingOptions = tabbedWindows[1]->findWidget<ListBoxWidget>("bindingOptions");
-		tabbedWindows[1]->addCallback(ACTION_CANCEL, returnToDisplayList);
+		tabbedWindows[1]->addCallback(ACTION_CANCEL, returnToTabList);
 
 		Widget* applyRow = tabbedWindows[0]->findWidget<Widget>("applyRow");
 		TextButton* applyButton = applyRow->findWidget<TextButton>("applyButton");
@@ -118,27 +135,27 @@ namespace Arboria {
 		defaultSettingsButton->addCallback(ACTION_CONFIRM, handleRestoreDefaultDisplaySettings);
 
 		Widget* confirmRow = tabbedWindows[1]->findWidget<Widget>("confirmRow");
-		confirmRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_CONFIRM), inputManager->getGamepadButtonFromAction(ACTION_CONFIRM), ACTION_CONFIRM });
+		confirmRow->setData(new BindingOption(bindingDataList[ACTION_CONFIRM]));
 		confirmRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 
 		Widget* cancelRow = tabbedWindows[1]->findWidget<Widget>("cancelRow");
-		cancelRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_CANCEL), inputManager->getGamepadButtonFromAction(ACTION_CANCEL), ACTION_CANCEL });
+		cancelRow->setData(new BindingOption(bindingDataList[ACTION_CANCEL]));
 		cancelRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 
 		Widget* unitMenuRow = tabbedWindows[1]->findWidget<Widget>("unitMenuRow");
-		unitMenuRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_TOGGLE_DISPLAY), inputManager->getGamepadButtonFromAction(ACTION_TOGGLE_DISPLAY), ACTION_TOGGLE_DISPLAY });
+		unitMenuRow->setData(new BindingOption(bindingDataList[ACTION_TOGGLE_DISPLAY]));
 		unitMenuRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 
 		Widget* helpRow = tabbedWindows[1]->findWidget<Widget>("helpRow");
-		helpRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_HELP), inputManager->getGamepadButtonFromAction(ACTION_HELP), ACTION_HELP });
+		helpRow->setData(new BindingOption(bindingDataList[ACTION_HELP]));
 		helpRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 		
 		Widget* lShiftRow = tabbedWindows[1]->findWidget<Widget>("leftShiftRow");
-		lShiftRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_L_TRIGGER_1), inputManager->getGamepadButtonFromAction(ACTION_L_TRIGGER_1), ACTION_L_TRIGGER_1 });
+		lShiftRow->setData(new BindingOption(bindingDataList[ACTION_L_TRIGGER_1]));
 		lShiftRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 		
 		Widget* rShiftRow = tabbedWindows[1]->findWidget<Widget>("rightShiftRow");
-		rShiftRow->setData(new BindingData{ inputManager->getKeyFromAction(ACTION_R_TRIGGER_1), inputManager->getGamepadButtonFromAction(ACTION_R_TRIGGER_1), ACTION_R_TRIGGER_1 });
+		rShiftRow->setData(new BindingOption(bindingDataList[ACTION_R_TRIGGER_1]));
 		rShiftRow->addCallback(ACTION_CONFIRM, handleBindingSelect);
 		
 		Widget* restoreDefaultBindingsRow = tabbedWindows[1]->findWidget<Widget>("restoreDefaultBindingsRow");
@@ -259,64 +276,22 @@ namespace Arboria {
 		//ListBoxWidget* bindingOptions = tabbedWindows[1]->findWidget<ListBoxWidget>("bindingOptions");
 		
 		Widget* confirmRow = tabbedWindows[1]->findWidget<Widget>("confirmRow");
-		int confirmKey = inputManager->getKeyFromAction(ACTION_CONFIRM);
-		int confirmButton = inputManager->getGamepadButtonFromAction(ACTION_CONFIRM);
-		BindingData* confirmBind = (BindingData*)confirmRow->getData();
-		confirmBind->key = confirmKey;
-		confirmBind->gamepad = confirmButton;
-		GraphicButton* confirmOption = dynamic_cast<GraphicButton*>(confirmRow->getChild(1));
-		confirmOption->setImage(resourceManager->loadTexture(confirmKey + 3));
-		confirmOption->setDirty();
+		resetDefaultBinding(confirmRow, ACTION_CONFIRM);
 
 		Widget* cancelRow = tabbedWindows[1]->findWidget<Widget>("cancelRow");
-		int cancelKey = inputManager->getKeyFromAction(ACTION_CANCEL);
-		int cancelButton = inputManager->getGamepadButtonFromAction(ACTION_CANCEL);
-		BindingData* cancelBind = (BindingData*)cancelRow->getData();
-		cancelBind->key = cancelKey;
-		cancelBind->gamepad = cancelButton;
-		GraphicButton* cancelOption = dynamic_cast<GraphicButton*>(cancelRow->getChild(1));
-		cancelOption->setImage(resourceManager->loadTexture(cancelKey + 3));
-		cancelOption->setDirty();
+		resetDefaultBinding(cancelRow, ACTION_CANCEL);
 
 		Widget* unitMenuRow = tabbedWindows[1]->findWidget<Widget>("unitMenuRow");
-		int unitMenuKey = inputManager->getKeyFromAction(ACTION_TOGGLE_DISPLAY);
-		int unitMenuButton = inputManager->getGamepadButtonFromAction(ACTION_TOGGLE_DISPLAY);
-		BindingData* unitMenuBind = (BindingData*)unitMenuRow->getData();
-		unitMenuBind->key = unitMenuKey;
-		unitMenuBind->gamepad = unitMenuButton;
-		GraphicButton* unitMenuOption = dynamic_cast<GraphicButton*>(unitMenuRow->getChild(1));
-		unitMenuOption->setImage(resourceManager->loadTexture(unitMenuKey + 3));
-		unitMenuOption->setDirty();
+		resetDefaultBinding(unitMenuRow, ACTION_TOGGLE_DISPLAY);
 
 		Widget* helpRow = tabbedWindows[1]->findWidget<Widget>("helpRow");
-		int helpKey = inputManager->getKeyFromAction(ACTION_HELP);
-		int helpButton = inputManager->getGamepadButtonFromAction(ACTION_HELP);
-		BindingData* helpBind = (BindingData*)helpRow->getData();
-		helpBind->key = helpKey;
-		helpBind->gamepad = helpButton;
-		GraphicButton* helpOption = dynamic_cast<GraphicButton*>(helpRow->getChild(1));
-		helpOption->setImage(resourceManager->loadTexture(helpKey + 3));
-		helpOption->setDirty();
+		resetDefaultBinding(helpRow, ACTION_HELP);
 
 		Widget* leftShiftRow = tabbedWindows[1]->findWidget<Widget>("leftShiftRow");
-		int leftShiftKey = inputManager->getKeyFromAction(ACTION_L_TRIGGER_1);
-		int leftShiftButton = inputManager->getGamepadButtonFromAction(ACTION_L_TRIGGER_1);
-		BindingData* leftShiftBind = (BindingData*)leftShiftRow->getData();
-		leftShiftBind->key = leftShiftKey;
-		leftShiftBind->gamepad = leftShiftButton;
-		GraphicButton* leftShiftOption = dynamic_cast<GraphicButton*>(leftShiftRow->getChild(1));
-		leftShiftOption->setImage(resourceManager->loadTexture(leftShiftKey + 3));
-		leftShiftOption->setDirty();
+		resetDefaultBinding(leftShiftRow, ACTION_L_TRIGGER_1);
 
 		Widget* rightShiftRow = tabbedWindows[1]->findWidget<Widget>("rightShiftRow");
-		int rightShiftKey = inputManager->getKeyFromAction(ACTION_R_TRIGGER_1);
-		int rightShiftButton = inputManager->getGamepadButtonFromAction(ACTION_R_TRIGGER_1);
-		BindingData* rightShiftBind = (BindingData*)rightShiftRow->getData();
-		rightShiftBind->key = rightShiftKey;
-		rightShiftBind->gamepad = rightShiftButton;
-		GraphicButton* rightShiftOption = dynamic_cast<GraphicButton*>(rightShiftRow->getChild(1));
-		rightShiftOption->setImage(resourceManager->loadTexture(rightShiftKey + 3));
-		rightShiftOption->setDirty();
+		resetDefaultBinding(rightShiftRow, ACTION_R_TRIGGER_1);
 
 		tabbedWindows[1]->setSelected(NULL);
 	}
@@ -403,17 +378,21 @@ namespace Arboria {
 		}
 		else {
 			if (((ev->eventType == EventType::EVENT_CONTROLLER_BUTTON) && ev->eventValue < ArboriaKey_GamepadDpadLeft || ev->eventValue > ArboriaKey_GamepadDpadRight)
-				|| (ev->eventType == EventType::EVENT_KEY) && ev->eventValue < ArboriaKey_LeftArrow && ev->eventValue > ArboriaKey_DownArrow) {
+				|| ((ev->eventType == EventType::EVENT_KEY) && (ev->eventValue < ArboriaKey_LeftArrow || ev->eventValue > ArboriaKey_DownArrow) && ev->eventValue2 > 0)) {
 				//update data in the row
 				//update the graphic
-				BindingData bindData = *(BindingData*)w->getParent()->getData();
+				BindingOption* chosenBinding = (BindingOption*)w->getData();
 
-				String bindCmd = "bind " + ev->eventValue;
-				bindCmd += ", ";
-				bindCmd += bindData.action;
-				bindCmd += ", "; 
-				bindCmd += session->getLastInputDevice();
-				commandSystem->pushCommand(const_cast<char*>(bindCmd.c_str()));
+				String bindCmd = String::format("bind %i, %i, %i", ev->eventValue, chosenBinding->bindingData->action, session->getLastInputDevice());
+				if (bindCmd.compare(chosenBinding->command.c_str()) == 0) {
+					ListBoxWidget* parentOptionsWindow = (ListBoxWidget*)w->getParent();
+					parentOptionsWindow->setSelected(NULL);
+					session->isBindWait = false;
+					return true;
+				}
+
+				chosenBinding->command = bindCmd;
+				commandSystem->pushCommand(chosenBinding->command.c_str());
 				return true;
 			}
 		}
@@ -501,64 +480,22 @@ namespace Arboria {
 			//Widget* inputScreen = optMenu->getRoot()->findWidget<Widget>("inputScreen");
 			ListBoxWidget* bindingOptions = optMenu->getRoot()->findWidget<ListBoxWidget>("bindingOptions");
 			Widget* confirmRow = bindingOptions->getChild(0);
-			int confirmKey = inputManager->getKeyFromAction(ACTION_CONFIRM);
-			int confirmButton = inputManager->getGamepadButtonFromAction(ACTION_CONFIRM);
-			BindingData* confirmBind = (BindingData*)confirmRow->getData();
-			confirmBind->key = confirmKey;
-			confirmBind->gamepad = confirmButton;
-			GraphicButton* confirmOption = dynamic_cast<GraphicButton*>(confirmRow->getChild(1));
-			confirmOption->setImage(resourceManager->loadTexture(confirmKey + 3));
-			confirmOption->setDirty();
+			resetDefaultBinding(confirmRow, ACTION_CONFIRM);
 
 			Widget* cancelRow = bindingOptions->getChild(1);
-			int cancelKey = inputManager->getKeyFromAction(ACTION_CANCEL);
-			int cancelButton = inputManager->getGamepadButtonFromAction(ACTION_CANCEL);
-			BindingData* cancelBind = (BindingData*)cancelRow->getData();
-			cancelBind->key = cancelKey;
-			cancelBind->gamepad = cancelButton;
-			GraphicButton* cancelOption = dynamic_cast<GraphicButton*>(cancelRow->getChild(1));
-			cancelOption->setImage(resourceManager->loadTexture(cancelKey + 3));
-			cancelOption->setDirty();
+			resetDefaultBinding(cancelRow, ACTION_CANCEL);
 
 			Widget* unitMenuRow = bindingOptions->getChild(2);
-			int unitMenuKey = inputManager->getKeyFromAction(ACTION_TOGGLE_DISPLAY);
-			int unitMenuButton = inputManager->getGamepadButtonFromAction(ACTION_TOGGLE_DISPLAY);
-			BindingData* unitMenuBind = (BindingData*)unitMenuRow->getData();
-			unitMenuBind->key = unitMenuKey;
-			unitMenuBind->gamepad = unitMenuButton;
-			GraphicButton* unitMenuOption = dynamic_cast<GraphicButton*>(unitMenuRow->getChild(1));
-			unitMenuOption->setImage(resourceManager->loadTexture(unitMenuKey + 3));
-			unitMenuOption->setDirty();
+			resetDefaultBinding(unitMenuRow, ACTION_TOGGLE_DISPLAY);
 
 			Widget* helpRow = bindingOptions->getChild(3);
-			int helpKey = inputManager->getKeyFromAction(ACTION_HELP);
-			int helpButton = inputManager->getGamepadButtonFromAction(ACTION_HELP);
-			BindingData* helpBind = (BindingData*)helpRow->getData();
-			helpBind->key = helpKey;
-			helpBind->gamepad = helpButton;
-			GraphicButton* helpOption = dynamic_cast<GraphicButton*>(helpRow->getChild(1));
-			helpOption->setImage(resourceManager->loadTexture(helpKey + 3));
-			helpOption->setDirty();
+			resetDefaultBinding(helpRow, ACTION_HELP);
 
 			Widget* leftShiftRow = bindingOptions->getChild(4);
-			int leftShiftKey = inputManager->getKeyFromAction(ACTION_L_TRIGGER_1);
-			int leftShiftButton = inputManager->getGamepadButtonFromAction(ACTION_L_TRIGGER_1);
-			BindingData* leftShiftBind = (BindingData*)leftShiftRow->getData();
-			leftShiftBind->key = leftShiftKey;
-			leftShiftBind->gamepad = leftShiftButton;
-			GraphicButton* leftShiftOption = dynamic_cast<GraphicButton*>(leftShiftRow->getChild(1));
-			leftShiftOption->setImage(resourceManager->loadTexture(leftShiftKey + 3));
-			leftShiftOption->setDirty();
+			resetDefaultBinding(leftShiftRow, ACTION_L_TRIGGER_1);
 
 			Widget* rightShiftRow = bindingOptions->getChild(5);
-			int rightShiftKey = inputManager->getKeyFromAction(ACTION_R_TRIGGER_1);
-			int rightShiftButton = inputManager->getGamepadButtonFromAction(ACTION_R_TRIGGER_1);
-			BindingData* rightShiftBind = (BindingData*)rightShiftRow->getData();
-			rightShiftBind->key = rightShiftKey;
-			rightShiftBind->gamepad = rightShiftButton;
-			GraphicButton* rightShiftOption = dynamic_cast<GraphicButton*>(rightShiftRow->getChild(1));
-			rightShiftOption->setImage(resourceManager->loadTexture(rightShiftKey + 3));
-			rightShiftOption->setDirty();
+			resetDefaultBinding(rightShiftRow, ACTION_R_TRIGGER_1);
 
 			bindingOptions->setSelected(NULL);
 
@@ -587,6 +524,19 @@ namespace Arboria {
 		window->setCursor(bOptions->getActualPosition().x, bOptions->getActualPosition().y);
 		bOptions->setHovered();
 		return true;
+	}
+
+	void initializeBindingDataList()
+	{
+		bindingDataList.clear();
+		bindingDataList = {
+			{ inputManager->getKeyFromAction(ACTION_CONFIRM), inputManager->getGamepadButtonFromAction(ACTION_CONFIRM), ACTION_CONFIRM },
+			{ inputManager->getKeyFromAction(ACTION_CANCEL), inputManager->getGamepadButtonFromAction(ACTION_CANCEL), ACTION_CANCEL },
+			{ inputManager->getKeyFromAction(ACTION_TOGGLE_DISPLAY), inputManager->getGamepadButtonFromAction(ACTION_TOGGLE_DISPLAY), ACTION_TOGGLE_DISPLAY },
+			{ inputManager->getKeyFromAction(ACTION_HELP), inputManager->getGamepadButtonFromAction(ACTION_HELP), ACTION_HELP },
+			{ inputManager->getKeyFromAction(ACTION_L_TRIGGER_1), inputManager->getGamepadButtonFromAction(ACTION_L_TRIGGER_1), ACTION_L_TRIGGER_1},
+			{ inputManager->getKeyFromAction(ACTION_R_TRIGGER_1), inputManager->getGamepadButtonFromAction(ACTION_R_TRIGGER_1), ACTION_R_TRIGGER_1},
+		};
 	}
 
 	template<typename T>

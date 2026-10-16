@@ -103,10 +103,13 @@ namespace Arboria {
 		if (String::iCompare(cmd, "bind") == 0) {
 			if (args.getArgc() >= 3) {
 				int newKey = atoi(args.getArgv(icmd++));
+				icmd++;
 				int bind = atoi(args.getArgv(icmd++));
+				icmd++;
 				int device = atoi(args.getArgv(icmd++));
 
 				int oldKey = ArboriaKey_Unknown;
+				int oldBind = inputManager->getBinding(newKey);
 
 				if (device == 0) {
 					oldKey = inputManager->getKeyFromAction(bind);
@@ -118,16 +121,19 @@ namespace Arboria {
 				if (oldKey != newKey) {
 					inputManager->unbindKeyAction(oldKey, bind);
 					inputManager->bindAction(newKey, bind);
+					if (oldBind > -1)
+						inputManager->bindAction(oldKey, oldBind);
 				}
 				OptionsMenu* optMenu = dynamic_cast<OptionsMenu*>(guiActive);
 				if (optMenu) {
 					ListBoxWidget* inputScreen = optMenu->getRoot()->findWidget<ListBoxWidget>("bindingOptions");
 					Widget* selectedRow = inputScreen->getSelected();
-					BindingData* selectedBinding = (BindingData*)selectedRow->getData();
+					BindingOption* selectedBinding = (BindingOption*)selectedRow->getData();
+
 					if (device == 0)
-						selectedBinding->key = newKey;
+						selectedBinding->bindingData->key = newKey;
 					else
-						selectedBinding->gamepad = newKey;
+						selectedBinding->bindingData->gamepad = newKey;
 
 					GraphicButton* optionButton = dynamic_cast<GraphicButton*>(selectedRow->getChildren()[1]);
 					if (oldKey != newKey) {
@@ -140,7 +146,7 @@ namespace Arboria {
 					}
 					inputScreen->setSelected(NULL);
 					optMenu->getRoot()->setFocus(inputScreen);
-
+					isBindWait = false;
 					return true;
 				}
 			}

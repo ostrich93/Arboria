@@ -299,7 +299,7 @@ namespace Arboria {
 			void saveUserBindings();
 			bool loadUserBindings();
 			bool parseActionBindings(Lexer& src, int& act, int& key, int& button);
-			String& convertToString(const int& act, const int& key, const int& button);
+			void convertToString(const int& act, const int& key, const int& button, String& out);
 			//void updateKeyInputState(AEvent* _keyEv);
 	};
 }

@@ -32,6 +32,14 @@ namespace Arboria {
 		int action;
 	};
 
+	struct BindingOption {
+		String command;
+		BindingData* bindingData;
+
+		BindingOption() = default;
+		BindingOption(const BindingData& bd) : bindingData(dynamic_cast<BindingData*>(const_cast<BindingData*>(&bd))) {}
+	};
+
 	class OptionsMenu : public Window {
 		private:
 			ListBoxWidget* tabbedList;
@@ -77,6 +85,7 @@ namespace Arboria {
 			}
 	};
 
+	void resetDefaultBinding(Widget* wd, int act);
 	bool handleApplyDisplayChanges(Widget* w, AEvent* ev);
 	bool handleRestoreDefaultDisplaySettings(Widget* w, AEvent* ev);
 	bool handleBindingSelect(Widget* w, AEvent* ev);
@@ -88,6 +97,9 @@ namespace Arboria {
 	bool handleRestoreDefaultBindings(Widget* w, AEvent* ev);
 	bool handleNavigateToDisplayWindow(Widget* w, AEvent* ev);
 	bool handleNavigateToBindingsWindow(Widget* w, AEvent* ev);
+
+	static List<BindingData> bindingDataList;
+	void initializeBindingDataList();
 }
 
 #endif

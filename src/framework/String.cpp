@@ -1,5 +1,7 @@
 #include "String.h"
 #include "../utils/math.h"
+#include "../framework/Engine.h"
+#include <stdarg.h>
 
 namespace Arboria {
 
@@ -342,6 +344,29 @@ namespace Arboria {
         dest[n-1] = '\0';
     }
 
+    int String::snPrintf(char* dest, int _size, const char* fmt, ...)
+    {
+        va_list argptr;
+        int len;
+        va_start(argptr, fmt);
+        len = vsnprintf(dest, _size, fmt, argptr);
+        va_end(argptr);
+        
+        if (len >= _size) {
+            Engine::printWarning("String::snPrintf: overflow of %i in %i\n", len, _size);
+            len = _size;
+        }
+
+        return len;
+    }
+
+    int String::vsnPrintf(char* dest, int _size, const char* fmt, va_list ap) {
+        int len = vsnprintf(dest, _size, fmt, ap);
+        if (len < 0 || len >= _size)
+            return -1;
+        return len;
+    }
+
     bool String::isNumeric(const char* s) {
 
         int i;
@@ -360,5 +385,36 @@ namespace Arboria {
             }
         }
         return true;
+    }
+
+    String String::format(const char* fmt, ...) {
+        va_list argptr;
+        va_start(argptr, fmt);
+        String ret = vFormat(fmt, argptr);
+        va_end(argptr);
+
+        return ret;
+    }
+
+    String String::vFormat(const char* fmt, va_list argptr) {
+        String ret;
+        int len;
+        va_list argptrcpy;
+        char buffer[16000]; //8*16000 = 128KB
+
+        va_copy(argptrcpy, argptr);
+        len = vsnprintf(buffer, sizeof(buffer), fmt, argptr);
+        ret.ensureAllocated(len + 1);
+        if (len < sizeof(buffer)) {
+            strcpy(ret.m_data->data, buffer);
+            ret.m_data->len = len;
+        }
+        else { //string was truncated due to the buffer being too small. Since we ensured that the return string has enough room with ensureAllocated, copy format string directly into ret.
+            vsnprintf(ret.m_data->data, len + 1, fmt, argptrcpy);
+            ret.m_data->len = len;
+        }
+        va_end(argptrcpy);
+
+        return ret;
     }
 }

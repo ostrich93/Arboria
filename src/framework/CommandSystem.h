@@ -17,7 +17,7 @@ namespace Arboria {
 
 	class CommandSystem {
 	private:
-		Queue<char*> commandQueue;
+		Queue<const char*> commandQueue;
 
 	public:
 		CommandSystem() {};
@@ -26,7 +26,7 @@ namespace Arboria {
 			if (commandQueue.isEmpty()) return NULL;
 			return commandQueue.front();
 		}
-		void pushCommand(char* cmd) { commandQueue.push(cmd); }
+		void pushCommand(const char* cmd) { commandQueue.push(cmd); }
 		void popCommand() { commandQueue.pop(); }
 		void clearCommandQueue() { commandQueue.clear(); }
 	};
